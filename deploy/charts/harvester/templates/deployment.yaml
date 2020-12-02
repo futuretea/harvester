@@ -76,6 +76,10 @@ spec:
               value: {{ .Values.service.harvester.httpsPort | quote }}
             - name: HARVESTER_SERVER_HTTP_PORT
               value: {{ .Values.service.harvester.httpPort | quote }}
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
             - name: NAMESPACE
               valueFrom:
                 fieldRef:

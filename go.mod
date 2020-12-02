@@ -12,6 +12,7 @@ replace (
 	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20191125132246-f6563a70e19a
 	github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190128024246-5eb7ae5bdb7a
 	github.com/rancher/apiserver => github.com/cnrancher/apiserver v0.0.0-20200731031228-a0459feeb0de
+	github.com/rancher/dynamiclistener => github.com/futuretea/dynamiclistener v0.2.1-0.20201202154250-0a2ab77e6d86
 	github.com/rancher/steve => github.com/cnrancher/steve v0.0.0-20200922090254-a3cedc4d23cd
 	github.com/rancher/wrangler => github.com/cnrancher/wrangler v0.6.2-0.20201110032717-f01dc974d85b
 	k8s.io/api => k8s.io/api v0.18.6

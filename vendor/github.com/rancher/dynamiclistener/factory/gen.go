@@ -10,6 +10,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"net"
+	"os"
 	"sort"
 	"strings"
 
@@ -147,7 +148,7 @@ func NeedsUpdate(secret *v1.Secret, cn ...string) bool {
 	}
 
 	for _, cn := range cn {
-		if secret.Annotations[cnPrefix+cn] == "" {
+		if secret.Annotations[cnPrefix+cn] == "" && cn != os.Getenv("MY_POD_IP") {
 			return true
 		}
 	}
