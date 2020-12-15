@@ -240,7 +240,7 @@ spec:
               name: cdrom-disk
               bootOrder: 1
             - disk:
-                bus: virtio
+                bus: scsi
               name: rootdisk
             - cdrom:
                 bus: sata
@@ -267,7 +267,7 @@ spec:
             name: datavolume-rootdisk
           name: rootdisk
         - containerDisk:
-            image: kubevirt/virtio-container-disk
+            image: rancher/virtio-container-disk:0.1.190
             imagePullPolicy: IfNotPresent
           name: virtio-container-disk
     dataVolumeTemplates:
@@ -291,7 +291,7 @@ spec:
           - ReadWriteOnce
           resources:
             requests:
-              storage: 32Gi
+              storage: 50Gi
         source:
           blank: {}
 `
