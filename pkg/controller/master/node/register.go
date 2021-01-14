@@ -25,6 +25,7 @@ func Register(ctx context.Context, management *config.Management) error {
 		jobCache:         jobs.Cache(),
 		statefulSets:     statefulsets,
 		statefulSetCache: statefulsets.Cache(),
+		recorder:         management.NewRecorder("harvester-"+controllerAgentName, "", ""),
 	}
 
 	nodes.OnChange(ctx, controllerAgentName, controller.OnNodeChanged)

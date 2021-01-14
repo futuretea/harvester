@@ -6,6 +6,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/tools/record"
 
 	ctlappsv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/apps/v1"
 	ctlbatchv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/batch/v1"
@@ -21,6 +22,7 @@ type Handler struct {
 	jobCache         ctlbatchv1.JobCache
 	statefulSets     ctlappsv1.StatefulSetClient
 	statefulSetCache ctlappsv1.StatefulSetCache
+	recorder         record.EventRecorder
 }
 
 // OnNodeChanged automate the upgrade of node roles and balance of minio pods

@@ -2,9 +2,11 @@ package node
 
 import (
 	"fmt"
+	"strings"
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -42,8 +44,29 @@ func (h *Handler) promote(node *corev1.Node) (*corev1.Node, error) {
 	return startedNode, nil
 }
 
+func (h *Handler) logPromoteEvent(node *corev1.Node, status string) {
+	preStatus := node.Annotations[HarvesterPromoteStatusAnnotationKey]
+	eventType := corev1.EventTypeNormal
+	switch status {
+	case PromoteStatusUnknown, PromoteStatusFailed:
+		eventType = corev1.EventTypeWarning
+	}
+	nodeReference := &corev1.ObjectReference{
+		Name: node.Name,
+		UID:  types.UID(node.Name),
+		Kind: "Node",
+	}
+	h.recorder.Event(nodeReference, eventType,
+		fmt.Sprintf("NodePromote%s", strings.Title(status)),
+		fmt.Sprintf("Node %s promote status change: %s => %s", node.Name, preStatus, status))
+}
+
 // setPromoteStart set node unschedulable and set promote status running.
 func (h *Handler) setPromoteStart(node *corev1.Node) (*corev1.Node, error) {
+	if node.Annotations[HarvesterPromoteStatusAnnotationKey] == PromoteStatusRunning {
+		return node, nil
+	}
+	h.logPromoteEvent(node, PromoteStatusRunning)
 	toUpdate := node.DeepCopy()
 	toUpdate.Labels[KubeNodeSVCEnableLBLabelKey] = "true"
 	toUpdate.Annotations[HarvesterPromoteStatusAnnotationKey] = PromoteStatusRunning
@@ -54,6 +77,10 @@ func (h *Handler) setPromoteStart(node *corev1.Node) (*corev1.Node, error) {
 
 // setPromoteResult set node schedulable and update promote status if the promote is successful
 func (h *Handler) setPromoteResult(job *batchv1.Job, node *corev1.Node, status string) (*batchv1.Job, error) {
+	if node.Annotations[HarvesterPromoteStatusAnnotationKey] == status {
+		return job, nil
+	}
+	h.logPromoteEvent(node, status)
 	toUpdate := node.DeepCopy()
 	toUpdate.Annotations[HarvesterPromoteStatusAnnotationKey] = status
 	if status == PromoteStatusComplete {
