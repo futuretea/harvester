@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
-	ctlappsv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/apps/v1"
-	ctlcorev1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
 	"github.com/stretchr/testify/assert"
+
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -15,7 +15,12 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
 	appsv1type "k8s.io/client-go/kubernetes/typed/apps/v1"
+	batchv1type "k8s.io/client-go/kubernetes/typed/batch/v1"
 	corev1type "k8s.io/client-go/kubernetes/typed/core/v1"
+
+	ctlappsv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/apps/v1"
+	ctlbatchv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/batch/v1"
+	ctlcorev1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
 )
 
 const cpNoScheduleTaintKey = "node-role.kubernetes.io/controlplane"
@@ -328,11 +333,15 @@ func TestNodeHandler_OnChanged(t *testing.T) {
 
 		var handler = &Handler{
 			podCache:         fakePodCache(clientset.CoreV1().Pods),
+			nodes:            fakeNodeClient(clientset.CoreV1().Nodes),
+			nodeCache:        fakeNodeCache(clientset.CoreV1().Nodes),
+			jobs:             fakeJobClient(clientset.BatchV1().Jobs),
+			jobCache:         fakeJobCache(clientset.BatchV1().Jobs),
 			statefulSets:     fakeStatefulSetClient(clientset.AppsV1().StatefulSets),
 			statefulSetCache: fakeStatefulSetCache(clientset.AppsV1().StatefulSets),
 		}
 		var actual output
-		actual.node, actual.err = handler.OnChanged(tc.given.key, tc.given.node)
+		actual.node, actual.err = handler.OnNodeChanged(tc.given.key, tc.given.node)
 		if tc.given.statefulset != nil {
 			ss, err := handler.statefulSetCache.Get(tc.given.statefulset.Namespace, tc.given.statefulset.Name)
 			assert.Nil(t, err)
@@ -343,6 +352,7 @@ func TestNodeHandler_OnChanged(t *testing.T) {
 	}
 }
 
+// fakePodCache
 type fakePodCache func(string) corev1type.PodInterface
 
 func (c fakePodCache) Get(namespace, name string) (*corev1.Pod, error) {
@@ -368,6 +378,7 @@ func (c fakePodCache) GetByIndex(indexName, key string) ([]*corev1.Pod, error) {
 	panic("implement me")
 }
 
+// fakeStatefulSetClient
 type fakeStatefulSetClient func(string) appsv1type.StatefulSetInterface
 
 func (c fakeStatefulSetClient) Update(ss *appsv1.StatefulSet) (*appsv1.StatefulSet, error) {
@@ -395,6 +406,7 @@ func (c fakeStatefulSetClient) Patch(namespace, name string, pt types.PatchType,
 	panic("implement me")
 }
 
+// fakeStatefulSetCache
 type fakeStatefulSetCache func(string) appsv1type.StatefulSetInterface
 
 func (c fakeStatefulSetCache) Get(namespace, name string) (*appsv1.StatefulSet, error) {
@@ -407,5 +419,104 @@ func (c fakeStatefulSetCache) AddIndexer(indexName string, indexer ctlappsv1.Sta
 	panic("implement me")
 }
 func (c fakeStatefulSetCache) GetByIndex(indexName, key string) ([]*appsv1.StatefulSet, error) {
+	panic("implement me")
+}
+
+// fakeNodeCache
+type fakeNodeCache func() corev1type.NodeInterface
+
+func (c fakeNodeCache) Get(name string) (*corev1.Node, error) {
+	return c().Get(context.TODO(), name, metav1.GetOptions{})
+}
+
+func (c fakeNodeCache) List(selector labels.Selector) ([]*corev1.Node, error) {
+	list, err := c().List(context.TODO(), metav1.ListOptions{
+		LabelSelector: selector.String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]*corev1.Node, 0, len(list.Items))
+	for _, item := range list.Items {
+		result = append(result, &item)
+	}
+	return result, err
+}
+func (c fakeNodeCache) AddIndexer(indexName string, indexer ctlcorev1.NodeIndexer) {
+	panic("implement me")
+}
+func (c fakeNodeCache) GetByIndex(indexName, key string) ([]*corev1.Node, error) {
+	panic("implement me")
+}
+
+// fakeNodeClient
+type fakeNodeClient func() corev1type.NodeInterface
+
+func (c fakeNodeClient) Create(*corev1.Node) (*corev1.Node, error) {
+	panic("implement me")
+}
+func (c fakeNodeClient) Update(node *corev1.Node) (*corev1.Node, error) {
+	return c().Update(context.TODO(), node, metav1.UpdateOptions{})
+}
+func (c fakeNodeClient) UpdateStatus(*corev1.Node) (*corev1.Node, error) {
+	panic("implement me")
+}
+func (c fakeNodeClient) Delete(name string, options *metav1.DeleteOptions) error {
+	panic("implement me")
+}
+func (c fakeNodeClient) Get(name string, options metav1.GetOptions) (*corev1.Node, error) {
+	panic("implement me")
+}
+func (c fakeNodeClient) List(opts metav1.ListOptions) (*corev1.NodeList, error) {
+	panic("implement me")
+}
+func (c fakeNodeClient) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	panic("implement me")
+}
+func (c fakeNodeClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *corev1.Node, err error) {
+	panic("implement me")
+}
+
+// fakeJobClient
+type fakeJobClient func(string) batchv1type.JobInterface
+
+func (c fakeJobClient) Update(job *batchv1.Job) (*batchv1.Job, error) {
+	return c(job.Namespace).Update(context.TODO(), job, metav1.UpdateOptions{})
+}
+func (c fakeJobClient) Get(namespace, name string, options metav1.GetOptions) (*batchv1.Job, error) {
+	panic("implement me")
+}
+func (c fakeJobClient) Create(*batchv1.Job) (*batchv1.Job, error) {
+	panic("implement me")
+}
+func (c fakeJobClient) UpdateStatus(*batchv1.Job) (*batchv1.Job, error) {
+	panic("implement me")
+}
+func (c fakeJobClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	panic("implement me")
+}
+func (c fakeJobClient) List(namespace string, opts metav1.ListOptions) (*batchv1.JobList, error) {
+	panic("implement me")
+}
+func (c fakeJobClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	panic("implement me")
+}
+func (c fakeJobClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *batchv1.Job, err error) {
+	panic("implement me")
+}
+
+// fakeJobCache
+type fakeJobCache func(string) batchv1type.JobInterface
+
+func (c fakeJobCache) Get(namespace, name string) (*batchv1.Job, error) {
+	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+}
+func (c fakeJobCache) List(namespace string, selector labels.Selector) ([]*batchv1.Job, error) {
+	panic("implement me")
+}
+func (c fakeJobCache) AddIndexer(indexName string, indexer ctlbatchv1.JobIndexer) {
+	panic("implement me")
+}
+func (c fakeJobCache) GetByIndex(indexName, key string) ([]*batchv1.Job, error) {
 	panic("implement me")
 }

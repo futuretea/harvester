@@ -6,6 +6,7 @@ import (
 	dashboardapi "github.com/kubernetes/dashboard/src/app/backend/auth/api"
 	"github.com/rancher/lasso/pkg/controller"
 	appsv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/apps"
+	batchv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/batch"
 	corev1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core"
 	rbacv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/rbac"
 	storagev1 "github.com/rancher/wrangler-api/pkg/generated/controllers/storage"
@@ -47,6 +48,7 @@ type Scaled struct {
 	AppsFactory      *appsv1.Factory
 	RbacFactory      *rbacv1.Factory
 	CniFactory       *cniv1.Factory
+	BatchFactory     *batchv1.Factory
 	starters         []start.Starter
 
 	Management   *Management
@@ -64,6 +66,7 @@ type Management struct {
 	AppsFactory      *appsv1.Factory
 	RbacFactory      *rbacv1.Factory
 	StorageFactory   *storagev1.Factory
+	BatchFactory     *batchv1.Factory
 
 	starters []start.Starter
 }
@@ -119,6 +122,13 @@ func SetupScaled(ctx context.Context, restConfig *rest.Config, opts *generic.Fac
 		return nil, nil, err
 	}
 	scaled.CniFactory = cni
+	scaled.starters = append(scaled.starters, cni)
+
+	batch, err := batchv1.NewFactoryFromConfigWithOptions(restConfig, opts)
+	if err != nil {
+		return nil, nil, err
+	}
+	scaled.BatchFactory = batch
 	scaled.starters = append(scaled.starters, cni)
 
 	scaled.Management, err = setupManagement(ctx, restConfig, opts)
@@ -179,6 +189,13 @@ func setupManagement(ctx context.Context, restConfig *rest.Config, opts *generic
 	}
 	management.RbacFactory = rbac
 	management.starters = append(management.starters, rbac)
+
+	batch, err := batchv1.NewFactoryFromConfigWithOptions(restConfig, opts)
+	if err != nil {
+		return nil, err
+	}
+	management.BatchFactory = batch
+	management.starters = append(management.starters, batch)
 
 	return management, nil
 }

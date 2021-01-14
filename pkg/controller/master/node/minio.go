@@ -1,12 +1,9 @@
 package node
 
 import (
-	"context"
 	"time"
 
-	appsv1 "github.com/rancher/wrangler-api/pkg/generated/controllers/apps/v1"
-	v1 "github.com/rancher/wrangler-api/pkg/generated/controllers/core/v1"
-	apiv1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
@@ -14,51 +11,25 @@ import (
 )
 
 const (
-	controllerAgentName = "balance-minio-node-controller"
-	appLabelKey         = "app"
-	minioName           = "minio"
-	timestampAnnoKey    = "cattle.io/timestamp"
+	appLabelKey      = "app"
+	minioName        = "minio"
+	timestampAnnoKey = "cattle.io/timestamp"
 )
 
 var (
 	throttleDelay = 1 * time.Minute
 )
 
-// Register registers the node controller
-func Register(ctx context.Context, management *config.Management) error {
-	nodes := management.CoreFactory.Core().V1().Node()
-	pods := management.CoreFactory.Core().V1().Pod()
-	statefulsets := management.AppsFactory.Apps().V1().StatefulSet()
-	controller := &Handler{
-		podCache:         pods.Cache(),
-		statefulSets:     statefulsets,
-		statefulSetCache: statefulsets.Cache(),
-	}
-
-	nodes.OnChange(ctx, controllerAgentName, controller.OnChanged)
-	return nil
-}
-
-// Handler balances minio pods if applicable when new nodes join
-type Handler struct {
-	podCache         v1.PodCache
-	statefulSets     appsv1.StatefulSetClient
-	statefulSetCache appsv1.StatefulSetCache
-}
-
-// OnChanged tries to make minio pods balanced if they are not
-func (h *Handler) OnChanged(key string, node *apiv1.Node) (*apiv1.Node, error) {
-	if node == nil || node.DeletionTimestamp != nil {
-		return node, nil
-	}
+// makeMinioBalanced tries to make minio pods balanced if they are not
+func (h *Handler) makeMinioBalanced(key string, node *corev1.Node) (*corev1.Node, error) {
 
 	for _, c := range node.Status.Conditions {
-		if c.Type == apiv1.NodeReady && c.Status != apiv1.ConditionTrue {
+		if c.Type == corev1.NodeReady && c.Status != corev1.ConditionTrue {
 			// skip unready nodes
 			return node, nil
 		}
 
-		if c.Type != apiv1.NodeReady && c.Status == apiv1.ConditionTrue {
+		if c.Type != corev1.NodeReady && c.Status == corev1.ConditionTrue {
 			// skip deploy minio to node with conditions like nodeMemoryPressure, nodeDiskPressure, nodePIDPressure
 			// and nodeNetworkUnavailable equal to true
 			return node, nil
@@ -67,6 +38,10 @@ func (h *Handler) OnChanged(key string, node *apiv1.Node) (*apiv1.Node, error) {
 
 	if len(node.Spec.Taints) > 0 {
 		// skip taints nodes
+		return node, nil
+	}
+
+	if h.isPromoteStatusIn(node, PromoteStatusUnknown, PromoteStatusRunning, PromoteStatusFailed) {
 		return node, nil
 	}
 
@@ -84,7 +59,7 @@ func (h *Handler) OnChanged(key string, node *apiv1.Node) (*apiv1.Node, error) {
 
 	var nodeSet = make(map[string]bool)
 	for _, p := range pods {
-		if p.Status.Phase != apiv1.PodRunning {
+		if p.Status.Phase != corev1.PodRunning {
 			// proceed when all pods are running
 			return node, nil
 		}
