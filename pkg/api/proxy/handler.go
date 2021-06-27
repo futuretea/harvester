@@ -19,6 +19,7 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		if h.Host != "" {
 			r.URL.Host = h.Host
 		}
+		r.Host = r.URL.Host
 	}
 	httpProxy := &httputil.ReverseProxy{
 		Director: director,
