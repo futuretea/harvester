@@ -25,6 +25,9 @@ func (h *Handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 			r.URL.Scheme = h.Scheme
 		}
 		r.Host = r.URL.Host
+		if req.Host != "" {
+			r.Header.Set("X-API-Host", req.Host)
+		}
 		r.Header.Set("Origin", fmt.Sprintf("%s://%s", "https", r.Host))
 	}
 	httpProxy := &httputil.ReverseProxy{
