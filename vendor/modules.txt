@@ -545,7 +545,7 @@ github.com/rancher/apiserver/pkg/subscribe
 github.com/rancher/apiserver/pkg/types
 github.com/rancher/apiserver/pkg/urlbuilder
 github.com/rancher/apiserver/pkg/writer
-# github.com/rancher/dynamiclistener v0.2.1-0.20201110045217-9b1b7d3132e8
+# github.com/rancher/dynamiclistener v0.2.1-0.20201110045217-9b1b7d3132e8 => github.com/cnrancher/dynamiclistener v0.2.1-0.20210709062411-37cf93f11d86
 ## explicit
 github.com/rancher/dynamiclistener
 github.com/rancher/dynamiclistener/cert
@@ -1680,6 +1680,7 @@ sigs.k8s.io/yaml
 # github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20200521150516-05eb9880269c
 # github.com/operator-framework/operator-lifecycle-manager => github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190128024246-5eb7ae5bdb7a
 # github.com/rancher/apiserver => github.com/cnrancher/apiserver v0.0.0-20210302022932-069aa785cb9f
+# github.com/rancher/dynamiclistener => github.com/cnrancher/dynamiclistener v0.2.1-0.20210709062411-37cf93f11d86
 # github.com/rancher/rancher/pkg/apis => github.com/rancher/rancher/pkg/apis v0.0.0-20210304063736-65f7c844267b
 # github.com/rancher/rancher/pkg/client => github.com/rancher/rancher/pkg/client v0.0.0-20210304063736-65f7c844267b
 # k8s.io/api => k8s.io/api v0.20.4
