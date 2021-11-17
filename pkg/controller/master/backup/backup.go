@@ -178,30 +178,46 @@ func (h *Handler) getVolumeBackups(backup *harvesterv1.VirtualMachineBackup, vm 
 	return volumeBackups, nil
 }
 
-// getSecretBackups helps to build a list of SecretBackup upon the cloud init secrets used by the backup VM
+// getSecretBackups helps to build a list of SecretBackup upon the secrets used by the backup VM
 func (h *Handler) getSecretBackups(vm *kv1.VirtualMachine) ([]harvesterv1.SecretBackup, error) {
-	var secretBackups []harvesterv1.SecretBackup
+	var (
+		secretBackups []harvesterv1.SecretBackup
+		appendSecret  = func(name string) error {
+			secret, err := h.secretCache.Get(vm.Namespace, name)
+			if err != nil {
+				return err
+			}
+			secretBackups = append(secretBackups, harvesterv1.SecretBackup{
+				Name: secret.Name,
+				Data: secret.Data,
+			})
+			return nil
+		}
+	)
+
+	for _, credential := range vm.Spec.Template.Spec.AccessCredentials {
+		if sshPublicKey := credential.SSHPublicKey; sshPublicKey != nil && sshPublicKey.Source.Secret != nil {
+			if err := appendSecret(sshPublicKey.Source.Secret.SecretName); err != nil {
+				return nil, err
+			}
+		}
+		if userPassword := credential.UserPassword; userPassword != nil && userPassword.Source.Secret != nil {
+			if err := appendSecret(userPassword.Source.Secret.SecretName); err != nil {
+				return nil, err
+			}
+		}
+	}
 
 	for _, volume := range vm.Spec.Template.Spec.Volumes {
 		if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.UserDataSecretRef != nil {
-			secret, err := h.secretCache.Get(vm.Namespace, volume.CloudInitNoCloud.UserDataSecretRef.Name)
-			if err != nil {
+			if err := appendSecret(volume.CloudInitNoCloud.UserDataSecretRef.Name); err != nil {
 				return nil, err
 			}
-			secretBackups = append(secretBackups, harvesterv1.SecretBackup{
-				Name: secret.Name,
-				Data: secret.Data,
-			})
 		}
 		if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.NetworkDataSecretRef != nil {
-			secret, err := h.secretCache.Get(vm.Namespace, volume.CloudInitNoCloud.NetworkDataSecretRef.Name)
-			if err != nil {
+			if err := appendSecret(volume.CloudInitNoCloud.NetworkDataSecretRef.Name); err != nil {
 				return nil, err
 			}
-			secretBackups = append(secretBackups, harvesterv1.SecretBackup{
-				Name: secret.Name,
-				Data: secret.Data,
-			})
 		}
 	}
 

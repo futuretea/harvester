@@ -167,7 +167,7 @@ func (h *RestoreHandler) RestoreOnChanged(key string, restore *harvesterv1.Virtu
 	}
 
 	//restore referenced secrets
-	if err := h.restoreCloudInitSecrets(backup, target); err != nil {
+	if err := h.restoreSecrets(backup, target); err != nil {
 		return nil, h.doUpdateError(restore, restoreCpy, err, true)
 	}
 
@@ -236,7 +236,29 @@ func (h *RestoreHandler) RestoreOnChanged(key string, restore *harvesterv1.Virtu
 	return nil, h.doUpdate(restore, restoreCpy)
 }
 
-func (h *RestoreHandler) restoreCloudInitSecrets(backup *harvesterv1.VirtualMachineBackup, target *vmRestoreTarget) error {
+func (h *RestoreHandler) createNewSecretFromBackup(target *vmRestoreTarget, newSecretName string, secretBackup harvesterv1.SecretBackup) error {
+	newSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      newSecretName,
+			Namespace: target.vmRestore.Namespace,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: target.vm.APIVersion,
+					Kind:       target.vm.Kind,
+					Name:       target.vm.Name,
+					UID:        target.vm.UID,
+				},
+			},
+		},
+		Data: secretBackup.Data,
+	}
+	if _, err := h.secretClient.Create(newSecret); err != nil && !apierrors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
+}
+
+func (h *RestoreHandler) restoreSecrets(backup *harvesterv1.VirtualMachineBackup, target *vmRestoreTarget) error {
 	if !target.newVM {
 		//Update existing secrets
 		for _, secretBackup := range backup.Status.SecretBackups {
@@ -252,48 +274,36 @@ func (h *RestoreHandler) restoreCloudInitSecrets(backup *harvesterv1.VirtualMach
 		}
 	} else {
 		for _, secretBackup := range backup.Status.SecretBackups {
+
+			for _, credential := range backup.Status.SourceSpec.Spec.Template.Spec.AccessCredentials {
+				if sshPublicKey := credential.SSHPublicKey; sshPublicKey != nil && sshPublicKey.Source.Secret != nil &&
+					secretBackup.Name == sshPublicKey.Source.Secret.SecretName {
+					newSecretName := getVMSSHPublicKeySecretName(target.vmRestore.Spec.Target.Name)
+					if err := h.createNewSecretFromBackup(target, newSecretName, secretBackup); err != nil {
+						return err
+					}
+				}
+				if userPassword := credential.UserPassword; userPassword != nil && userPassword.Source.Secret != nil &&
+					secretBackup.Name == userPassword.Source.Secret.SecretName {
+					newSecretName := getVMUserPasswordSecretName(target.vmRestore.Spec.Target.Name)
+					if err := h.createNewSecretFromBackup(target, newSecretName, secretBackup); err != nil {
+						return err
+					}
+				}
+			}
+
 			for _, volume := range backup.Status.SourceSpec.Spec.Template.Spec.Volumes {
 				if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.UserDataSecretRef != nil &&
 					secretBackup.Name == volume.CloudInitNoCloud.UserDataSecretRef.Name {
 					newSecretName := getVMUserDataSecretName(target.vmRestore.Spec.Target.Name, volume.Name)
-					newSecret := &corev1.Secret{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      newSecretName,
-							Namespace: target.vmRestore.Namespace,
-							OwnerReferences: []metav1.OwnerReference{
-								{
-									APIVersion: target.vm.APIVersion,
-									Kind:       target.vm.Kind,
-									Name:       target.vm.Name,
-									UID:        target.vm.UID,
-								},
-							},
-						},
-						Data: secretBackup.Data,
-					}
-					if _, err := h.secretClient.Create(newSecret); err != nil && !apierrors.IsAlreadyExists(err) {
+					if err := h.createNewSecretFromBackup(target, newSecretName, secretBackup); err != nil {
 						return err
 					}
 				}
 				if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.NetworkDataSecretRef != nil &&
 					secretBackup.Name == volume.CloudInitNoCloud.NetworkDataSecretRef.Name {
 					newSecretName := getVMNetworkDataSecretName(target.vmRestore.Spec.Target.Name, volume.Name)
-					newSecret := &corev1.Secret{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      newSecretName,
-							Namespace: target.vmRestore.Namespace,
-							OwnerReferences: []metav1.OwnerReference{
-								{
-									APIVersion: target.vm.APIVersion,
-									Kind:       target.vm.Kind,
-									Name:       target.vm.Name,
-									UID:        target.vm.UID,
-								},
-							},
-						},
-						Data: secretBackup.Data,
-					}
-					if _, err := h.secretClient.Create(newSecret); err != nil && !apierrors.IsAlreadyExists(err) {
+					if err := h.createNewSecretFromBackup(target, newSecretName, secretBackup); err != nil {
 						return err
 					}
 				}
@@ -632,6 +642,14 @@ func (h *RestoreHandler) createNewVM(restore *harvesterv1.VirtualMachineRestore,
 }
 
 func sanitizeVirtualMachineForRestore(restore *harvesterv1.VirtualMachineRestore, spec kv1.VirtualMachineInstanceSpec) kv1.VirtualMachineInstanceSpec {
+	for index, credential := range spec.AccessCredentials {
+		if sshPublicKey := credential.SSHPublicKey; sshPublicKey != nil && sshPublicKey.Source.Secret != nil {
+			spec.AccessCredentials[index].SSHPublicKey.Source.Secret.SecretName = getVMSSHPublicKeySecretName(restore.Spec.Target.Name)
+		}
+		if userPassword := credential.UserPassword; userPassword != nil && userPassword.Source.Secret != nil {
+			spec.AccessCredentials[index].UserPassword.Source.Secret.SecretName = getVMUserPasswordSecretName(restore.Spec.Target.Name)
+		}
+	}
 	for index, volume := range spec.Volumes {
 		if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.UserDataSecretRef != nil {
 			spec.Volumes[index].CloudInitNoCloud.UserDataSecretRef.Name = getVMUserDataSecretName(restore.Spec.Target.Name, volume.Name)
@@ -765,4 +783,12 @@ func getVMUserDataSecretName(vmName, volumeName string) string {
 
 func getVMNetworkDataSecretName(vmName, volumeName string) string {
 	return fmt.Sprintf("vm-%s-%s-networkdata", vmName, volumeName)
+}
+
+func getVMSSHPublicKeySecretName(vmName string) string {
+	return fmt.Sprintf("vm-%s-accesscredentials-sshpublichkey", vmName)
+}
+
+func getVMUserPasswordSecretName(vmName string) string {
+	return fmt.Sprintf("vm-%s-accesscredentials-userpassword", vmName)
 }
