@@ -624,12 +624,11 @@ func (h *RestoreHandler) createNewVM(restore *harvesterv1.VirtualMachineRestore,
 	if restore.Status.TargetUID == nil {
 		restore.Status.TargetUID = &newVM.UID
 	}
-	vm.SetOwnerReferences(configVMOwner(vm))
 	if _, err = h.restores.Update(restore); err != nil {
 		return nil, err
 	}
 
-	return vm, nil
+	return newVM, nil
 }
 
 func sanitizeVirtualMachineForRestore(restore *harvesterv1.VirtualMachineRestore, spec kv1.VirtualMachineInstanceSpec) kv1.VirtualMachineInstanceSpec {
