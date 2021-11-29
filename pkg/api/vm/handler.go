@@ -103,6 +103,10 @@ func (h *vmActionHandler) doAction(rw http.ResponseWriter, r *http.Request) erro
 		if err := h.subresourceOperate(r.Context(), vmiResource, namespace, name, action); err != nil {
 			return fmt.Errorf("%s virtual machine %s/%s failed, %v", action, namespace, name, err)
 		}
+	case softRebootVM:
+		if err := h.subresourceOperate(r.Context(), vmiResource, namespace, name, action); err != nil {
+			return fmt.Errorf("%s virtual machine %s/%s failed, %v", action, namespace, name, err)
+		}
 	case backupVM:
 		var input BackupInput
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {

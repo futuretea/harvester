@@ -17,6 +17,7 @@ const (
 	restartVM      = "restart"
 	pauseVM        = "pause"
 	unpauseVM      = "unpause"
+	softRebootVM   = "softReboot"
 	ejectCdRom     = "ejectCdRom"
 	migrate        = "migrate"
 	abortMigration = "abortMigration"
@@ -71,6 +72,10 @@ func (vf *vmformatter) formatter(request *types.APIRequest, resource *types.RawR
 
 	if vf.canUnPause(vmi) {
 		resource.AddAction(request, unpauseVM)
+	}
+
+	if vf.canSoftReboot(vmi) {
+		resource.AddAction(request, softRebootVM)
 	}
 
 	if canMigrate(vmi) {
@@ -133,6 +138,18 @@ func (vf *vmformatter) canUnPause(vmi *kv1.VirtualMachineInstance) bool {
 	}
 
 	return vmiPaused.IsTrue(vmi)
+}
+
+func (vf *vmformatter) canSoftReboot(vmi *kv1.VirtualMachineInstance) bool {
+	if vmi == nil {
+		return false
+	}
+
+	if vmi.Status.Phase != kv1.Running {
+		return false
+	}
+
+	return true
 }
 
 func (vf *vmformatter) canStart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineInstance) bool {
