@@ -26,47 +26,51 @@ import (
 )
 
 const (
-	defaultTimeout        = time.Second * 3
-	defaultTickerInterval = time.Second
+	defaultTimeout		= time.Second * 3
+	defaultTickerInterval	= time.Second
 
-	port = "6443"
+	port	= "6443"
 )
 
 type GenerateHandler struct {
-	context           context.Context
-	saClient          ctlcorev1.ServiceAccountClient
-	saCache           ctlcorev1.ServiceAccountCache
-	clusterRoleCache  ctlrbacv1.ClusterRoleCache
-	roleBindingClient ctlrbacv1.RoleBindingClient
-	roleBindingCache  ctlrbacv1.RoleBindingCache
-	secretCache       ctlcorev1.SecretCache
-	secretClient      ctlcorev1.SecretClient
-	configMapCache    ctlcorev1.ConfigMapCache
-	namespace         string
+	context			context.Context
+	saClient		ctlcorev1.ServiceAccountClient
+	saCache			ctlcorev1.ServiceAccountCache
+	clusterRoleCache	ctlrbacv1.ClusterRoleCache
+	roleBindingClient	ctlrbacv1.RoleBindingClient
+	roleBindingCache	ctlrbacv1.RoleBindingCache
+	secretCache		ctlcorev1.SecretCache
+	secretClient		ctlcorev1.SecretClient
+	configMapCache		ctlcorev1.ConfigMapCache
+	namespace		string
 }
 
 func NewGenerateHandler(scaled *config.Scaled, option config.Options) *GenerateHandler {
+	__traceStack()
+
 	return &GenerateHandler{
-		context:           scaled.Ctx,
-		saClient:          scaled.CoreFactory.Core().V1().ServiceAccount(),
-		saCache:           scaled.CoreFactory.Core().V1().ServiceAccount().Cache(),
-		clusterRoleCache:  scaled.RbacFactory.Rbac().V1().ClusterRole().Cache(),
-		roleBindingClient: scaled.RbacFactory.Rbac().V1().RoleBinding(),
-		roleBindingCache:  scaled.RbacFactory.Rbac().V1().RoleBinding().Cache(),
-		secretCache:       scaled.CoreFactory.Core().V1().Secret().Cache(),
-		secretClient:      scaled.CoreFactory.Core().V1().Secret(),
-		configMapCache:    scaled.CoreFactory.Core().V1().ConfigMap().Cache(),
-		namespace:         option.Namespace,
+		context:		scaled.Ctx,
+		saClient:		scaled.CoreFactory.Core().V1().ServiceAccount(),
+		saCache:		scaled.CoreFactory.Core().V1().ServiceAccount().Cache(),
+		clusterRoleCache:	scaled.RbacFactory.Rbac().V1().ClusterRole().Cache(),
+		roleBindingClient:	scaled.RbacFactory.Rbac().V1().RoleBinding(),
+		roleBindingCache:	scaled.RbacFactory.Rbac().V1().RoleBinding().Cache(),
+		secretCache:		scaled.CoreFactory.Core().V1().Secret().Cache(),
+		secretClient:		scaled.CoreFactory.Core().V1().Secret(),
+		configMapCache:		scaled.CoreFactory.Core().V1().ConfigMap().Cache(),
+		namespace:		option.Namespace,
 	}
 }
 
 type req struct {
-	ClusterRoleName string `json:"clusterRoleName"`
-	Namespace       string `json:"namespace"`
-	SaName          string `json:"serviceAccountName"`
+	ClusterRoleName	string	`json:"clusterRoleName"`
+	Namespace	string	`json:"namespace"`
+	SaName		string	`json:"serviceAccountName"`
 }
 
 func decodeRequest(r *http.Request) (*req, error) {
+	__traceStack()
+
 	if r == nil {
 		return nil, fmt.Errorf("request can not be nil")
 	}
@@ -84,7 +88,8 @@ func decodeRequest(r *http.Request) (*req, error) {
 }
 
 func (h *GenerateHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	// TODO authentication
+	__traceStack()
+
 	req, err := decodeRequest(r)
 	if err != nil {
 		util.ResponseError(rw, http.StatusBadRequest, errors.Wrap(err, "fail to decode request"))
@@ -123,6 +128,8 @@ func (h *GenerateHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GenerateHandler) getServerUrl() (string, error) {
+	__traceStack()
+
 	vipCm, err := h.configMapCache.Get(h.namespace, rancher.VipConfigmapName)
 	if err != nil {
 		return "", err
@@ -142,6 +149,8 @@ func (h *GenerateHandler) getServerUrl() (string, error) {
 }
 
 func (h *GenerateHandler) createRoleBindingIfNotExit(clusterRoleName string, sa *corev1.ServiceAccount) (*rbacv1.RoleBinding, error) {
+	__traceStack()
+
 	namespace := sa.Namespace
 	name := sa.Namespace + "-" + sa.Name
 	roleBinding, err := h.roleBindingCache.Get(namespace, name)
@@ -154,34 +163,35 @@ func (h *GenerateHandler) createRoleBindingIfNotExit(clusterRoleName string, sa 
 
 	return h.roleBindingClient.Create(&rbacv1.RoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
+			Namespace:	namespace,
+			Name:		name,
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion: "v1",
-					Kind:       rbacv1.ServiceAccountKind,
-					Name:       sa.Name,
-					UID:        sa.UID,
+					APIVersion:	"v1",
+					Kind:		rbacv1.ServiceAccountKind,
+					Name:		sa.Name,
+					UID:		sa.UID,
 				},
 			},
 		},
 		Subjects: []rbacv1.Subject{
 			{
-				Kind:      rbacv1.ServiceAccountKind,
-				Namespace: namespace,
-				Name:      sa.Name,
+				Kind:		rbacv1.ServiceAccountKind,
+				Namespace:	namespace,
+				Name:		sa.Name,
 			},
 		},
 		RoleRef: rbacv1.RoleRef{
-			APIGroup: rbacv1.GroupName,
-			Kind:     "ClusterRole",
-			Name:     clusterRoleName,
+			APIGroup:	rbacv1.GroupName,
+			Kind:		"ClusterRole",
+			Name:		clusterRoleName,
 		},
 	})
 }
 
-// ensureSaAndSecret returns the serviceAccount and the associated secret
 func (h *GenerateHandler) ensureSaAndSecret(namespace, name string) (*corev1.ServiceAccount, *corev1.Secret, error) {
+	__traceStack()
+
 	_, err := h.saCache.Get(namespace, name)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, nil, err
@@ -189,8 +199,8 @@ func (h *GenerateHandler) ensureSaAndSecret(namespace, name string) (*corev1.Ser
 	if apierrors.IsNotFound(err) {
 		_, err := h.saClient.Create(&corev1.ServiceAccount{
 			ObjectMeta: metav1.ObjectMeta{
-				Namespace: namespace,
-				Name:      name,
+				Namespace:	namespace,
+				Name:		name,
 			}})
 		if err != nil {
 			return nil, nil, err
@@ -224,6 +234,8 @@ func (h *GenerateHandler) ensureSaAndSecret(namespace, name string) (*corev1.Ser
 }
 
 func (h *GenerateHandler) generateKubeConfig(secret *corev1.Secret, server string) (string, error) {
+	__traceStack()
+
 	cluster, user, context := "default", "default", "default"
 	ca, token, err := h.getCaAndToken(secret)
 	if err != nil {
@@ -233,16 +245,16 @@ func (h *GenerateHandler) generateKubeConfig(secret *corev1.Secret, server strin
 	config.Kind = "Config"
 	config.APIVersion = clientcmdlatest.Version
 	config.Clusters[cluster] = &clientcmdapi.Cluster{
-		Server:                   server,
-		CertificateAuthorityData: ca,
+		Server:				server,
+		CertificateAuthorityData:	ca,
 	}
 	config.AuthInfos[user] = &clientcmdapi.AuthInfo{
 		Token: string(token),
 	}
 	config.Contexts[context] = &clientcmdapi.Context{
-		Cluster:   cluster,
-		Namespace: secret.Namespace,
-		AuthInfo:  user,
+		Cluster:	cluster,
+		Namespace:	secret.Namespace,
+		AuthInfo:	user,
 	}
 	config.CurrentContext = context
 
@@ -255,6 +267,8 @@ func (h *GenerateHandler) generateKubeConfig(secret *corev1.Secret, server strin
 }
 
 func (h *GenerateHandler) getCaAndToken(secret *corev1.Secret) ([]byte, []byte, error) {
+	__traceStack()
+
 	ca, ok := secret.Data["ca.crt"]
 	if !ok {
 		return nil, nil, fmt.Errorf("ca.crt is not found in secret %s", secret.Name)

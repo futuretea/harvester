@@ -20,15 +20,19 @@ import (
 )
 
 func newTestExistingVirtualMachineImage(namespace, name string) *harvesterv1.VirtualMachineImage {
+	__traceStack()
+
 	return &harvesterv1.VirtualMachineImage{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      name,
+			Namespace:	namespace,
+			Name:		name,
 		},
 	}
 }
 
 func newTestVirtualMachineImage() *harvesterv1.VirtualMachineImage {
+	__traceStack()
+
 	return &harvesterv1.VirtualMachineImage{
 		Spec: harvesterv1.VirtualMachineImageSpec{
 			DisplayName: getISODisplayNameImageName(testUpgradeName, testVersion),
@@ -37,31 +41,33 @@ func newTestVirtualMachineImage() *harvesterv1.VirtualMachineImage {
 }
 
 func TestUpgradeHandler_OnChanged(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key     string
-		upgrade *harvesterv1.Upgrade
-		version *harvesterv1.Version
-		vmi     *harvesterv1.VirtualMachineImage
-		nodes   []*v1.Node
+		key	string
+		upgrade	*harvesterv1.Upgrade
+		version	*harvesterv1.Version
+		vmi	*harvesterv1.VirtualMachineImage
+		nodes	[]*v1.Node
 	}
 	type output struct {
-		plan    *upgradeapiv1.Plan
-		upgrade *harvesterv1.Upgrade
-		vmi     *harvesterv1.VirtualMachineImage
-		err     error
+		plan	*upgradeapiv1.Plan
+		upgrade	*harvesterv1.Upgrade
+		vmi	*harvesterv1.VirtualMachineImage
+		err	error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "upgrade triggers an image creation from ISOURL",
+			name:	"upgrade triggers an image creation from ISOURL",
 			given: input{
-				key:     testUpgradeName,
-				upgrade: newTestUpgradeBuilder().Build(),
-				version: newVersionBuilder(testVersion).Build(),
-				vmi:     newTestExistingVirtualMachineImage(upgradeNamespace, testUpgradeImage),
+				key:		testUpgradeName,
+				upgrade:	newTestUpgradeBuilder().Build(),
+				version:	newVersionBuilder(testVersion).Build(),
+				vmi:		newTestExistingVirtualMachineImage(upgradeNamespace, testUpgradeImage),
 				nodes: []*v1.Node{
 					newNodeBuilder("node-1").Managed().ControlPlane().Build(),
 					newNodeBuilder("node-2").Managed().ControlPlane().Build(),
@@ -69,18 +75,18 @@ func TestUpgradeHandler_OnChanged(t *testing.T) {
 				},
 			},
 			expected: output{
-				vmi: newTestVirtualMachineImage(),
+				vmi:	newTestVirtualMachineImage(),
 				upgrade: newTestUpgradeBuilder().InitStatus().
 					ImageReadyCondition(v1.ConditionUnknown, "", "").Build(),
 			},
 		},
 		{
-			name: "upgrade with an existing image",
+			name:	"upgrade with an existing image",
 			given: input{
-				key:     testUpgradeName,
-				upgrade: newTestUpgradeBuilder().WithImage(testUpgradeImage).Build(),
-				version: newVersionBuilder(testVersion).Build(),
-				vmi:     newTestExistingVirtualMachineImage(upgradeNamespace, testUpgradeImage),
+				key:		testUpgradeName,
+				upgrade:	newTestUpgradeBuilder().WithImage(testUpgradeImage).Build(),
+				version:	newVersionBuilder(testVersion).Build(),
+				vmi:		newTestExistingVirtualMachineImage(upgradeNamespace, testUpgradeImage),
 				nodes: []*v1.Node{
 					newNodeBuilder("node-1").Managed().ControlPlane().Build(),
 					newNodeBuilder("node-2").Managed().ControlPlane().Build(),
@@ -103,15 +109,15 @@ func TestUpgradeHandler_OnChanged(t *testing.T) {
 		}
 		var k8sclientset = k8sfake.NewSimpleClientset(nodes...)
 		var handler = &upgradeHandler{
-			namespace:     harvesterSystemNamespace,
-			nodeCache:     fakeclients.NodeCache(k8sclientset.CoreV1().Nodes),
-			planClient:    fakeclients.PlanClient(clientset.UpgradeV1().Plans),
-			upgradeClient: fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
-			upgradeCache:  fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
-			versionCache:  fakeclients.VersionCache(clientset.HarvesterhciV1beta1().Versions),
-			vmClient:      fakeclients.VirtualMachineClient(clientset.KubevirtV1().VirtualMachines),
-			vmImageClient: fakeclients.VirtualMachineImageClient(clientset.HarvesterhciV1beta1().VirtualMachineImages),
-			vmImageCache:  fakeclients.VirtualMachineImageCache(clientset.HarvesterhciV1beta1().VirtualMachineImages),
+			namespace:	harvesterSystemNamespace,
+			nodeCache:	fakeclients.NodeCache(k8sclientset.CoreV1().Nodes),
+			planClient:	fakeclients.PlanClient(clientset.UpgradeV1().Plans),
+			upgradeClient:	fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
+			upgradeCache:	fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
+			versionCache:	fakeclients.VersionCache(clientset.HarvesterhciV1beta1().Versions),
+			vmClient:	fakeclients.VirtualMachineClient(clientset.KubevirtV1().VirtualMachines),
+			vmImageClient:	fakeclients.VirtualMachineImageClient(clientset.HarvesterhciV1beta1().VirtualMachineImages),
+			vmImageCache:	fakeclients.VirtualMachineImageCache(clientset.HarvesterhciV1beta1().VirtualMachineImages),
 		}
 		var actual output
 		actual.upgrade, actual.err = handler.OnChanged(tc.given.key, tc.given.upgrade)
@@ -125,7 +131,7 @@ func TestUpgradeHandler_OnChanged(t *testing.T) {
 			var err error
 			actual.plan, err = handler.planClient.Get(upgradeNamespace, tc.expected.plan.Name, metav1.GetOptions{})
 			assert.Nil(t, err)
-			//skip hash comparison
+
 			actual.plan.Status.LatestHash = ""
 			tc.expected.plan.Status.LatestHash = ""
 		}
@@ -134,8 +140,6 @@ func TestUpgradeHandler_OnChanged(t *testing.T) {
 			emptyConditionsTime(tc.expected.upgrade.Status.Conditions)
 			emptyConditionsTime(actual.upgrade.Status.Conditions)
 
-			// A Generated image ID is unpredictable. Verify
-			// the image is there and compare the display name.
 			imageID := actual.upgrade.Status.ImageID
 			if imageID != "" && tc.expected.vmi != nil {
 				tokens := strings.Split(imageID, "/")
@@ -153,6 +157,8 @@ func TestUpgradeHandler_OnChanged(t *testing.T) {
 }
 
 func fakeImageExist(imageCache ctlharvesterv1.VirtualMachineImageCache, displayName string) (bool, error) {
+	__traceStack()
+
 	vmis, err := imageCache.List(upgradeNamespace, labels.Everything())
 	if err != nil {
 		return false, err
@@ -167,6 +173,8 @@ func fakeImageExist(imageCache ctlharvesterv1.VirtualMachineImageCache, displayN
 }
 
 func emptyConditionsTime(conditions []harvesterv1.Condition) {
+	__traceStack()
+
 	for _, c := range conditions {
 		c.LastTransitionTime = ""
 		c.LastUpdateTime = ""

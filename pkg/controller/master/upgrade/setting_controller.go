@@ -6,12 +6,13 @@ import (
 	harvesterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 )
 
-// settingHandler do version syncs on server-version setting changes
 type settingHandler struct {
 	versionSyncer *versionSyncer
 }
 
 func (h *settingHandler) OnChanged(key string, setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	if setting == nil || setting.DeletionTimestamp != nil || setting.Name != "server-version" {
 		return setting, nil
 	}

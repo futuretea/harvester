@@ -12,8 +12,10 @@ import (
 )
 
 func RegisterSchema(scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	t := schema.Template{
-		ID: "harvesterhci.io.virtualmachineimage",
+		ID:	"harvesterhci.io.virtualmachineimage",
 		Customize: func(s *types.APISchema) {
 			s.Formatter = Formatter
 			s.ResourceActions = map[string]schemas.Action{
@@ -21,11 +23,11 @@ func RegisterSchema(scaled *config.Scaled, server *server.Server, options config
 			}
 			s.ActionHandlers = map[string]http.Handler{
 				actionUpload: UploadActionHandler{
-					httpClient:                  http.Client{},
-					Images:                      scaled.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineImage(),
-					ImageCache:                  scaled.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineImage().Cache(),
-					BackingImageDataSources:     scaled.LonghornFactory.Longhorn().V1beta1().BackingImageDataSource(),
-					BackingImageDataSourceCache: scaled.LonghornFactory.Longhorn().V1beta1().BackingImageDataSource().Cache(),
+					httpClient:			http.Client{},
+					Images:				scaled.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineImage(),
+					ImageCache:			scaled.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineImage().Cache(),
+					BackingImageDataSources:	scaled.LonghornFactory.Longhorn().V1beta1().BackingImageDataSource(),
+					BackingImageDataSourceCache:	scaled.LonghornFactory.Longhorn().V1beta1().BackingImageDataSource().Cache(),
 				},
 			}
 		},

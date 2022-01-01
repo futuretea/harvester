@@ -19,12 +19,13 @@ import (
 )
 
 type VMController struct {
-	pvcClient v1.PersistentVolumeClaimClient
-	pvcCache  v1.PersistentVolumeClaimCache
+	pvcClient	v1.PersistentVolumeClaimClient
+	pvcCache	v1.PersistentVolumeClaimCache
 }
 
-// createPVCsFromAnnotation creates PVCs defined in the volumeClaimTemplates annotation if they don't exist.
 func (h *VMController) createPVCsFromAnnotation(_ string, vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	if vm == nil || vm.DeletionTimestamp != nil {
 		return nil, nil
 	}
@@ -50,8 +51,9 @@ func (h *VMController) createPVCsFromAnnotation(_ string, vm *kv1.VirtualMachine
 	return nil, nil
 }
 
-// SetOwnerOfPVCs records the target VirtualMachine as the owner of the PVCs in annotation.
 func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	if vm == nil || vm.DeletionTimestamp != nil || vm.Spec.Template == nil {
 		return vm, nil
 	}
@@ -59,7 +61,7 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 	pvcNames := getPVCNames(&vm.Spec.Template.Spec)
 
 	vmReferenceKey := ref.Construct(vm.Namespace, vm.Name)
-	// get all the volumes attached to this virtual machine
+
 	attachedPVCs, err := h.pvcCache.GetByIndex(indexeres.PVCByVMIndex, vmReferenceKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get attached PVCs by VM index: %w", err)
@@ -70,15 +72,13 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 	vmGK := vmGVK.GroupKind()
 
 	for _, attachedPVC := range attachedPVCs {
-		// check if it's still attached
+
 		if pvcNames.Has(attachedPVC.Name) {
 			continue
 		}
 
 		toUpdate := attachedPVC.DeepCopy()
 
-		// if this volume is no longer attached
-		// remove volume's annotation
 		owners, err := ref.GetSchemaOwnersFromAnnotation(attachedPVC)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get schema owners from annotation: %w", err)
@@ -91,7 +91,6 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 			}
 		}
 
-		// remove volume's ownerReferences
 		isOwned := false
 		ownerReferences := make([]metav1.OwnerReference, 0, len(attachedPVC.OwnerReferences))
 		for _, reference := range attachedPVC.OwnerReferences {
@@ -108,7 +107,6 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 			toUpdate.OwnerReferences = ownerReferences
 		}
 
-		// update volume
 		if isAttached || isOwned {
 			if _, err = h.pvcClient.Update(toUpdate); err != nil {
 				return nil, fmt.Errorf("failed to clean schema owners for PVC(%s/%s): %w",
@@ -122,7 +120,7 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 		var pvc, err = h.pvcCache.Get(pvcNamespace, pvcName)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				// ignores not-found error, A VM can reference a non-existent PVC.
+
 				continue
 			}
 			return vm, fmt.Errorf("failed to get PVC(%s/%s): %w", pvcNamespace, pvcName, err)
@@ -138,23 +136,23 @@ func (h *VMController) SetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.Vi
 	return vm, nil
 }
 
-// UnsetOwnerOfPVCs erases the target VirtualMachine from the owner of the PVCs in annotation.
 func (h *VMController) UnsetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	if vm == nil || vm.DeletionTimestamp == nil || vm.Spec.Template == nil {
 		return vm, nil
 	}
 
 	var (
-		pvcNamespace = vm.Namespace
-		pvcNames     = getPVCNames(&vm.Spec.Template.Spec)
-		removedPVCs  = getRemovedPVCs(vm)
+		pvcNamespace	= vm.Namespace
+		pvcNames	= getPVCNames(&vm.Spec.Template.Spec)
+		removedPVCs	= getRemovedPVCs(vm)
 	)
 	for _, pvcName := range pvcNames.List() {
 		var pvc, err = h.pvcCache.Get(pvcNamespace, pvcName)
 		if err != nil {
 			if apierrors.IsNotFound(err) {
-				// NB(thxCode): ignores error, since this can't be fixed by an immediate requeue,
-				// and also doesn't block the whole logic if the PVC has already been deleted.
+
 				continue
 			}
 			return vm, fmt.Errorf("failed to get PVC(%s/%s): %w", pvcNamespace, pvcName, err)
@@ -170,7 +168,7 @@ func (h *VMController) UnsetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.
 			if err != nil {
 				return vm, fmt.Errorf("failed to count number of owners for PVC(%s/%s): %w", pvcNamespace, pvcName, err)
 			}
-			// We are the solely owner here, so try to delete the PVC as requested.
+
 			if numberOfOwner == 1 {
 				if err := h.pvcClient.Delete(pvcNamespace, pvcName, &metav1.DeleteOptions{}); err != nil {
 					return vm, err
@@ -182,13 +180,15 @@ func (h *VMController) UnsetOwnerOfPVCs(_ string, vm *kv1.VirtualMachine) (*kv1.
 	return vm, nil
 }
 
-// getRemovedPVCs returns removed PVCs.
 func getRemovedPVCs(vm *kv1.VirtualMachine) []string {
+	__traceStack()
+
 	return strings.Split(vm.Annotations[util.RemovedPVCsAnnotationKey], ",")
 }
 
-// getPVCNames returns a name set of the PVCs used by the VMI.
 func getPVCNames(vmiSpecPtr *kv1.VirtualMachineInstanceSpec) sets.String {
+	__traceStack()
+
 	var pvcNames = sets.String{}
 
 	for _, volume := range vmiSpecPtr.Volumes {

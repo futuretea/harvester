@@ -35,27 +35,26 @@ import (
 
 var certs = getSystemCerts()
 
-// See supported TLS protocols of ingress-nginx and Nginx.
-// - https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#ssl-protocols
-// - http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols
 var supportedSSLProtocols = []string{"SSLv2", "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"}
 
 type validateSettingFunc func(setting *v1beta1.Setting) error
 
 var validateSettingFuncs = map[string]validateSettingFunc{
-	settings.HttpProxySettingName:            validateHTTPProxy,
-	settings.VMForceResetPolicySettingName:   validateVMForceResetPolicy,
-	settings.SupportBundleTimeoutSettingName: validateSupportBundleTimeout,
-	settings.OvercommitConfigSettingName:     validateOvercommitConfig,
-	settings.VipPoolsConfigSettingName:       validateVipPoolsConfig,
-	settings.SSLCertificatesSettingName:      validateSSLCertificates,
-	settings.SSLParametersName:               validateSSLParameters,
+	settings.HttpProxySettingName:			validateHTTPProxy,
+	settings.VMForceResetPolicySettingName:		validateVMForceResetPolicy,
+	settings.SupportBundleTimeoutSettingName:	validateSupportBundleTimeout,
+	settings.OvercommitConfigSettingName:		validateOvercommitConfig,
+	settings.VipPoolsConfigSettingName:		validateVipPoolsConfig,
+	settings.SSLCertificatesSettingName:		validateSSLCertificates,
+	settings.SSLParametersName:			validateSSLParameters,
 }
 
 func NewValidator(settingCache ctlv1beta1.SettingCache, vmBackupCache ctlv1beta1.VirtualMachineBackupCache) types.Validator {
+	__traceStack()
+
 	validator := &settingValidator{
-		settingCache:  settingCache,
-		vmBackupCache: vmBackupCache,
+		settingCache:	settingCache,
+		vmBackupCache:	vmBackupCache,
 	}
 	validateSettingFuncs[settings.BackupTargetSettingName] = validator.validateBackupTarget
 	return validator
@@ -64,17 +63,19 @@ func NewValidator(settingCache ctlv1beta1.SettingCache, vmBackupCache ctlv1beta1
 type settingValidator struct {
 	types.DefaultValidator
 
-	settingCache  ctlv1beta1.SettingCache
-	vmBackupCache ctlv1beta1.VirtualMachineBackupCache
+	settingCache	ctlv1beta1.SettingCache
+	vmBackupCache	ctlv1beta1.VirtualMachineBackupCache
 }
 
 func (v *settingValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       v1beta1.SettingResourceName,
-		Scope:      admissionregv1.ClusterScope,
-		APIGroup:   v1beta1.SchemeGroupVersion.Group,
-		APIVersion: v1beta1.SchemeGroupVersion.Version,
-		ObjectType: &v1beta1.Setting{},
+		Name:		v1beta1.SettingResourceName,
+		Scope:		admissionregv1.ClusterScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.Setting{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Update,
@@ -83,14 +84,20 @@ func (v *settingValidator) Resource() types.Resource {
 }
 
 func (v *settingValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	return validateSetting(newObj)
 }
 
 func (v *settingValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	return validateSetting(newObj)
 }
 
 func validateSetting(newObj runtime.Object) error {
+	__traceStack()
+
 	setting := newObj.(*v1beta1.Setting)
 
 	if validateFunc, ok := validateSettingFuncs[setting.Name]; ok {
@@ -101,6 +108,8 @@ func validateSetting(newObj runtime.Object) error {
 }
 
 func validateHTTPProxy(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -112,6 +121,8 @@ func validateHTTPProxy(setting *v1beta1.Setting) error {
 }
 
 func validateOvercommitConfig(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -136,6 +147,8 @@ func validateOvercommitConfig(setting *v1beta1.Setting) error {
 }
 
 func validateVMForceResetPolicy(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -147,8 +160,9 @@ func validateVMForceResetPolicy(setting *v1beta1.Setting) error {
 	return nil
 }
 
-// chech if this backup target is updated again by controller to strip secret information
 func (v *settingValidator) isUpdatedS3BackupTarget(target *settings.BackupTarget) bool {
+	__traceStack()
+
 	if target.Type != settings.S3BackupType || target.SecretAccessKey != "" || target.AccessKeyID != "" {
 		return false
 	}
@@ -158,7 +172,7 @@ func (v *settingValidator) isUpdatedS3BackupTarget(target *settings.BackupTarget
 	} else if savedTarget, err := settings.DecodeBackupTarget(savedSetting.Value); err != nil {
 		return false
 	} else {
-		// when any of those fields is different, then it is from user input, not from internal re-config
+
 		if savedTarget.Type != target.Type || savedTarget.BucketName != target.BucketName || savedTarget.BucketRegion != target.BucketRegion || savedTarget.Endpoint != target.Endpoint || savedTarget.VirtualHostedStyle != target.VirtualHostedStyle {
 			return false
 		}
@@ -167,8 +181,9 @@ func (v *settingValidator) isUpdatedS3BackupTarget(target *settings.BackupTarget
 	return true
 }
 
-// for each type of backup target, a well defined field composition is checked here
 func (v *settingValidator) validateBackupTargetFields(target *settings.BackupTarget) error {
+	__traceStack()
+
 	switch target.Type {
 	case settings.S3BackupType:
 		if target.SecretAccessKey == "" || target.AccessKeyID == "" {
@@ -193,7 +208,7 @@ func (v *settingValidator) validateBackupTargetFields(target *settings.BackupTar
 		}
 
 	default:
-		// do not check target.IsDefaultBackupTarget again, direct return error
+
 		return werror.NewInvalidError("Invalid backup target type", "value")
 	}
 
@@ -201,6 +216,8 @@ func (v *settingValidator) validateBackupTargetFields(target *settings.BackupTar
 }
 
 func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -210,7 +227,6 @@ func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error 
 		return werror.NewInvalidError(err.Error(), "value")
 	}
 
-	// when target is from internal re-update, allow fast pass
 	if v.isUpdatedS3BackupTarget(target) {
 		return nil
 	}
@@ -225,8 +241,6 @@ func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error 
 		return werror.NewBadRequest("There is VMBackup in creating or deleting progress")
 	}
 
-	// It is allowed to reset the current backup target setting to the default value
-	// when it is default, the validator will skip all remaining checks
 	if target.IsDefaultBackupTarget() {
 		return nil
 	}
@@ -236,7 +250,7 @@ func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error 
 	}
 
 	if target.Type == settings.S3BackupType {
-		// Set OS environment variables for S3
+
 		os.Setenv(backup.AWSAccessKey, target.AccessKeyID)
 		os.Setenv(backup.AWSSecretKey, target.SecretAccessKey)
 		os.Setenv(backup.AWSEndpoints, target.Endpoint)
@@ -245,9 +259,6 @@ func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error 
 		}
 	}
 
-	// GetBackupStoreDriver tests whether the driver can List objects, so we don't need to do it again here.
-	// S3: https://github.com/longhorn/backupstore/blob/56ddc538b85950b02c37432e4854e74f2647ca61/s3/s3.go#L38-L87
-	// NFS: https://github.com/longhorn/backupstore/blob/56ddc538b85950b02c37432e4854e74f2647ca61/nfs/nfs.go#L46-L81
 	endpoint := backup.ConstructEndpoint(target)
 	if _, err := backupstore.GetBackupStoreDriver(endpoint); err != nil {
 		return werror.NewInvalidError(err.Error(), "value")
@@ -255,9 +266,9 @@ func (v *settingValidator) validateBackupTarget(setting *v1beta1.Setting) error 
 	return nil
 }
 
-// customizeTransport sets HTTP proxy and trusted CAs in the default HTTP transport.
-// The transport used in the library is a one-time cache. Overwrite to update dynamically.
 func (v *settingValidator) customizeTransport() error {
+	__traceStack()
+
 	httpProxySetting, err := v.settingCache.Get(settings.HttpProxySettingName)
 	if err != nil {
 		return fmt.Errorf("failed to get HTTP proxy setting: %v", err)
@@ -296,6 +307,8 @@ func (v *settingValidator) customizeTransport() error {
 }
 
 func validateVipPoolsConfig(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -314,6 +327,8 @@ func validateVipPoolsConfig(setting *v1beta1.Setting) error {
 }
 
 func validateSupportBundleTimeout(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -329,6 +344,8 @@ func validateSupportBundleTimeout(setting *v1beta1.Setting) error {
 }
 
 func validateSSLCertificates(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -358,6 +375,8 @@ func validateSSLCertificates(setting *v1beta1.Setting) error {
 }
 
 func validateSSLParameters(setting *v1beta1.Setting) error {
+	__traceStack()
+
 	if setting.Value == "" {
 		return nil
 	}
@@ -375,20 +394,18 @@ func validateSSLParameters(setting *v1beta1.Setting) error {
 		return werror.NewInvalidError(err.Error(), "protocols")
 	}
 
-	// TODO: Validate ciphers
-	// Currently, there's no easy way to actually tell what Ciphers are supported by rke2-ingress-nginx,
-	// we need to tell users where to look for ciphers in docs.
 	return nil
 }
 
 func validateSSLProtocols(param *settings.SSLParameter) error {
+	__traceStack()
+
 	if param.Protocols == "" {
 		return nil
 	}
 
 	for _, given := range strings.Split(param.Protocols, " ") {
-		// Deal with multiple spaces between words e.g. "TLSv1.1    TLSv1.2"
-		// ingress-nginx supports this so we also support it
+
 		if len(given) == 0 {
 			continue
 		}
@@ -402,6 +419,8 @@ func validateSSLProtocols(param *settings.SSLParameter) error {
 }
 
 func getSystemCerts() *x509.CertPool {
+	__traceStack()
+
 	certs, _ := x509.SystemCertPool()
 	if certs == nil {
 		certs = x509.NewCertPool()
@@ -410,6 +429,8 @@ func getSystemCerts() *x509.CertPool {
 }
 
 func hasVMBackupInCreatingOrDeletingProgress(vmBackups []*v1beta1.VirtualMachineBackup) bool {
+	__traceStack()
+
 	for _, vmBackup := range vmBackups {
 		if vmBackup.DeletionTimestamp != nil || vmBackup.Status == nil || !*vmBackup.Status.ReadyToUse {
 			return true

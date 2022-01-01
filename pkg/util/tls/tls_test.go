@@ -8,9 +8,7 @@ import (
 )
 
 const (
-	// Sample RSA certificate
-	// generated from https://www.selfsignedcertificate.com/
-	rsaPublicCertificate = `-----BEGIN CERTIFICATE-----
+	rsaPublicCertificate	= `-----BEGIN CERTIFICATE-----
 MIIC1TCCAb2gAwIBAgIJAKeDcYV7SJD7MA0GCSqGSIb3DQEBBQUAMBoxGDAWBgNV
 BAMTD3d3dy5leGFtcGxlLmNvbTAeFw0yMTExMjUwOTE2MDdaFw0zMTExMjMwOTE2
 MDdaMBoxGDAWBgNVBAMTD3d3dy5leGFtcGxlLmNvbTCCASIwDQYJKoZIhvcNAQEB
@@ -28,7 +26,7 @@ OEikx/YABhBq9wy5m0UClM4QDEsmIGgDLMwag3n0yguqYD6P0mVU6pyG5JydkHnh
 OsuVP6DdQFneu/Vpmf6yuadMCZR/mV6DFO2dwJXAPZ2mgRRqXCZd9oYuR8yhzWMQ
 I9IvUdWBn7dq
 -----END CERTIFICATE-----`
-	rsaPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
+	rsaPrivateKey	= `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAxR2efm78ekGqfxY7jflM2iEUo1eG72glUbOKafaj6gV3ovpM
 5UDZ0ZlRS6/ikDxXI6Y5J5cKyOo5OOsGTgl/ymBo77oBcf2Lks6dhIox1mGuwwoD
 qtwuT+qqi3IlWYDzaM6SeKpYwk+N+NuP3fWjuizpDYa8AHFDrpzD4uD1dV/XcWey
@@ -56,13 +54,7 @@ zWmEYYfH1zg2UErhq84neXqKloPsK1h3BzgF6QnIXks5TRSqVNGFfRgUC+5JJ2FC
 aYgCAsCDf8z+cq2HzPFMRutfWupJyN8mVGCEJQCVl6CRy3e5NeHe
 -----END RSA PRIVATE KEY-----`
 
-	// Sample EC certificate
-	// openssl ecparam -name prime256v1 -genkey -out ec_key.pem
-	// openssl req -new -x509 -key ec_key.pem -out ec_crt.pem -days 3650 \
-	//  -subj "/C=US/ST=CA/O=Acme" \
-	//  -reqexts SAN -extensions SAN -config <(cat /etc/ssl/openssl.cnf \
-	//  <(printf "\n[SAN]\nsubjectAltName=DNS:example.com,DNS:www.example.com"))
-	ecPublicCertificate = `-----BEGIN CERTIFICATE-----
+	ecPublicCertificate	= `-----BEGIN CERTIFICATE-----
 MIIBdDCCARqgAwIBAgIJAOx++iJycIx5MAoGCCqGSM49BAMCMCkxCzAJBgNVBAYT
 AlVTMQswCQYDVQQIDAJDQTENMAsGA1UECgwEQWNtZTAeFw0yMTExMjUwOTI1NDNa
 Fw0zMTExMjMwOTI1NDNaMCkxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJDQTENMAsG
@@ -72,7 +64,7 @@ A1UECgwEQWNtZTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABOZbP1VfwAAgb/9Z
 b20wCgYIKoZIzj0EAwIDSAAwRQIhALxufYRJTrNGdFpdN+HvPkqZ9agM72uWp5UL
 iIKypZoiAiAPhmX9ni61slHE8kpnSiF3A02rpNW8mcKsZwfLR54nEw==
 -----END CERTIFICATE-----`
-	ecPrivateKey = `-----BEGIN EC PARAMETERS-----
+	ecPrivateKey	= `-----BEGIN EC PARAMETERS-----
 BggqhkjOPQMBBw==
 -----END EC PARAMETERS-----
 -----BEGIN EC PRIVATE KEY-----
@@ -81,10 +73,7 @@ AwEHoUQDQgAE5ls/VV/AACBv/1nmC12IqteeZLpws03TW0HrMWe9ZUSGewMgSBRG
 GVqGEPr/PEhY25SHJ6xVHPnbppzxNeS03A==
 -----END EC PRIVATE KEY-----`
 
-	// Sample CA certificate
-	// openssl genrsa -out ca_key.pem 4096
-	// openssl req -x509 -new -nodes -key ca_key.pem -sha256 -days 1024 -out ca_crt.pem
-	caCertificate = `-----BEGIN CERTIFICATE-----
+	caCertificate	= `-----BEGIN CERTIFICATE-----
 MIIFKDCCAxACCQDhu/zHZWGpODANBgkqhkiG9w0BAQsFADBWMQswCQYDVQQGEwJD
 TjELMAkGA1UECAwCR0QxCzAJBgNVBAcMAlNaMQ0wCwYDVQQKDARTVVNFMQwwCgYD
 VQQLDANERVYxEDAOBgNVBAMMB2xhd3ItY2EwHhcNMjExMTI0MDcyMDMwWhcNMjQw
@@ -117,18 +106,20 @@ sigGu6RstlytNkq8d3Ozq/jqbStvCoVvXpHVWw==
 )
 
 func TestCAValidation(t *testing.T) {
+	__traceStack()
+
 	tests := map[string]struct {
-		pem   string
-		valid bool
-		err   error
+		pem	string
+		valid	bool
+		err	error
 	}{
 		"valid CA": {
-			pem: caCertificate,
-			err: nil,
+			pem:	caCertificate,
+			err:	nil,
 		},
 		"invalid CA": {
-			pem: "INVALID TEST CA DATA",
-			err: errors.New("failed to locate certificate"),
+			pem:	"INVALID TEST CA DATA",
+			err:	errors.New("failed to locate certificate"),
 		},
 	}
 
@@ -139,22 +130,24 @@ func TestCAValidation(t *testing.T) {
 }
 
 func TestPublicCertificateValidation(t *testing.T) {
+	__traceStack()
+
 	tests := map[string]struct {
-		pem   string
-		valid bool
-		err   error
+		pem	string
+		valid	bool
+		err	error
 	}{
 		"valid rsa cert": {
-			pem: rsaPublicCertificate,
-			err: nil,
+			pem:	rsaPublicCertificate,
+			err:	nil,
 		},
 		"valid ec cert": {
-			pem: ecPublicCertificate,
-			err: nil,
+			pem:	ecPublicCertificate,
+			err:	nil,
 		},
 		"invalid cert": {
-			pem: "INVALID TEST CERT DATA",
-			err: errors.New("failed to locate certificate"),
+			pem:	"INVALID TEST CERT DATA",
+			err:	errors.New("failed to locate certificate"),
 		},
 	}
 
@@ -165,22 +158,24 @@ func TestPublicCertificateValidation(t *testing.T) {
 }
 
 func TestPrivateKeyValidation(t *testing.T) {
+	__traceStack()
+
 	tests := map[string]struct {
-		pem   string
-		valid bool
-		err   error
+		pem	string
+		valid	bool
+		err	error
 	}{
 		"valid rsa private key": {
-			pem: rsaPrivateKey,
-			err: nil,
+			pem:	rsaPrivateKey,
+			err:	nil,
 		},
 		"valid ec private key": {
-			pem: ecPrivateKey,
-			err: nil,
+			pem:	ecPrivateKey,
+			err:	nil,
 		},
 		"invalid private key": {
-			pem: "INVALID TEST PRIVATE KEY DATA",
-			err: errors.New("failed to locate private key"),
+			pem:	"INVALID TEST PRIVATE KEY DATA",
+			err:	errors.New("failed to locate private key"),
 		},
 	}
 

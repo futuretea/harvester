@@ -8,15 +8,17 @@ import (
 )
 
 type Resource struct {
-	Name           string
-	Scope          admissionregv1.ScopeType
-	APIGroup       string
-	APIVersion     string
-	ObjectType     runtime.Object
-	OperationTypes []admissionregv1.OperationType
+	Name		string
+	Scope		admissionregv1.ScopeType
+	APIGroup	string
+	APIVersion	string
+	ObjectType	runtime.Object
+	OperationTypes	[]admissionregv1.OperationType
 }
 
 func (r Resource) Validate() error {
+	__traceStack()
+
 	if r.Name == "" {
 		return errUndefined("Name")
 	}
@@ -36,5 +38,7 @@ func (r Resource) Validate() error {
 }
 
 func errUndefined(field string) error {
+	__traceStack()
+
 	return fmt.Errorf("filed %s is not defined", field)
 }

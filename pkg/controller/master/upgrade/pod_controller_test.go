@@ -14,32 +14,34 @@ import (
 )
 
 func TestPodHandler_OnChanged(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key     string
-		pod     *corev1.Pod
-		plan    *upgradeapiv1.Plan
-		upgrade *harvesterv1.Upgrade
+		key	string
+		pod	*corev1.Pod
+		plan	*upgradeapiv1.Plan
+		upgrade	*harvesterv1.Upgrade
 	}
 	type output struct {
-		upgrade *harvesterv1.Upgrade
-		err     error
+		upgrade	*harvesterv1.Upgrade
+		err	error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "upgrade repo vm ready",
+			name:	"upgrade repo vm ready",
 			given: input{
-				key: "upgrade-repo-vm-pod",
+				key:	"upgrade-repo-vm-pod",
 				pod: &corev1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:      "upgrade-repo-vm-pod",
-						Namespace: upgradeNamespace,
+						Name:		"upgrade-repo-vm-pod",
+						Namespace:	upgradeNamespace,
 						Labels: map[string]string{
-							harvesterUpgradeLabel:          testUpgradeName,
-							harvesterUpgradeComponentLabel: upgradeComponentRepo,
+							harvesterUpgradeLabel:		testUpgradeName,
+							harvesterUpgradeComponentLabel:	upgradeComponentRepo,
 						},
 					},
 					Status: corev1.PodStatus{
@@ -50,22 +52,22 @@ func TestPodHandler_OnChanged(t *testing.T) {
 						},
 					},
 				},
-				plan:    newTestPlanBuilder().Build(),
-				upgrade: newTestUpgradeBuilder().WithLabel(upgradeStateLabel, StatePreparingRepo).Build(),
+				plan:		newTestPlanBuilder().Build(),
+				upgrade:	newTestUpgradeBuilder().WithLabel(upgradeStateLabel, StatePreparingRepo).Build(),
 			},
 			expected: output{
-				upgrade: newTestUpgradeBuilder().WithLabel(upgradeStateLabel, StateRepoPrepared).RepoProvisionedCondition(corev1.ConditionTrue, "", "").Build(),
-				err:     nil,
+				upgrade:	newTestUpgradeBuilder().WithLabel(upgradeStateLabel, StateRepoPrepared).RepoProvisionedCondition(corev1.ConditionTrue, "", "").Build(),
+				err:		nil,
 			},
 		},
 	}
 	for _, tc := range testCases {
 		var clientset = fake.NewSimpleClientset(tc.given.plan, tc.given.upgrade)
 		var handler = &podHandler{
-			namespace:     harvesterSystemNamespace,
-			planCache:     fakeclients.PlanCache(clientset.UpgradeV1().Plans),
-			upgradeClient: fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
-			upgradeCache:  fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
+			namespace:	harvesterSystemNamespace,
+			planCache:	fakeclients.PlanCache(clientset.UpgradeV1().Plans),
+			upgradeClient:	fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
+			upgradeCache:	fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
 		}
 		var actual output
 		var getErr error

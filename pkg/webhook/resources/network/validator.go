@@ -20,32 +20,36 @@ import (
 )
 
 const (
-	fieldConfig     = "spec.config"
-	fieldConfigVlan = "spec.config.vlan"
+	fieldConfig	= "spec.config"
+	fieldConfigVlan	= "spec.config.vlan"
 )
 
 func NewValidator(netAttachDefs ctlcniv1.NetworkAttachmentDefinitionCache, vms ctlkubevirtv1.VirtualMachineCache) types.Validator {
+	__traceStack()
+
 	vms.AddIndexer(indexeres.VMByNetworkIndex, indexeres.VMByNetwork)
 	return &networkAttachmentDefinitionValidator{
-		netAttachDefs: netAttachDefs,
-		vms:           vms,
+		netAttachDefs:	netAttachDefs,
+		vms:		vms,
 	}
 }
 
 type networkAttachmentDefinitionValidator struct {
 	types.DefaultValidator
 
-	netAttachDefs ctlcniv1.NetworkAttachmentDefinitionCache
-	vms           ctlkubevirtv1.VirtualMachineCache
+	netAttachDefs	ctlcniv1.NetworkAttachmentDefinitionCache
+	vms		ctlkubevirtv1.VirtualMachineCache
 }
 
 func (v *networkAttachmentDefinitionValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       "network-attachment-definitions",
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   v1.SchemeGroupVersion.Group,
-		APIVersion: v1.SchemeGroupVersion.Version,
-		ObjectType: &v1.NetworkAttachmentDefinition{},
+		Name:		"network-attachment-definitions",
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1.SchemeGroupVersion.Group,
+		APIVersion:	v1.SchemeGroupVersion.Version,
+		ObjectType:	&v1.NetworkAttachmentDefinition{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Delete,
@@ -55,18 +59,20 @@ func (v *networkAttachmentDefinitionValidator) Resource() types.Resource {
 
 type NetConf struct {
 	cniv1.NetConf
-	BrName       string `json:"bridge"`
-	IsGW         bool   `json:"isGateway"`
-	IsDefaultGW  bool   `json:"isDefaultGateway"`
-	ForceAddress bool   `json:"forceAddress"`
-	IPMasq       bool   `json:"ipMasq"`
-	MTU          int    `json:"mtu"`
-	HairpinMode  bool   `json:"hairpinMode"`
-	PromiscMode  bool   `json:"promiscMode"`
-	Vlan         int    `json:"vlan"`
+	BrName		string	`json:"bridge"`
+	IsGW		bool	`json:"isGateway"`
+	IsDefaultGW	bool	`json:"isDefaultGateway"`
+	ForceAddress	bool	`json:"forceAddress"`
+	IPMasq		bool	`json:"ipMasq"`
+	MTU		int	`json:"mtu"`
+	HairpinMode	bool	`json:"hairpinMode"`
+	PromiscMode	bool	`json:"promiscMode"`
+	Vlan		int	`json:"vlan"`
 }
 
 func (v *networkAttachmentDefinitionValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	netAttachDef := newObj.(*v1.NetworkAttachmentDefinition)
 
 	config := netAttachDef.Spec.Config
@@ -96,8 +102,9 @@ func (v *networkAttachmentDefinitionValidator) Create(request *types.Request, ne
 	return nil
 }
 
-// getVLAN checks if vid is already allocated to any network defs in a namespace
 func (v *networkAttachmentDefinitionValidator) getVLAN(namespace string, vid int) (*bool, error) {
+	__traceStack()
+
 	allocated := false
 	nads, err := v.netAttachDefs.List(namespace, labels.Everything())
 	if err != nil {
@@ -120,10 +127,10 @@ func (v *networkAttachmentDefinitionValidator) getVLAN(namespace string, vid int
 }
 
 func (v *networkAttachmentDefinitionValidator) Delete(request *types.Request, oldObj runtime.Object) error {
+	__traceStack()
+
 	netAttachDef := oldObj.(*v1.NetworkAttachmentDefinition)
 
-	// multus network name can be <networkName> or <namespace>/<networkName>
-	// ref: https://github.com/kubevirt/client-go/blob/148fa0d1c7e83b7a56606a7ca92394ba6768c9ac/api/v1/schema.go#L1436-L1439
 	networkName := fmt.Sprintf("%s/%s", netAttachDef.Namespace, netAttachDef.Name)
 	vms, err := v.vms.GetByIndex(indexeres.VMByNetworkIndex, networkName)
 	if err != nil {

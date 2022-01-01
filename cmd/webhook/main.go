@@ -16,42 +16,44 @@ import (
 )
 
 func main() {
+	__traceStack()
+
 	var options config.Options
 
 	flags := []cli.Flag{
 		cli.IntFlag{
-			Name:        "threadiness",
-			EnvVar:      "THREADINESS",
-			Usage:       "Specify controller threads",
-			Value:       5,
-			Destination: &options.Threadiness,
+			Name:		"threadiness",
+			EnvVar:		"THREADINESS",
+			Usage:		"Specify controller threads",
+			Value:		5,
+			Destination:	&options.Threadiness,
 		},
 		cli.IntFlag{
-			Name:        "https-port",
-			EnvVar:      "HARVESTER_WEBHOOK_SERVER_HTTPS_PORT",
-			Usage:       "HTTPS listen port",
-			Value:       9443,
-			Destination: &options.HTTPSListenPort,
+			Name:		"https-port",
+			EnvVar:		"HARVESTER_WEBHOOK_SERVER_HTTPS_PORT",
+			Usage:		"HTTPS listen port",
+			Value:		9443,
+			Destination:	&options.HTTPSListenPort,
 		},
 		cli.StringFlag{
-			Name:        "namespace",
-			EnvVar:      "NAMESPACE",
-			Destination: &options.Namespace,
-			Usage:       "The harvester namespace",
-			Required:    true,
+			Name:		"namespace",
+			EnvVar:		"NAMESPACE",
+			Destination:	&options.Namespace,
+			Usage:		"The harvester namespace",
+			Required:	true,
 		},
 		cli.StringFlag{
-			Name:        "controller-user",
-			EnvVar:      "HARVESTER_CONTROLLER_USER_NAME",
-			Destination: &options.HarvesterControllerUsername,
-			Usage:       "The harvester controller username",
+			Name:		"controller-user",
+			EnvVar:		"HARVESTER_CONTROLLER_USER_NAME",
+			Destination:	&options.HarvesterControllerUsername,
+			Usage:		"The harvester controller username",
 		},
 		cli.StringFlag{
-			Name:        "gc-user",
-			EnvVar:      "GARBAGE_COLLECTION_USER_NAME",
-			Destination: &options.GarbageCollectionUsername,
-			Usage:       "The system username that performs garbage collection",
-			Value:       "system:serviceaccount:kube-system:generic-garbage-collector",
+			Name:		"gc-user",
+			EnvVar:		"GARBAGE_COLLECTION_USER_NAME",
+			Destination:	&options.GarbageCollectionUsername,
+			Usage:		"The system username that performs garbage collection",
+			Value:		"system:serviceaccount:kube-system:generic-garbage-collector",
 		},
 	}
 
@@ -62,6 +64,8 @@ func main() {
 }
 
 func run(commonOptions *harvesterconfig.CommonOptions, options *config.Options) error {
+	__traceStack()
+
 	logrus.Info("Starting webhook server")
 
 	ctx := signals.SetupSignalContext()

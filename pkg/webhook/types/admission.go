@@ -14,62 +14,53 @@ import (
 )
 
 const (
-	AdmissionTypeMutation   = "mutation"
-	AdmissionTypeValidation = "validation"
+	AdmissionTypeMutation	= "mutation"
+	AdmissionTypeValidation	= "validation"
 )
 
-// JSON Patch operations to mutate input data. See https://jsonpatch.com/ for more information.
 type PatchOps []string
 
-// A Admitter interface is used by AdmissionHandler to check if a operation is allowed.
 type Admitter interface {
-	// Create checks if a CREATE operation is allowed.
-	// PatchOps contains JSON patch operations to be applied on the API object received by the server.
-	// If no error is returned, the operation is allowed.
 	Create(request *Request, newObj runtime.Object) (PatchOps, error)
 
-	// Update checks if a UPDATE operation is allowed.
-	// PatchOps contains JSON patch operations to be applied on the API object received by the server.
-	// If no error is returned, the operation is allowed.
 	Update(request *Request, oldObj runtime.Object, newObj runtime.Object) (PatchOps, error)
 
-	// Delete checks if a DELETE operation is allowed.
-	// PatchOps contains JSON patch operations to be applied on the API object received by the server.
-	// If no error is returned, the operation is allowed.
 	Delete(request *Request, oldObj runtime.Object) (PatchOps, error)
 
-	// Connect checks if a CONNECT operation is allowed.
-	// PatchOps contains JSON patch operations to be applied on the API object received by the server.
-	// If no error is returned, the operation is allowed.
 	Connect(request *Request, newObj runtime.Object) (PatchOps, error)
 
-	// Resource returns the resource that the admitter works on.
 	Resource() Resource
 }
 
 type AdmissionHandler struct {
-	admitter      Admitter
-	admissionType string
-	options       *config.Options
+	admitter	Admitter
+	admissionType	string
+	options		*config.Options
 }
 
 func NewAdmissionHandler(admitter Admitter, admissionType string, options *config.Options) *AdmissionHandler {
+	__traceStack()
+
 	if err := admitter.Resource().Validate(); err != nil {
 		panic(err.Error())
 	}
 	return &AdmissionHandler{
-		admitter:      admitter,
-		admissionType: admissionType,
-		options:       options,
+		admitter:	admitter,
+		admissionType:	admissionType,
+		options:	options,
 	}
 }
 
 func (v *AdmissionHandler) Admit(response *webhook.Response, request *webhook.Request) error {
+	__traceStack()
+
 	v.admit(response, NewRequest(request, v.options))
 	return nil
 }
 
 func (v *AdmissionHandler) admit(response *webhook.Response, req *Request) {
+	__traceStack()
+
 	logrus.Debugf("%s admitting %s", req, v.admissionType)
 
 	oldObj, newObj, err := req.DecodeObjects()
@@ -121,6 +112,8 @@ func (v *AdmissionHandler) admit(response *webhook.Response, req *Request) {
 }
 
 func (v *AdmissionHandler) decodeObjects(request *Request) (oldObj runtime.Object, newObj runtime.Object, err error) {
+	__traceStack()
+
 	operation := request.Operation
 	if operation == admissionv1.Delete || operation == admissionv1.Update {
 		oldObj, err = request.DecodeOldObject()
@@ -128,7 +121,7 @@ func (v *AdmissionHandler) decodeObjects(request *Request) (oldObj runtime.Objec
 			return
 		}
 		if operation == admissionv1.Delete {
-			// no new object for DELETE operation
+
 			return
 		}
 	}

@@ -10,15 +10,17 @@ import (
 )
 
 var (
-	localSchemeBuilder = runtime.SchemeBuilder{
+	localSchemeBuilder	= runtime.SchemeBuilder{
 		harvesterv1.AddToScheme,
 		kubevirtv1.AddToScheme,
 	}
-	AddToScheme = localSchemeBuilder.AddToScheme
-	Scheme      = runtime.NewScheme()
+	AddToScheme	= localSchemeBuilder.AddToScheme
+	Scheme		= runtime.NewScheme()
 )
 
 func init() {
+	__traceStack()
+
 	utilruntime.Must(AddToScheme(Scheme))
 	utilruntime.Must(schemes.AddToScheme(Scheme))
 }

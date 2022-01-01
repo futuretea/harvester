@@ -29,6 +29,8 @@ const (
 )
 
 func Formatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	resource.Actions = make(map[string]string, 1)
 	if request.AccessControl.CanUpdate(request, resource.APIObject, resource.Schema) != nil {
 		return
@@ -40,14 +42,16 @@ func Formatter(request *types.APIRequest, resource *types.RawResource) {
 }
 
 type UploadActionHandler struct {
-	httpClient                  http.Client
-	Images                      v1beta1.VirtualMachineImageClient
-	ImageCache                  v1beta1.VirtualMachineImageCache
-	BackingImageDataSources     ctllhv1beta1.BackingImageDataSourceClient
-	BackingImageDataSourceCache ctllhv1beta1.BackingImageDataSourceCache
+	httpClient			http.Client
+	Images				v1beta1.VirtualMachineImageClient
+	ImageCache			v1beta1.VirtualMachineImageCache
+	BackingImageDataSources		ctllhv1beta1.BackingImageDataSourceClient
+	BackingImageDataSourceCache	ctllhv1beta1.BackingImageDataSourceCache
 }
 
 func (h UploadActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	__traceStack()
+
 	if err := h.do(rw, req); err != nil {
 		status := http.StatusInternalServerError
 		if e, ok := err.(*apierror.APIError); ok {
@@ -61,6 +65,8 @@ func (h UploadActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request
 }
 
 func (h UploadActionHandler) do(rw http.ResponseWriter, req *http.Request) error {
+	__traceStack()
+
 	vars := mux.Vars(req)
 	action := vars["action"]
 	switch action {
@@ -72,6 +78,8 @@ func (h UploadActionHandler) do(rw http.ResponseWriter, req *http.Request) error
 }
 
 func (h UploadActionHandler) uploadImage(rw http.ResponseWriter, req *http.Request) error {
+	__traceStack()
+
 	vars := mux.Vars(req)
 	namespace := vars["namespace"]
 	name := vars["name"]
@@ -88,7 +96,6 @@ func (h UploadActionHandler) uploadImage(rw http.ResponseWriter, req *http.Reque
 		}
 	}()
 
-	//Wait for backing image data source to be ready. Otherwise the upload request will fail.
 	dsName := fmt.Sprintf("%s-%s", namespace, name)
 	if err := h.waitForBackingImageDataSourceReady(dsName); err != nil {
 		return err
@@ -105,8 +112,7 @@ func (h UploadActionHandler) uploadImage(rw http.ResponseWriter, req *http.Reque
 	var urlErr *url.Error
 	uploadResp, err := h.httpClient.Do(uploadReq)
 	if errors.As(err, &urlErr) {
-		// Trim the "POST http://xxx" implementation detail for the error
-		// set the err var and it will be recorded in image condition in the defer function
+
 		err = errors.Unwrap(urlErr)
 		return err
 	} else if err != nil {
@@ -119,7 +125,7 @@ func (h UploadActionHandler) uploadImage(rw http.ResponseWriter, req *http.Reque
 		return fmt.Errorf("failed to read response body: %w", err)
 	}
 	if uploadResp.StatusCode >= http.StatusBadRequest {
-		// err will be recorded in image condition in the defer function
+
 		err = fmt.Errorf("upload failed: %s", string(body))
 		return err
 	}
@@ -128,6 +134,8 @@ func (h UploadActionHandler) uploadImage(rw http.ResponseWriter, req *http.Reque
 }
 
 func (h UploadActionHandler) waitForBackingImageDataSourceReady(name string) error {
+	__traceStack()
+
 	retry := 30
 	for i := 0; i < retry; i++ {
 		ds, err := h.BackingImageDataSources.Get(util.LonghornSystemNamespaceName, name, metav1.GetOptions{})
@@ -149,6 +157,8 @@ func (h UploadActionHandler) waitForBackingImageDataSourceReady(name string) err
 
 func (h UploadActionHandler) updateImportedConditionOnConflict(image *apisv1beta1.VirtualMachineImage,
 	status, reason, message string) error {
+	__traceStack()
+
 	retry := 3
 	for i := 0; i < retry; i++ {
 		current, err := h.ImageCache.Get(image.Namespace, image.Name)

@@ -8,6 +8,8 @@ import (
 )
 
 func ConfigureAPIUI(server *apiserver.Server) {
+	__traceStack()
+
 	wi, ok := server.ResponseWriters["html"]
 	if !ok {
 		return
@@ -27,6 +29,8 @@ func ConfigureAPIUI(server *apiserver.Server) {
 }
 
 func JSURL() string {
+	__traceStack()
+
 	switch settings.UISource.Get() {
 	case "auto":
 		if !settings.IsRelease() {
@@ -39,6 +43,8 @@ func JSURL() string {
 }
 
 func CSSURL() string {
+	__traceStack()
+
 	switch settings.UISource.Get() {
 	case "auto":
 		if !settings.IsRelease() {

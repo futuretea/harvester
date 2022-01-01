@@ -7,83 +7,62 @@ import (
 )
 
 var (
-	ImageInitialized condition.Cond = "Initialized"
-	ImageImported    condition.Cond = "Imported"
+	ImageInitialized	condition.Cond	= "Initialized"
+	ImageImported		condition.Cond	= "Imported"
 )
 
 const (
-	VirtualMachineImageSourceTypeDownload     = "download"
-	VirtualMachineImageSourceTypeUpload       = "upload"
-	VirtualMachineImageSourceTypeExportVolume = "export-from-volume"
+	VirtualMachineImageSourceTypeDownload		= "download"
+	VirtualMachineImageSourceTypeUpload		= "upload"
+	VirtualMachineImageSourceTypeExportVolume	= "export-from-volume"
 )
 
-// +genclient
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:resource:shortName=vmimage;vmimages,scope=Namespaced
-// +kubebuilder:printcolumn:name="DISPLAY-NAME",type=string,JSONPath=`.spec.displayName`
-// +kubebuilder:printcolumn:name="SIZE",type=integer,JSONPath=`.status.size`
-// +kubebuilder:printcolumn:name="AGE",type="date",JSONPath=`.metadata.creationTimestamp`
-
 type VirtualMachineImage struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta		`json:",inline"`
+	metav1.ObjectMeta	`json:"metadata,omitempty"`
 
-	Spec   VirtualMachineImageSpec   `json:"spec"`
-	Status VirtualMachineImageStatus `json:"status,omitempty"`
+	Spec	VirtualMachineImageSpec		`json:"spec"`
+	Status	VirtualMachineImageStatus	`json:"status,omitempty"`
 }
 
 type VirtualMachineImageSpec struct {
-	// +optional
-	Description string `json:"description,omitempty"`
+	Description	string	`json:"description,omitempty"`
 
-	// +kubebuilder:validation:Required
-	DisplayName string `json:"displayName"`
+	DisplayName	string	`json:"displayName"`
 
-	// +kubebuilder:validation:Required
-	// +kubebuilder:validation:Enum=download;upload;export-from-volume
-	SourceType string `json:"sourceType"`
+	SourceType	string	`json:"sourceType"`
 
-	// +optional
-	PVCName string `json:"pvcName"`
+	PVCName	string	`json:"pvcName"`
 
-	// +optional
-	PVCNamespace string `json:"pvcNamespace"`
+	PVCNamespace	string	`json:"pvcNamespace"`
 
-	// +optional
-	URL string `json:"url"`
+	URL	string	`json:"url"`
 
-	// +optional
-	Checksum string `json:"checksum"`
+	Checksum	string	`json:"checksum"`
 }
 
 type VirtualMachineImageStatus struct {
-	// +optional
-	AppliedURL string `json:"appliedUrl,omitempty"`
+	AppliedURL	string	`json:"appliedUrl,omitempty"`
 
-	// +optional
-	Progress int `json:"progress,omitempty"`
+	Progress	int	`json:"progress,omitempty"`
 
-	// +optional
-	Size int64 `json:"size,omitempty"`
+	Size	int64	`json:"size,omitempty"`
 
-	// +optional
-	StorageClassName string `json:"storageClassName,omitempty"`
+	StorageClassName	string	`json:"storageClassName,omitempty"`
 
-	// +optional
-	Conditions []Condition `json:"conditions,omitempty"`
+	Conditions	[]Condition	`json:"conditions,omitempty"`
 }
 
 type Condition struct {
-	// Type of the condition.
-	Type condition.Cond `json:"type"`
-	// Status of the condition, one of True, False, Unknown.
-	Status v1.ConditionStatus `json:"status"`
-	// The last time this condition was updated.
-	LastUpdateTime string `json:"lastUpdateTime,omitempty"`
-	// Last time the condition transitioned from one status to another.
-	LastTransitionTime string `json:"lastTransitionTime,omitempty"`
-	// The reason for the condition's last transition.
-	Reason string `json:"reason,omitempty"`
-	// Human-readable message indicating details about last transition
-	Message string `json:"message,omitempty"`
+	Type	condition.Cond	`json:"type"`
+
+	Status	v1.ConditionStatus	`json:"status"`
+
+	LastUpdateTime	string	`json:"lastUpdateTime,omitempty"`
+
+	LastTransitionTime	string	`json:"lastTransitionTime,omitempty"`
+
+	Reason	string	`json:"reason,omitempty"`
+
+	Message	string	`json:"message,omitempty"`
 }

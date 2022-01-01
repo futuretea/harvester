@@ -8,15 +8,16 @@ import (
 	"github.com/harvester/harvester/pkg/ref"
 )
 
-// templateHandler sets status.Version to template objects
 type templateHandler struct {
-	templates            ctlharvesterv1.VirtualMachineTemplateClient
-	templateVersions     ctlharvesterv1.VirtualMachineTemplateVersionClient
-	templateVersionCache ctlharvesterv1.VirtualMachineTemplateVersionCache
-	templateController   ctlharvesterv1.VirtualMachineTemplateController
+	templates		ctlharvesterv1.VirtualMachineTemplateClient
+	templateVersions	ctlharvesterv1.VirtualMachineTemplateVersionClient
+	templateVersionCache	ctlharvesterv1.VirtualMachineTemplateVersionCache
+	templateController	ctlharvesterv1.VirtualMachineTemplateController
 }
 
 func (h *templateHandler) OnChanged(key string, tp *harvesterv1.VirtualMachineTemplate) (*harvesterv1.VirtualMachineTemplate, error) {
+	__traceStack()
+
 	if tp == nil || tp.DeletionTimestamp != nil {
 		return tp, nil
 	}
@@ -33,7 +34,6 @@ func (h *templateHandler) OnChanged(key string, tp *harvesterv1.VirtualMachineTe
 		return copyTp, nil
 	}
 
-	//set the first version as the default version
 	defaultVersionID := copyTp.Spec.DefaultVersionID
 	if defaultVersionID == "" && latestVersion == 1 {
 		defaultVersionID = ref.Construct(latestVersionObj.Namespace, latestVersionObj.Name)

@@ -13,9 +13,13 @@ import (
 type NodeCache func() corev1type.NodeInterface
 
 func (c NodeCache) Get(name string) (*v1.Node, error) {
+	__traceStack()
+
 	return c().Get(context.TODO(), name, metav1.GetOptions{})
 }
 func (c NodeCache) List(selector labels.Selector) ([]*v1.Node, error) {
+	__traceStack()
+
 	list, err := c().List(context.TODO(), metav1.ListOptions{
 		LabelSelector: selector.String(),
 	})
@@ -29,8 +33,12 @@ func (c NodeCache) List(selector labels.Selector) ([]*v1.Node, error) {
 	return result, err
 }
 func (c NodeCache) AddIndexer(indexName string, indexer ctlcorev1.NodeIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c NodeCache) GetByIndex(indexName, key string) ([]*v1.Node, error) {
+	__traceStack()
+
 	panic("implement me")
 }

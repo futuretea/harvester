@@ -9,12 +9,13 @@ import (
 	ctlharvesterv1 "github.com/harvester/harvester/pkg/generated/controllers/harvesterhci.io/v1beta1"
 )
 
-// Handler computes key pairs' fingerprints
 type Handler struct {
 	keyPairClient ctlharvesterv1.KeyPairClient
 }
 
 func (h *Handler) OnKeyPairChanged(key string, keyPair *harvesterv1.KeyPair) (*harvesterv1.KeyPair, error) {
+	__traceStack()
+
 	if keyPair == nil || keyPair.DeletionTimestamp != nil {
 		return keyPair, nil
 	}

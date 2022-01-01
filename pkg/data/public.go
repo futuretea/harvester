@@ -11,7 +11,8 @@ const (
 )
 
 func addPublicNamespace(apply apply.Apply) error {
-	// All authenticated users are readable in the public namespace
+	__traceStack()
+
 	return apply.
 		WithDynamicLookup().
 		WithSetID("harvester-public").

@@ -17,8 +17,9 @@ import (
 	harvesterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 )
 
-// registerCluster imports Harvester to Rancher by applying manifests from the registration URL.
 func (h *Handler) registerCluster(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	url := setting.Value
 	resp, err := h.httpClient.Get(url)
 	if err != nil {
@@ -35,8 +36,8 @@ func (h *Handler) registerCluster(setting *harvesterv1.Setting) error {
 	}
 
 	var (
-		objects        = objectset.NewObjectSet()
-		multidocReader = utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(body)))
+		objects		= objectset.NewObjectSet()
+		multidocReader	= utilyaml.NewYAMLReader(bufio.NewReader(bytes.NewReader(body)))
 	)
 	for {
 		buf, err := multidocReader.Read()
@@ -46,7 +47,7 @@ func (h *Handler) registerCluster(setting *harvesterv1.Setting) error {
 			}
 			return err
 		}
-		// Skip the YAML doc if it is unkind.
+
 		var typeMeta runtime.TypeMeta
 		if err := yaml.Unmarshal(buf, &typeMeta); err != nil || typeMeta.Kind == "" {
 			continue

@@ -22,6 +22,8 @@ const (
 )
 
 func Formatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	resource.Actions = make(map[string]string, 1)
 	if request.AccessControl.CanUpdate(request, resource.APIObject, resource.Schema) != nil {
 		return
@@ -35,6 +37,8 @@ type ExportActionHandler struct {
 }
 
 func (h ExportActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	__traceStack()
+
 	if err := h.do(rw, req); err != nil {
 		status := http.StatusInternalServerError
 		if e, ok := err.(*apierror.APIError); ok {
@@ -49,6 +53,8 @@ func (h ExportActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request
 }
 
 func (h ExportActionHandler) do(rw http.ResponseWriter, r *http.Request) error {
+	__traceStack()
+
 	vars := mux.Vars(r)
 	action := vars["action"]
 	pvcName := vars["name"]
@@ -73,16 +79,18 @@ func (h ExportActionHandler) do(rw http.ResponseWriter, r *http.Request) error {
 }
 
 func (h ExportActionHandler) exportVolume(ctx context.Context, imageNamespace, imageDisplayName, pvcName, pvcNamespace string) error {
+	__traceStack()
+
 	vmImage := &harvesterv1.VirtualMachineImage{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "image-",
-			Namespace:    imageNamespace,
+			GenerateName:	"image-",
+			Namespace:	imageNamespace,
 		},
 		Spec: harvesterv1.VirtualMachineImageSpec{
-			DisplayName:  imageDisplayName,
-			SourceType:   harvesterv1.VirtualMachineImageSourceTypeExportVolume,
-			PVCName:      pvcName,
-			PVCNamespace: pvcNamespace,
+			DisplayName:	imageDisplayName,
+			SourceType:	harvesterv1.VirtualMachineImageSourceTypeExportVolume,
+			PVCName:	pvcName,
+			PVCNamespace:	pvcNamespace,
 		},
 	}
 	_, err := h.images.Create(vmImage)

@@ -11,40 +11,42 @@ import (
 )
 
 const (
-	defaultVMGenerateName = "harv-"
-	defaultVMNamespace    = "default"
+	defaultVMGenerateName	= "harv-"
+	defaultVMNamespace	= "default"
 
-	defaultVMCPUCores = 1
-	defaultVMMemory   = "256Mi"
+	defaultVMCPUCores	= 1
+	defaultVMMemory		= "256Mi"
 
-	HarvesterAPIGroup                    = "harvesterhci.io"
-	LabelAnnotationPrefixHarvester       = HarvesterAPIGroup + "/"
-	LabelKeyVirtualMachineCreator        = LabelAnnotationPrefixHarvester + "creator"
-	LabelKeyVirtualMachineName           = LabelAnnotationPrefixHarvester + "vmName"
-	AnnotationKeyVirtualMachineSSHNames  = LabelAnnotationPrefixHarvester + "sshNames"
-	AnnotationKeyVirtualMachineDiskNames = LabelAnnotationPrefixHarvester + "diskNames"
-	AnnotationKeyImageID                 = LabelAnnotationPrefixHarvester + "imageId"
+	HarvesterAPIGroup			= "harvesterhci.io"
+	LabelAnnotationPrefixHarvester		= HarvesterAPIGroup + "/"
+	LabelKeyVirtualMachineCreator		= LabelAnnotationPrefixHarvester + "creator"
+	LabelKeyVirtualMachineName		= LabelAnnotationPrefixHarvester + "vmName"
+	AnnotationKeyVirtualMachineSSHNames	= LabelAnnotationPrefixHarvester + "sshNames"
+	AnnotationKeyVirtualMachineDiskNames	= LabelAnnotationPrefixHarvester + "diskNames"
+	AnnotationKeyImageID			= LabelAnnotationPrefixHarvester + "imageId"
 
-	AnnotationPrefixCattleField = "field.cattle.io/"
-	LabelPrefixHarvesterTag     = "tag.harvesterhci.io/"
-	AnnotationKeyDescription    = AnnotationPrefixCattleField + "description"
+	AnnotationPrefixCattleField	= "field.cattle.io/"
+	LabelPrefixHarvesterTag		= "tag.harvesterhci.io/"
+	AnnotationKeyDescription	= AnnotationPrefixCattleField + "description"
 )
 
 type VMBuilder struct {
-	VirtualMachine *kubevirtv1.VirtualMachine
-	SSHNames       []string
-	InterfaceNames []string
+	VirtualMachine	*kubevirtv1.VirtualMachine
+	SSHNames	[]string
+	InterfaceNames	[]string
 }
 
 func NewVMBuilder(creator string) *VMBuilder {
+	__traceStack()
+
 	vmLabels := map[string]string{
 		LabelKeyVirtualMachineCreator: creator,
 	}
 	objectMeta := metav1.ObjectMeta{
-		Namespace:    defaultVMNamespace,
-		GenerateName: defaultVMGenerateName,
-		Labels:       vmLabels,
-		Annotations:  map[string]string{},
+		Namespace:	defaultVMNamespace,
+		GenerateName:	defaultVMGenerateName,
+		Labels:		vmLabels,
+		Annotations:	map[string]string{},
 	}
 	running := pointer.BoolPtr(false)
 	cpu := &kubevirtv1.CPU{
@@ -52,8 +54,8 @@ func NewVMBuilder(creator string) *VMBuilder {
 	}
 	resources := kubevirtv1.ResourceRequirements{
 		Limits: corev1.ResourceList{
-			corev1.ResourceMemory: resource.MustParse(defaultVMMemory),
-			corev1.ResourceCPU:    *resource.NewQuantity(defaultVMCPUCores, resource.DecimalSI),
+			corev1.ResourceMemory:	resource.MustParse(defaultVMMemory),
+			corev1.ResourceCPU:	*resource.NewQuantity(defaultVMCPUCores, resource.DecimalSI),
 		},
 	}
 	template := &kubevirtv1.VirtualMachineInstanceTemplateSpec{
@@ -62,24 +64,24 @@ func NewVMBuilder(creator string) *VMBuilder {
 		},
 		Spec: kubevirtv1.VirtualMachineInstanceSpec{
 			Domain: kubevirtv1.DomainSpec{
-				CPU: cpu,
+				CPU:	cpu,
 				Devices: kubevirtv1.Devices{
-					Disks:      []kubevirtv1.Disk{},
-					Interfaces: []kubevirtv1.Interface{},
+					Disks:		[]kubevirtv1.Disk{},
+					Interfaces:	[]kubevirtv1.Interface{},
 				},
-				Resources: resources,
+				Resources:	resources,
 			},
-			Affinity: &corev1.Affinity{},
-			Networks: []kubevirtv1.Network{},
-			Volumes:  []kubevirtv1.Volume{},
+			Affinity:	&corev1.Affinity{},
+			Networks:	[]kubevirtv1.Network{},
+			Volumes:	[]kubevirtv1.Volume{},
 		},
 	}
 
 	vm := &kubevirtv1.VirtualMachine{
-		ObjectMeta: objectMeta,
+		ObjectMeta:	objectMeta,
 		Spec: kubevirtv1.VirtualMachineSpec{
-			Running:  running,
-			Template: template,
+			Running:	running,
+			Template:	template,
 		},
 	}
 	return &VMBuilder{
@@ -88,6 +90,8 @@ func NewVMBuilder(creator string) *VMBuilder {
 }
 
 func (v *VMBuilder) Name(name string) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.ObjectMeta.Name = name
 	v.VirtualMachine.ObjectMeta.GenerateName = ""
 	v.VirtualMachine.Spec.Template.ObjectMeta.Labels[LabelKeyVirtualMachineName] = name
@@ -95,11 +99,15 @@ func (v *VMBuilder) Name(name string) *VMBuilder {
 }
 
 func (v *VMBuilder) Namespace(namespace string) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.ObjectMeta.Namespace = namespace
 	return v
 }
 
 func (v *VMBuilder) MachineType(machineType string) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.Spec.Template.Spec.Domain.Machine = &kubevirtv1.Machine{
 		Type: machineType,
 	}
@@ -107,11 +115,15 @@ func (v *VMBuilder) MachineType(machineType string) *VMBuilder {
 }
 
 func (v *VMBuilder) HostName(hostname string) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.Spec.Template.Spec.Hostname = hostname
 	return v
 }
 
 func (v *VMBuilder) Description(description string) *VMBuilder {
+	__traceStack()
+
 	if v.VirtualMachine.ObjectMeta.Annotations == nil {
 		v.VirtualMachine.ObjectMeta.Annotations = map[string]string{}
 	}
@@ -120,6 +132,8 @@ func (v *VMBuilder) Description(description string) *VMBuilder {
 }
 
 func (v *VMBuilder) Labels(labels map[string]string) *VMBuilder {
+	__traceStack()
+
 	if v.VirtualMachine.ObjectMeta.Labels == nil {
 		v.VirtualMachine.ObjectMeta.Labels = labels
 	}
@@ -130,6 +144,8 @@ func (v *VMBuilder) Labels(labels map[string]string) *VMBuilder {
 }
 
 func (v *VMBuilder) Annotations(annotations map[string]string) *VMBuilder {
+	__traceStack()
+
 	if v.VirtualMachine.ObjectMeta.Annotations == nil {
 		v.VirtualMachine.ObjectMeta.Annotations = annotations
 	}
@@ -140,6 +156,8 @@ func (v *VMBuilder) Annotations(annotations map[string]string) *VMBuilder {
 }
 
 func (v *VMBuilder) Memory(memory string) *VMBuilder {
+	__traceStack()
+
 	if len(v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Limits) == 0 {
 		v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Limits = corev1.ResourceList{}
 	}
@@ -148,6 +166,8 @@ func (v *VMBuilder) Memory(memory string) *VMBuilder {
 }
 
 func (v *VMBuilder) CPU(cores int) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.Spec.Template.Spec.Domain.CPU.Cores = uint32(cores)
 	if len(v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Limits) == 0 {
 		v.VirtualMachine.Spec.Template.Spec.Domain.Resources.Limits = corev1.ResourceList{}
@@ -157,6 +177,8 @@ func (v *VMBuilder) CPU(cores int) *VMBuilder {
 }
 
 func (v *VMBuilder) EvictionStrategy(liveMigrate bool) *VMBuilder {
+	__traceStack()
+
 	if liveMigrate {
 		evictionStrategy := kubevirtv1.EvictionStrategyLiveMigrate
 		v.VirtualMachine.Spec.Template.Spec.EvictionStrategy = &evictionStrategy
@@ -165,27 +187,31 @@ func (v *VMBuilder) EvictionStrategy(liveMigrate bool) *VMBuilder {
 }
 
 func (v *VMBuilder) DefaultPodAntiAffinity() *VMBuilder {
+	__traceStack()
+
 	podAffinityTerm := corev1.PodAffinityTerm{
 		LabelSelector: &metav1.LabelSelector{
 			MatchExpressions: []metav1.LabelSelectorRequirement{
 				{
-					Key:      LabelKeyVirtualMachineCreator,
-					Operator: metav1.LabelSelectorOpExists,
+					Key:		LabelKeyVirtualMachineCreator,
+					Operator:	metav1.LabelSelectorOpExists,
 				},
 			},
 		},
-		TopologyKey: corev1.LabelHostname,
+		TopologyKey:	corev1.LabelHostname,
 	}
 	return v.PodAntiAffinity(podAffinityTerm, true, 100)
 }
 
 func (v *VMBuilder) PodAntiAffinity(podAffinityTerm corev1.PodAffinityTerm, soft bool, weight int32) *VMBuilder {
+	__traceStack()
+
 	podAffinity := &corev1.PodAntiAffinity{}
 	if soft {
 		podAffinity.PreferredDuringSchedulingIgnoredDuringExecution = []corev1.WeightedPodAffinityTerm{
 			{
-				Weight:          weight,
-				PodAffinityTerm: podAffinityTerm,
+				Weight:			weight,
+				PodAffinityTerm:	podAffinityTerm,
 			},
 		}
 	} else {
@@ -198,11 +224,15 @@ func (v *VMBuilder) PodAntiAffinity(podAffinityTerm corev1.PodAffinityTerm, soft
 }
 
 func (v *VMBuilder) Run(start bool) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine.Spec.Running = pointer.BoolPtr(start)
 	return v
 }
 
 func (v *VMBuilder) VM() (*kubevirtv1.VirtualMachine, error) {
+	__traceStack()
+
 	if v.VirtualMachine.Spec.Template.ObjectMeta.Annotations == nil {
 		v.VirtualMachine.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
@@ -216,6 +246,8 @@ func (v *VMBuilder) VM() (*kubevirtv1.VirtualMachine, error) {
 }
 
 func (v *VMBuilder) Update(vm *kubevirtv1.VirtualMachine) *VMBuilder {
+	__traceStack()
+
 	v.VirtualMachine = vm
 	return v
 }

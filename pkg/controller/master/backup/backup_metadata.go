@@ -28,33 +28,34 @@ import (
 )
 
 const (
-	metadataFolderPath           = "harvester/vmbackups/"
-	backupMetadataControllerName = "harvester-backup-metadata-controller"
+	metadataFolderPath		= "harvester/vmbackups/"
+	backupMetadataControllerName	= "harvester-backup-metadata-controller"
 )
 
 type VirtualMachineBackupMetadata struct {
-	Name          string                                `json:"name"`
-	Namespace     string                                `json:"namespace"`
-	BackupSpec    harvesterv1.VirtualMachineBackupSpec  `json:"backupSpec,omitempty"`
-	VMSourceSpec  *harvesterv1.VirtualMachineSourceSpec `json:"vmSourceSpec,omitempty"`
-	VolumeBackups []harvesterv1.VolumeBackup            `json:"volumeBackups,omitempty"`
-	SecretBackups []harvesterv1.SecretBackup            `json:"secretBackups,omitempty"`
+	Name		string					`json:"name"`
+	Namespace	string					`json:"namespace"`
+	BackupSpec	harvesterv1.VirtualMachineBackupSpec	`json:"backupSpec,omitempty"`
+	VMSourceSpec	*harvesterv1.VirtualMachineSourceSpec	`json:"vmSourceSpec,omitempty"`
+	VolumeBackups	[]harvesterv1.VolumeBackup		`json:"volumeBackups,omitempty"`
+	SecretBackups	[]harvesterv1.SecretBackup		`json:"secretBackups,omitempty"`
 }
 
 type MetadataHandler struct {
-	ctx                  context.Context
-	namespaces           ctlcorev1.NamespaceClient
-	namespaceCache       ctlcorev1.NamespaceCache
-	secretCache          ctlcorev1.SecretCache
-	vms                  ctlkubevirtv1.VirtualMachineController
-	longhornSettingCache ctllonghornv1.SettingCache
-	settings             ctlharvesterv1.SettingController
-	vmBackups            ctlharvesterv1.VirtualMachineBackupClient
-	vmBackupCache        ctlharvesterv1.VirtualMachineBackupCache
+	ctx			context.Context
+	namespaces		ctlcorev1.NamespaceClient
+	namespaceCache		ctlcorev1.NamespaceCache
+	secretCache		ctlcorev1.SecretCache
+	vms			ctlkubevirtv1.VirtualMachineController
+	longhornSettingCache	ctllonghornv1.SettingCache
+	settings		ctlharvesterv1.SettingController
+	vmBackups		ctlharvesterv1.VirtualMachineBackupClient
+	vmBackupCache		ctlharvesterv1.VirtualMachineBackupCache
 }
 
-// RegisterBackupMetadata register the setting controller and resync vm backup metadata when backup target change
 func RegisterBackupMetadata(ctx context.Context, management *config.Management, opts config.Options) error {
+	__traceStack()
+
 	vmBackups := management.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineBackup()
 	settings := management.HarvesterFactory.Harvesterhci().V1beta1().Setting()
 	namespaces := management.CoreFactory.Core().V1().Namespace()
@@ -63,23 +64,24 @@ func RegisterBackupMetadata(ctx context.Context, management *config.Management, 
 	vms := management.VirtFactory.Kubevirt().V1().VirtualMachine()
 
 	backupMetadataController := &MetadataHandler{
-		ctx:                  ctx,
-		namespaces:           namespaces,
-		namespaceCache:       namespaces.Cache(),
-		secretCache:          secrets.Cache(),
-		vms:                  vms,
-		longhornSettingCache: longhornSettings.Cache(),
-		settings:             settings,
-		vmBackups:            vmBackups,
-		vmBackupCache:        vmBackups.Cache(),
+		ctx:			ctx,
+		namespaces:		namespaces,
+		namespaceCache:		namespaces.Cache(),
+		secretCache:		secrets.Cache(),
+		vms:			vms,
+		longhornSettingCache:	longhornSettings.Cache(),
+		settings:		settings,
+		vmBackups:		vmBackups,
+		vmBackupCache:		vmBackups.Cache(),
 	}
 
 	settings.OnChange(ctx, backupMetadataControllerName, backupMetadataController.OnBackupTargetChange)
 	return nil
 }
 
-// OnBackupTargetChange resync vm metadata files when backup target change
 func (h *MetadataHandler) OnBackupTargetChange(key string, setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	if setting == nil || setting.DeletionTimestamp != nil ||
 		setting.Name != settings.BackupTargetSettingName || setting.Value == "" {
 		return nil, nil
@@ -92,7 +94,6 @@ func (h *MetadataHandler) OnBackupTargetChange(key string, setting *harvesterv1.
 
 	logrus.Debugf("backup target change, sync vm backup:%s:%s", target.Type, target.Endpoint)
 
-	// when backup target is reset to default, do not trig sync
 	if target.IsDefaultBackupTarget() {
 		return nil, nil
 	}
@@ -107,6 +108,8 @@ func (h *MetadataHandler) OnBackupTargetChange(key string, setting *harvesterv1.
 }
 
 func (h *MetadataHandler) syncVMBackup(target *settings.BackupTarget) error {
+	__traceStack()
+
 	if target.Type == settings.S3BackupType {
 		secret, err := h.secretCache.Get(util.LonghornSystemNamespaceName, util.BackupTargetSecretName)
 		if err != nil {
@@ -145,6 +148,8 @@ func (h *MetadataHandler) syncVMBackup(target *settings.BackupTarget) error {
 }
 
 func (h *MetadataHandler) createVMBackupIfNotExist(backupMetadata VirtualMachineBackupMetadata, target *settings.BackupTarget) error {
+	__traceStack()
+
 	if _, err := h.vmBackupCache.Get(backupMetadata.Namespace, backupMetadata.Name); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	} else if err == nil {
@@ -156,20 +161,20 @@ func (h *MetadataHandler) createVMBackupIfNotExist(backupMetadata VirtualMachine
 	}
 	if _, err := h.vmBackups.Create(&harvesterv1.VirtualMachineBackup{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      backupMetadata.Name,
-			Namespace: backupMetadata.Namespace,
+			Name:		backupMetadata.Name,
+			Namespace:	backupMetadata.Namespace,
 		},
-		Spec: backupMetadata.BackupSpec,
+		Spec:	backupMetadata.BackupSpec,
 		Status: &harvesterv1.VirtualMachineBackupStatus{
-			ReadyToUse: pointer.BoolPtr(false),
+			ReadyToUse:	pointer.BoolPtr(false),
 			BackupTarget: &harvesterv1.BackupTarget{
-				Endpoint:     target.Endpoint,
-				BucketName:   target.BucketName,
-				BucketRegion: target.BucketRegion,
+				Endpoint:	target.Endpoint,
+				BucketName:	target.BucketName,
+				BucketRegion:	target.BucketRegion,
 			},
-			SourceSpec:    backupMetadata.VMSourceSpec,
-			VolumeBackups: backupMetadata.VolumeBackups,
-			SecretBackups: backupMetadata.SecretBackups,
+			SourceSpec:	backupMetadata.VMSourceSpec,
+			VolumeBackups:	backupMetadata.VolumeBackups,
+			SecretBackups:	backupMetadata.SecretBackups,
 		},
 	}); err != nil {
 		return err
@@ -178,6 +183,8 @@ func (h *MetadataHandler) createVMBackupIfNotExist(backupMetadata VirtualMachine
 }
 
 func (h *MetadataHandler) createNamespaceIfNotExist(namespace string) error {
+	__traceStack()
+
 	if _, err := h.namespaceCache.Get(namespace); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	} else if err == nil {
@@ -193,6 +200,8 @@ func (h *MetadataHandler) createNamespaceIfNotExist(namespace string) error {
 }
 
 func loadBackupMetadataInBackupTarget(filePath string, bsDriver backupstore.BackupStoreDriver) (*VirtualMachineBackupMetadata, error) {
+	__traceStack()
+
 	if !bsDriver.FileExists(filePath) {
 		return nil, fmt.Errorf("cannot find %v in backupstore", filePath)
 	}

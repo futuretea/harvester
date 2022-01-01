@@ -13,40 +13,37 @@ import (
 )
 
 const (
-	KindClusterKind     = "kind"
-	ExistingClusterKind = "unknown"
+	KindClusterKind		= "kind"
+	ExistingClusterKind	= "unknown"
 )
 
-// Cluster defines the basic actions of a cluster handler.
 type Cluster interface {
 	fmt.Stringer
 
-	// GetKind returns the kind of cluster.
 	GetKind() string
 
-	// Startup runs a cluster.
 	Startup(output io.Writer) error
 
-	// Load images into a cluster.
 	LoadImages(output io.Writer) error
 
-	// Cleanup closes the cluster.
 	Cleanup(output io.Writer) error
 }
 
-// NewLocalCluster returns the local cluster from environment,
-// the default runtime is based on kubernetes-sigs/kind.
 func NewLocalCluster() Cluster {
+	__traceStack()
+
 	return NewLocalKindCluster()
 }
 
-// GetExistCluster returns the exist cluster from environment,
 func GetExistCluster() Cluster {
+	__traceStack()
+
 	return &ExistingCluster{}
 }
 
-// Start starts a test environment and redirects Stdout/Stderr to output if "USE_EXISTING_CLUSTER" is not "true".
 func Start(output io.Writer) (clientcmd.ClientConfig, Cluster, error) {
+	__traceStack()
+
 	var cluster Cluster
 	if env.IsUsingExistingCluster() {
 		cluster = GetExistCluster()
@@ -67,9 +64,9 @@ func Start(output io.Writer) (clientcmd.ClientConfig, Cluster, error) {
 	return KubeClientConfig, cluster, err
 }
 
-// Stop stops a test environment and redirects Stdout/Stderr to output
-// if "KEEP_TESTING_CLUSTER" is not "true" and "USE_EXISTING_CLUSTER" is not "true".
 func Stop(output io.Writer) error {
+	__traceStack()
+
 	if env.IsUsingExistingCluster() || env.IsKeepingTestingCluster() {
 		return nil
 	}
@@ -81,11 +78,9 @@ func Stop(output io.Writer) error {
 	return nil
 }
 
-// GetConfig creates a clientcmd.ClientConfig for talking to a Kubernetes API server, the config precedence is as below:
-// 1. KUBECONFIG environment variable pointing at files
-// 2. $HOME/.kube/config if exists
-// 3. In-cluster config if running in cluster
 func GetConfig() (clientcmd.ClientConfig, error) {
+	__traceStack()
+
 	var loadingRules = clientcmd.NewDefaultClientConfigLoadingRules()
 	if _, ok := os.LookupEnv("HOME"); !ok {
 		var u, err = user.Current()

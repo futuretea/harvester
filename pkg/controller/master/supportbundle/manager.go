@@ -26,20 +26,23 @@ const (
 )
 
 type Manager struct {
-	deployments ctlappsv1.DeploymentClient
-	nodeCache   ctlcorev1.NodeCache
-	podCache    ctlcorev1.PodCache
-	services    ctlcorev1.ServiceClient
+	deployments	ctlappsv1.DeploymentClient
+	nodeCache	ctlcorev1.NodeCache
+	podCache	ctlcorev1.PodCache
+	services	ctlcorev1.ServiceClient
 
-	// to talk with support bundle manager
-	httpClient http.Client
+	httpClient	http.Client
 }
 
 func (m *Manager) getManagerName(sb *harvesterv1.SupportBundle) string {
+	__traceStack()
+
 	return fmt.Sprintf("supportbundle-manager-%s", sb.Name)
 }
 
 func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
+	__traceStack()
+
 	deployName := m.getManagerName(sb)
 	logrus.Debugf("creating deployment %s with image %s", deployName, image)
 
@@ -47,18 +50,18 @@ func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployName,
-			Namespace: sb.Namespace,
+			Name:		deployName,
+			Namespace:	sb.Namespace,
 			Labels: map[string]string{
-				"app":                       types.AppManager,
-				types.SupportBundleLabelKey: sb.Name,
+				"app":				types.AppManager,
+				types.SupportBundleLabelKey:	sb.Name,
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					Name:       sb.Name,
-					Kind:       sb.Kind,
-					UID:        sb.UID,
-					APIVersion: sb.APIVersion,
+					Name:		sb.Name,
+					Kind:		sb.Kind,
+					UID:		sb.UID,
+					APIVersion:	sb.APIVersion,
 				},
 			},
 		},
@@ -69,32 +72,32 @@ func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app":                       types.AppManager,
-						types.SupportBundleLabelKey: sb.Name,
+						"app":				types.AppManager,
+						types.SupportBundleLabelKey:	sb.Name,
 					},
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:            "manager",
-							Image:           image,
-							Args:            []string{"/usr/bin/support-bundle-kit", "manager"},
-							ImagePullPolicy: pullPolicy,
+							Name:			"manager",
+							Image:			image,
+							Args:			[]string{"/usr/bin/support-bundle-kit", "manager"},
+							ImagePullPolicy:	pullPolicy,
 							Env: []corev1.EnvVar{
 								{
-									Name:  "SUPPORT_BUNDLE_TARGET_NAMESPACES",
-									Value: m.getCollectNamespaces(),
+									Name:	"SUPPORT_BUNDLE_TARGET_NAMESPACES",
+									Value:	m.getCollectNamespaces(),
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_NAME",
-									Value: sb.Name,
+									Name:	"SUPPORT_BUNDLE_NAME",
+									Value:	sb.Name,
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_DEBUG",
-									Value: "true",
+									Name:	"SUPPORT_BUNDLE_DEBUG",
+									Value:	"true",
 								},
 								{
-									Name: "SUPPORT_BUNDLE_MANAGER_POD_IP",
+									Name:	"SUPPORT_BUNDLE_MANAGER_POD_IP",
 									ValueFrom: &corev1.EnvVarSource{
 										FieldRef: &corev1.ObjectFieldSelector{
 											FieldPath: "status.podIP",
@@ -102,20 +105,20 @@ func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
 									},
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_IMAGE",
-									Value: image,
+									Name:	"SUPPORT_BUNDLE_IMAGE",
+									Value:	image,
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_IMAGE_PULL_POLICY",
-									Value: string(pullPolicy),
+									Name:	"SUPPORT_BUNDLE_IMAGE_PULL_POLICY",
+									Value:	string(pullPolicy),
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_NODE_SELECTOR",
-									Value: "harvesterhci.io/managed=true",
+									Name:	"SUPPORT_BUNDLE_NODE_SELECTOR",
+									Value:	"harvesterhci.io/managed=true",
 								},
 								{
-									Name:  "SUPPORT_BUNDLE_EXCLUDE_RESOURCES",
-									Value: m.getExcludeResources(),
+									Name:	"SUPPORT_BUNDLE_EXCLUDE_RESOURCES",
+									Value:	m.getExcludeResources(),
 								},
 							},
 							Ports: []corev1.ContainerPort{
@@ -125,7 +128,7 @@ func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
 							},
 						},
 					},
-					ServiceAccountName: HarvesterServiceAccount,
+					ServiceAccountName:	HarvesterServiceAccount,
 				},
 			},
 		},
@@ -136,6 +139,8 @@ func (m *Manager) Create(sb *harvesterv1.SupportBundle, image string) error {
 }
 
 func (m *Manager) getCollectNamespaces() string {
+	__traceStack()
+
 	namespaces := []string{
 		"cattle-dashboards",
 		"cattle-fleet-clusters-system",
@@ -155,10 +160,11 @@ func (m *Manager) getCollectNamespaces() string {
 }
 
 func (m *Manager) getExcludeResources() string {
+	__traceStack()
+
 	resources := []string{}
 
-	// Sensitive data not go into support bundle
-	resources = append(resources, harvesterv1.Resource(harvesterv1.SettingResourceName).String()) // TLS certificate and private key
+	resources = append(resources, harvesterv1.Resource(harvesterv1.SettingResourceName).String())
 	resources = append(resources, rancherv3.Resource(rancherv3.AuthConfigResourceName).String())
 	resources = append(resources, rancherv3.Resource(rancherv3.AuthTokenResourceName).String())
 	resources = append(resources, rancherv3.Resource(rancherv3.SamlTokenResourceName).String())
@@ -169,6 +175,8 @@ func (m *Manager) getExcludeResources() string {
 }
 
 func (m *Manager) getImagePullPolicy() corev1.PullPolicy {
+	__traceStack()
+
 	switch strings.ToLower(settings.SupportBundleImagePullPolicy.Get()) {
 	case "always":
 		return corev1.PullAlways
@@ -182,6 +190,8 @@ func (m *Manager) getImagePullPolicy() corev1.PullPolicy {
 }
 
 func (m *Manager) GetStatus(sb *harvesterv1.SupportBundle) (*types.ManagerStatus, error) {
+	__traceStack()
+
 	podIP, err := GetManagerPodIP(m.podCache, sb)
 	if err != nil {
 		return nil, err
@@ -208,9 +218,11 @@ func (m *Manager) GetStatus(sb *harvesterv1.SupportBundle) (*types.ManagerStatus
 }
 
 func GetManagerPodIP(podCache ctlcorev1.PodCache, sb *harvesterv1.SupportBundle) (string, error) {
+	__traceStack()
+
 	sets := labels.Set{
-		"app":                       types.AppManager,
-		types.SupportBundleLabelKey: sb.Name,
+		"app":				types.AppManager,
+		types.SupportBundleLabelKey:	sb.Name,
 	}
 
 	pods, err := podCache.List(sb.Namespace, sets.AsSelector())

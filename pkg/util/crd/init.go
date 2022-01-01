@@ -21,20 +21,23 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// FromGV returns an abstract namespace-scope CRD handler via group version and kind.
 func FromGV(gv schema.GroupVersion, kind string, obj interface{}) crd.CRD {
+	__traceStack()
+
 	return crd.FromGV(gv, kind).WithSchemaFromStruct(obj)
 }
 
-// NonNamespacedFromGV returns a cluster-scope CRD abstract handler via group version and kind.
 func NonNamespacedFromGV(gv schema.GroupVersion, kind string, obj interface{}) crd.CRD {
+	__traceStack()
+
 	var c = crd.FromGV(gv, kind).WithSchemaFromStruct(obj)
 	c.NonNamespace = true
 	return c
 }
 
-// NewFactoryFromClient returns a CRD initialization factory.
 func NewFactoryFromClient(ctx context.Context, config *rest.Config) (*Factory, error) {
+	__traceStack()
+
 	apply, err := apply.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -46,27 +49,30 @@ func NewFactoryFromClient(ctx context.Context, config *rest.Config) (*Factory, e
 	}
 
 	return &Factory{
-		ctx:    ctx,
-		client: f,
-		apply:  apply.WithDynamicLookup().WithNoDelete(),
+		ctx:	ctx,
+		client:	f,
+		apply:	apply.WithDynamicLookup().WithNoDelete(),
 	}, nil
 }
 
 type Factory struct {
-	err    error
-	wg     sync.WaitGroup
-	ctx    context.Context
-	client clientset.Interface
-	apply  apply.Apply
+	err	error
+	wg	sync.WaitGroup
+	ctx	context.Context
+	client	clientset.Interface
+	apply	apply.Apply
 }
 
 func (f *Factory) BatchWait() error {
+	__traceStack()
+
 	f.wg.Wait()
 	return f.err
 }
 
-// CreateCRDsIfNotExisted concurrently creates the target CRDs which are not existed.
 func (f *Factory) BatchCreateCRDsIfNotExisted(crds ...crd.CRD) *Factory {
+	__traceStack()
+
 	f.wg.Add(1)
 	go func() {
 		defer f.wg.Done()
@@ -79,10 +85,14 @@ func (f *Factory) BatchCreateCRDsIfNotExisted(crds ...crd.CRD) *Factory {
 }
 
 func getCRDName(pluralName, group string) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s.%s", pluralName, group)
 }
 
 func (f *Factory) CreateCRDs(ctx context.Context, updateIfExisted bool, crds ...crd.CRD) (map[schema.GroupVersionKind]*apiext.CustomResourceDefinition, error) {
+	__traceStack()
+
 	if len(crds) == 0 {
 		return nil, nil
 	}
@@ -108,7 +118,6 @@ func (f *Factory) CreateCRDs(ctx context.Context, updateIfExisted bool, crds ...
 		}
 		crdName := getCRDName(plural, crdDef.GVK.Group)
 
-		// skip to update existing CRD
 		if !updateIfExisted && ready[crdName] != nil {
 			logrus.Infof("Do not update the existing CRD %s", crdDef.GVK.Kind)
 			continue
@@ -140,6 +149,8 @@ func (f *Factory) CreateCRDs(ctx context.Context, updateIfExisted bool, crds ...
 }
 
 func (f *Factory) createCRD(ctx context.Context, crdDef crd.CRD, ready map[string]*apiext.CustomResourceDefinition) (*apiext.CustomResourceDefinition, error) {
+	__traceStack()
+
 	crd, err := crdDef.ToCustomResourceDefinition()
 	if err != nil {
 		return nil, err
@@ -160,6 +171,8 @@ func (f *Factory) createCRD(ctx context.Context, crdDef crd.CRD, ready map[strin
 }
 
 func (f *Factory) ensureAccess(ctx context.Context) (bool, error) {
+	__traceStack()
+
 	_, err := f.client.ApiextensionsV1().CustomResourceDefinitions().List(ctx, metav1.ListOptions{})
 	if apierrors.IsForbidden(err) {
 		return false, nil
@@ -168,6 +181,8 @@ func (f *Factory) ensureAccess(ctx context.Context) (bool, error) {
 }
 
 func (f *Factory) getReadyCRDs(ctx context.Context) (map[string]*apiext.CustomResourceDefinition, error) {
+	__traceStack()
+
 	list, err := f.client.ApiextensionsV1().CustomResourceDefinitions().List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -190,6 +205,8 @@ func (f *Factory) getReadyCRDs(ctx context.Context) (map[string]*apiext.CustomRe
 }
 
 func (f *Factory) waitCRD(ctx context.Context, crdName string, gvk schema.GroupVersionKind, crdStatus map[schema.GroupVersionKind]*apiext.CustomResourceDefinition) error {
+	__traceStack()
+
 	logrus.Infof("Waiting for CRD %s to become available", crdName)
 	defer logrus.Infof("Done waiting for CRD %s to become available", crdName)
 

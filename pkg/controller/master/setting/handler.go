@@ -26,43 +26,43 @@ import (
 type syncerFunc func(*harvesterv1.Setting) error
 
 var (
-	syncers map[string]syncerFunc
-	// bootstrapSettings are the setting that syncs on bootstrap
-	bootstrapSettings = []string{
+	syncers	map[string]syncerFunc
+
+	bootstrapSettings	= []string{
 		settings.SSLCertificatesSettingName,
 	}
 )
 
 type Handler struct {
-	namespace            string
-	httpClient           http.Client
-	apply                apply.Apply
-	clusterCache         provisioningv1.ClusterCache
-	clusters             provisioningv1.ClusterClient
-	settings             v1beta1.SettingClient
-	secrets              ctlcorev1.SecretClient
-	secretCache          ctlcorev1.SecretCache
-	deployments          v1.DeploymentClient
-	deploymentCache      v1.DeploymentCache
-	ingresses            networkingv1.IngressClient
-	ingressCache         networkingv1.IngressCache
-	longhornSettings     ctllonghornv1.SettingClient
-	longhornSettingCache ctllonghornv1.SettingCache
-	configmaps           ctlcorev1.ConfigMapClient
-	configmapCache       ctlcorev1.ConfigMapCache
-	managedCharts        mgmtv3.ManagedChartClient
-	managedChartCache    mgmtv3.ManagedChartCache
-	helmChartConfigs     ctlhelmv1.HelmChartConfigClient
-	helmChartConfigCache ctlhelmv1.HelmChartConfigCache
+	namespace		string
+	httpClient		http.Client
+	apply			apply.Apply
+	clusterCache		provisioningv1.ClusterCache
+	clusters		provisioningv1.ClusterClient
+	settings		v1beta1.SettingClient
+	secrets			ctlcorev1.SecretClient
+	secretCache		ctlcorev1.SecretCache
+	deployments		v1.DeploymentClient
+	deploymentCache		v1.DeploymentCache
+	ingresses		networkingv1.IngressClient
+	ingressCache		networkingv1.IngressCache
+	longhornSettings	ctllonghornv1.SettingClient
+	longhornSettingCache	ctllonghornv1.SettingCache
+	configmaps		ctlcorev1.ConfigMapClient
+	configmapCache		ctlcorev1.ConfigMapCache
+	managedCharts		mgmtv3.ManagedChartClient
+	managedChartCache	mgmtv3.ManagedChartCache
+	helmChartConfigs	ctlhelmv1.HelmChartConfigClient
+	helmChartConfigCache	ctlhelmv1.HelmChartConfigCache
 }
 
 func (h *Handler) settingOnChanged(_ string, setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	if setting == nil || setting.DeletionTimestamp != nil {
 		return nil, nil
 	}
 
-	// The setting value hash is stored in the annotation when a setting syncer completes.
-	// So that we only proceed when value is changed.
 	if setting.Value == "" && setting.Annotations[util.AnnotationHash] == "" &&
 		!slice.ContainsString(bootstrapSettings, setting.Name) {
 		return nil, nil
@@ -98,6 +98,8 @@ func (h *Handler) settingOnChanged(_ string, setting *harvesterv1.Setting) (*har
 }
 
 func (h *Handler) setConfiguredCondition(settingCopy *harvesterv1.Setting, err error) error {
+	__traceStack()
+
 	if err != nil && (!harvesterv1.SettingConfigured.IsFalse(settingCopy) ||
 		harvesterv1.SettingConfigured.GetMessage(settingCopy) != err.Error()) {
 		harvesterv1.SettingConfigured.False(settingCopy)
@@ -116,6 +118,8 @@ func (h *Handler) setConfiguredCondition(settingCopy *harvesterv1.Setting, err e
 }
 
 func (h *Handler) updateBackupSecret(data map[string]string) error {
+	__traceStack()
+
 	secret, err := h.secretCache.Get(util.LonghornSystemNamespaceName, util.BackupTargetSecretName)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -135,6 +139,8 @@ func (h *Handler) updateBackupSecret(data map[string]string) error {
 }
 
 func (h *Handler) redeployDeployment(namespace, name string) error {
+	__traceStack()
+
 	deployment, err := h.deploymentCache.Get(namespace, name)
 	if err != nil {
 		return err

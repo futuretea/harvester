@@ -18,21 +18,24 @@ import (
 )
 
 type Router struct {
-	scaled     *config.Scaled
-	restConfig *rest.Config
-	options    config.Options
+	scaled		*config.Scaled
+	restConfig	*rest.Config
+	options		config.Options
 }
 
 func NewRouter(scaled *config.Scaled, restConfig *rest.Config, options config.Options) (*Router, error) {
+	__traceStack()
+
 	return &Router{
-		scaled:     scaled,
-		restConfig: restConfig,
-		options:    options,
+		scaled:		scaled,
+		restConfig:	restConfig,
+		options:	options,
 	}, nil
 }
 
-//Routes adds some customize routes to the default router
 func (r *Router) Routes(h router.Handlers) http.Handler {
+	__traceStack()
+
 	m := mux.NewRouter()
 	m.UseEncodedPath()
 	m.StrictSlash(true)
@@ -42,19 +45,14 @@ func (r *Router) Routes(h router.Handlers) http.Handler {
 		http.Redirect(rw, req, "/dashboard/", http.StatusFound)
 	})
 
-	// Those routes should be above /v1/harvester/{type}, otherwise, the response status code would be 404
 	kcGenerateHandler := kubeconfig.NewGenerateHandler(r.scaled, r.options)
 	m.Path("/v1/harvester/kubeconfig").Methods("POST").Handler(kcGenerateHandler)
 
 	sbDownloadHandler := supportbundle.NewDownloadHandler(r.scaled, r.options.Namespace)
 	m.Path("/v1/harvester/supportbundles/{bundleName}/download").Methods("GET").Handler(sbDownloadHandler)
-	// --- END of preposition routes ---
 
-	// adds collection action support
 	m.Path("/v1/{type}").Queries("action", "{action}").Handler(h.K8sResource)
 
-	// aggregation at /v1/harvester/
-	// By default vars are split by slashes. Use a custom matcher to generate the name var.
 	matchV1Harvester := func(r *http.Request, match *mux.RouteMatch) bool {
 		if r.URL.Path == "/v1/harvester" {
 			match.Vars = map[string]string{"name": "v1/harvester"}
@@ -84,8 +82,8 @@ func (r *Router) Routes(h router.Handlers) http.Handler {
 			logrus.Fatal(err)
 		}
 		rancherHandler := &proxy.Handler{
-			Host:   host,
-			Scheme: scheme,
+			Host:	host,
+			Scheme:	scheme,
 		}
 		m.PathPrefix("/v3-public/").Handler(rancherHandler)
 		m.PathPrefix("/v3/").Handler(rancherHandler)
@@ -99,6 +97,8 @@ func (r *Router) Routes(h router.Handlers) http.Handler {
 }
 
 func parseRancherServerURL(endpoint string) (string, string, error) {
+	__traceStack()
+
 	if endpoint == "" {
 		return "", "", nil
 	}

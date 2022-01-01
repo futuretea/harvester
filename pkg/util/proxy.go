@@ -17,12 +17,14 @@ var builtInNoProxy = []string{
 }
 
 type HTTPProxyConfig struct {
-	HTTPProxy  string `json:"httpProxy,omitempty"`
-	HTTPSProxy string `json:"httpsProxy,omitempty"`
-	NoProxy    string `json:"noProxy,omitempty"`
+	HTTPProxy	string	`json:"httpProxy,omitempty"`
+	HTTPSProxy	string	`json:"httpsProxy,omitempty"`
+	NoProxy		string	`json:"noProxy,omitempty"`
 }
 
 func AddBuiltInNoProxy(noProxy string) string {
+	__traceStack()
+
 	noProxySlice := strings.Split(noProxy, ",")
 	for _, item := range builtInNoProxy {
 		if !slice.ContainsString(noProxySlice, item) {

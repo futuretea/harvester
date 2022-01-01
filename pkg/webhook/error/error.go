@@ -7,22 +7,26 @@ import (
 )
 
 type AdmitError struct {
-	message string
-	code    int32
-	reason  metav1.StatusReason
-	causes  []metav1.StatusCause
+	message	string
+	code	int32
+	reason	metav1.StatusReason
+	causes	[]metav1.StatusCause
 }
 
 func (e AdmitError) Error() string {
+	__traceStack()
+
 	return e.message
 }
 
 func (e AdmitError) AsResult() *metav1.Status {
+	__traceStack()
+
 	status := metav1.Status{
-		Status:  "Failure",
-		Message: e.message,
-		Code:    e.code,
-		Reason:  e.reason,
+		Status:		"Failure",
+		Message:	e.message,
+		Code:		e.code,
+		Reason:		e.reason,
 	}
 
 	if len(e.causes) > 0 {
@@ -34,54 +38,59 @@ func (e AdmitError) AsResult() *metav1.Status {
 	return &status
 }
 
-// 400
 func NewBadRequest(message string) AdmitError {
+	__traceStack()
+
 	return AdmitError{
-		code:    http.StatusBadRequest,
-		message: message,
-		reason:  metav1.StatusReasonBadRequest,
+		code:		http.StatusBadRequest,
+		message:	message,
+		reason:		metav1.StatusReasonBadRequest,
 	}
 }
 
-// 405
 func NewMethodNotAllowed(message string) AdmitError {
+	__traceStack()
+
 	return AdmitError{
-		code:    http.StatusMethodNotAllowed,
-		message: message,
-		reason:  metav1.StatusReasonMethodNotAllowed,
+		code:		http.StatusMethodNotAllowed,
+		message:	message,
+		reason:		metav1.StatusReasonMethodNotAllowed,
 	}
 }
 
-// 422
 func NewInvalidError(message string, field string) AdmitError {
+	__traceStack()
+
 	return AdmitError{
-		code:    http.StatusUnprocessableEntity,
-		message: message,
-		reason:  metav1.StatusReasonInvalid,
+		code:		http.StatusUnprocessableEntity,
+		message:	message,
+		reason:		metav1.StatusReasonInvalid,
 		causes: []metav1.StatusCause{
 			{
-				Type:    metav1.CauseTypeFieldValueInvalid,
-				Message: message,
-				Field:   field,
+				Type:		metav1.CauseTypeFieldValueInvalid,
+				Message:	message,
+				Field:		field,
 			},
 		},
 	}
 }
 
-// 409
 func NewConflict(message string) AdmitError {
+	__traceStack()
+
 	return AdmitError{
-		code:    http.StatusConflict,
-		message: message,
-		reason:  metav1.StatusReasonConflict,
+		code:		http.StatusConflict,
+		message:	message,
+		reason:		metav1.StatusReasonConflict,
 	}
 }
 
-// 500
 func NewInternalError(message string) AdmitError {
+	__traceStack()
+
 	return AdmitError{
-		code:    http.StatusInternalServerError,
-		message: message,
-		reason:  metav1.StatusReasonInternalError,
+		code:		http.StatusInternalServerError,
+		message:	message,
+		reason:		metav1.StatusReasonInternalError,
 	}
 }

@@ -15,17 +15,17 @@ import (
 	upgradectlv1 "github.com/harvester/harvester/pkg/generated/controllers/upgrade.cattle.io/v1"
 )
 
-// planHandler syncs on plan completions
-// When a plan completes, it set the NodesPrepared condition of upgrade CRD to be true.
 type planHandler struct {
-	namespace     string
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
-	nodeCache     v1.NodeCache
-	planClient    upgradectlv1.PlanClient
+	namespace	string
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
+	nodeCache	v1.NodeCache
+	planClient	upgradectlv1.PlanClient
 }
 
 func (h *planHandler) OnChanged(key string, plan *upgradev1.Plan) (*upgradev1.Plan, error) {
+	__traceStack()
+
 	if plan == nil || plan.DeletionTimestamp != nil {
 		return plan, nil
 	}
@@ -54,7 +54,6 @@ func (h *planHandler) OnChanged(key string, plan *upgradev1.Plan) (*upgradev1.Pl
 		return plan, nil
 	}
 
-	// All nodes for a plan are done at this stage
 	upgradeName, ok := plan.Labels[harvesterUpgradeLabel]
 	if !ok {
 		return plan, nil

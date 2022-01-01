@@ -10,6 +10,8 @@ import (
 )
 
 func VirtClientUpdateVmi(ctx context.Context, client rest.Interface, managementNamespace, namespace, name string, obj runtime.Object) error {
+	__traceStack()
+
 	return client.Put().
 		Namespace(namespace).
 		SetHeader("Impersonate-User", fmt.Sprintf("system:serviceaccount:%s:%s", managementNamespace, rbac.ControllerServiceAccountName)).

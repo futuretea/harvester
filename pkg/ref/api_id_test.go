@@ -7,37 +7,39 @@ import (
 )
 
 func TestParse(t *testing.T) {
+	__traceStack()
+
 	type input struct {
 		ref string
 	}
 	type output struct {
-		namespace string
-		name      string
+		namespace	string
+		name		string
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "cluster scope ref",
+			name:	"cluster scope ref",
 			given: input{
 				ref: "test",
 			},
 			expected: output{
-				namespace: "",
-				name:      "test",
+				namespace:	"",
+				name:		"test",
 			},
 		},
 		{
-			name: "namespace scope ref",
+			name:	"namespace scope ref",
 			given: input{
 				ref: "default/test",
 			},
 			expected: output{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 			},
 		},
 	}
@@ -51,34 +53,36 @@ func TestParse(t *testing.T) {
 }
 
 func TestConstruct(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		namespace string
-		name      string
+		namespace	string
+		name		string
 	}
 	type output struct {
 		ref string
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "cluster scope ref",
+			name:	"cluster scope ref",
 			given: input{
-				namespace: "",
-				name:      "test",
+				namespace:	"",
+				name:		"test",
 			},
 			expected: output{
 				ref: "test",
 			},
 		},
 		{
-			name: "namespace scope ref",
+			name:	"namespace scope ref",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 			},
 			expected: output{
 				ref: "default/test",

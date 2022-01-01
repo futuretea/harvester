@@ -16,14 +16,16 @@ import (
 )
 
 const (
-	drainKey                     = "kubevirt.io/drain"
-	enableMaintenanceModeAction  = "enableMaintenanceMode"
-	disableMaintenanceModeAction = "disableMaintenanceMode"
-	cordonAction                 = "cordon"
-	uncordonAction               = "uncordon"
+	drainKey			= "kubevirt.io/drain"
+	enableMaintenanceModeAction	= "enableMaintenanceMode"
+	disableMaintenanceModeAction	= "disableMaintenanceMode"
+	cordonAction			= "cordon"
+	uncordonAction			= "uncordon"
 )
 
 func Formatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	resource.Actions = make(map[string]string, 1)
 	if request.AccessControl.CanUpdate(request, resource.APIObject, resource.Schema) != nil {
 		return
@@ -43,11 +45,13 @@ func Formatter(request *types.APIRequest, resource *types.RawResource) {
 }
 
 type ActionHandler struct {
-	nodeCache  ctlcorev1.NodeCache
-	nodeClient ctlcorev1.NodeClient
+	nodeCache	ctlcorev1.NodeCache
+	nodeClient	ctlcorev1.NodeClient
 }
 
 func (h ActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	__traceStack()
+
 	if err := h.do(rw, req); err != nil {
 		status := http.StatusInternalServerError
 		if e, ok := err.(*apierror.APIError); ok {
@@ -61,6 +65,8 @@ func (h ActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 }
 
 func (h ActionHandler) do(rw http.ResponseWriter, req *http.Request) error {
+	__traceStack()
+
 	vars := mux.Vars(req)
 	action := vars["action"]
 	name := vars["name"]
@@ -84,6 +90,8 @@ func (h ActionHandler) do(rw http.ResponseWriter, req *http.Request) error {
 }
 
 func (h ActionHandler) cordonUncordonNode(node *corev1.Node, actionName string, cordon bool) error {
+	__traceStack()
+
 	if cordon == node.Spec.Unschedulable {
 		return httperror.NewAPIError(httperror.InvalidAction, fmt.Sprintf("Node %s already %sed", node.Name, actionName))
 	}
@@ -93,12 +101,14 @@ func (h ActionHandler) cordonUncordonNode(node *corev1.Node, actionName string, 
 }
 
 func (h ActionHandler) enableMaintenanceMode(node *corev1.Node) error {
+	__traceStack()
+
 	node.Spec.Unschedulable = true
 	if !hasDrainTaint(node.Spec.Taints) {
 		node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
-			Key:    drainKey,
-			Value:  "scheduling",
-			Effect: corev1.TaintEffectNoSchedule,
+			Key:	drainKey,
+			Value:	"scheduling",
+			Effect:	corev1.TaintEffectNoSchedule,
 		})
 	}
 	if node.Annotations == nil {
@@ -110,6 +120,8 @@ func (h ActionHandler) enableMaintenanceMode(node *corev1.Node) error {
 }
 
 func hasDrainTaint(taints []corev1.Taint) bool {
+	__traceStack()
+
 	for _, taint := range taints {
 		if taint.Key == drainKey {
 			return true
@@ -119,6 +131,8 @@ func hasDrainTaint(taints []corev1.Taint) bool {
 }
 
 func (h ActionHandler) disableMaintenanceMode(node *corev1.Node) error {
+	__traceStack()
+
 	node.Spec.Unschedulable = false
 	for i, taint := range node.Spec.Taints {
 		if taint.Key == drainKey {

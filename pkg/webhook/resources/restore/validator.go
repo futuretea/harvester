@@ -18,9 +18,9 @@ import (
 )
 
 const (
-	fieldTargetName               = "spec.target.name"
-	fieldVirtualMachineBackupName = "spec.virtualMachineBackupName"
-	fieldNewVM                    = "spec.newVM"
+	fieldTargetName			= "spec.target.name"
+	fieldVirtualMachineBackupName	= "spec.virtualMachineBackupName"
+	fieldNewVM			= "spec.newVM"
 )
 
 func NewValidator(
@@ -28,28 +28,32 @@ func NewValidator(
 	setting ctlharvesterv1.SettingCache,
 	vmBackup ctlharvesterv1.VirtualMachineBackupCache,
 ) types.Validator {
+	__traceStack()
+
 	return &restoreValidator{
-		vms:      vms,
-		setting:  setting,
-		vmBackup: vmBackup,
+		vms:		vms,
+		setting:	setting,
+		vmBackup:	vmBackup,
 	}
 }
 
 type restoreValidator struct {
 	types.DefaultValidator
 
-	vms      ctlkubevirtv1.VirtualMachineCache
-	setting  ctlharvesterv1.SettingCache
-	vmBackup ctlharvesterv1.VirtualMachineBackupCache
+	vms		ctlkubevirtv1.VirtualMachineCache
+	setting		ctlharvesterv1.SettingCache
+	vmBackup	ctlharvesterv1.VirtualMachineBackupCache
 }
 
 func (v *restoreValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       v1beta1.VirtualMachineRestoreResourceName,
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   v1beta1.SchemeGroupVersion.Group,
-		APIVersion: v1beta1.SchemeGroupVersion.Version,
-		ObjectType: &v1beta1.VirtualMachineRestore{},
+		Name:		v1beta1.VirtualMachineRestoreResourceName,
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.VirtualMachineRestore{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 		},
@@ -57,6 +61,8 @@ func (v *restoreValidator) Resource() types.Resource {
 }
 
 func (v *restoreValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	newRestore := newObj.(*v1beta1.VirtualMachineRestore)
 
 	targetVM := newRestore.Spec.Target.Name
@@ -82,12 +88,10 @@ func (v *restoreValidator) Create(request *types.Request, newObj runtime.Object)
 		return werror.NewInvalidError(err.Error(), fieldTargetName)
 	}
 
-	// restore a new vm but the vm is already exist
 	if newVM && vm != nil {
 		return werror.NewInvalidError(fmt.Sprintf("VM %s is already exists", vm.Name), fieldNewVM)
 	}
 
-	// restore an existing vm but the vm is still running
 	if !newVM && vm.Status.Ready {
 		return werror.NewInvalidError(fmt.Sprintf("please stop the VM %q before doing a restore", vm.Name), fieldTargetName)
 	}
@@ -96,7 +100,8 @@ func (v *restoreValidator) Create(request *types.Request, newObj runtime.Object)
 }
 
 func (v *restoreValidator) checkBackupTarget(vmRestore *v1beta1.VirtualMachineRestore) error {
-	// get backup target
+	__traceStack()
+
 	backupTargetSetting, err := v.setting.Get(settings.BackupTargetSettingName)
 	if err != nil {
 		return fmt.Errorf("can't get backup target setting, err: %w", err)
@@ -111,7 +116,6 @@ func (v *restoreValidator) checkBackupTarget(vmRestore *v1beta1.VirtualMachineRe
 		return fmt.Errorf("backup target is invalid")
 	}
 
-	// get vmbackup
 	vmBackup, err := v.vmBackup.Get(vmRestore.Spec.VirtualMachineBackupNamespace, vmRestore.Spec.VirtualMachineBackupName)
 	if err != nil {
 		return fmt.Errorf("can't get vmbackup %s/%s, err: %w", vmRestore.Spec.VirtualMachineBackupNamespace, vmRestore.Spec.VirtualMachineBackupName, err)

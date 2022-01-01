@@ -19,6 +19,8 @@ import (
 func NewMutator(
 	setting ctlharvesterv1.SettingCache,
 ) types.Mutator {
+	__traceStack()
+
 	return &vmMutator{
 		setting: setting,
 	}
@@ -26,16 +28,18 @@ func NewMutator(
 
 type vmMutator struct {
 	types.DefaultMutator
-	setting ctlharvesterv1.SettingCache
+	setting	ctlharvesterv1.SettingCache
 }
 
 func (m *vmMutator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       "virtualmachines",
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   kubevirtv1.SchemeGroupVersion.Group,
-		APIVersion: kubevirtv1.SchemeGroupVersion.Version,
-		ObjectType: &kubevirtv1.VirtualMachine{},
+		Name:		"virtualmachines",
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	kubevirtv1.SchemeGroupVersion.Group,
+		APIVersion:	kubevirtv1.SchemeGroupVersion.Version,
+		ObjectType:	&kubevirtv1.VirtualMachine{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Update,
@@ -44,6 +48,8 @@ func (m *vmMutator) Resource() types.Resource {
 }
 
 func (m *vmMutator) Create(request *types.Request, newObj runtime.Object) (types.PatchOps, error) {
+	__traceStack()
+
 	vm := newObj.(*kubevirtv1.VirtualMachine)
 	patchOps, err := m.patchResourceOvercommit(vm)
 	if err != nil {
@@ -53,6 +59,8 @@ func (m *vmMutator) Create(request *types.Request, newObj runtime.Object) (types
 }
 
 func (m *vmMutator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) (types.PatchOps, error) {
+	__traceStack()
+
 	newVm := newObj.(*kubevirtv1.VirtualMachine)
 	oldVm := oldObj.(*kubevirtv1.VirtualMachine)
 
@@ -69,6 +77,8 @@ func (m *vmMutator) Update(request *types.Request, oldObj runtime.Object, newObj
 }
 
 func needUpdateResourceOvercommit(oldVm, newVm *kubevirtv1.VirtualMachine) bool {
+	__traceStack()
+
 	newLimits := newVm.Spec.Template.Spec.Domain.Resources.Limits
 	newCpu := newLimits.Cpu()
 	newMem := newLimits.Memory()
@@ -85,6 +95,8 @@ func needUpdateResourceOvercommit(oldVm, newVm *kubevirtv1.VirtualMachine) bool 
 }
 
 func (m *vmMutator) patchResourceOvercommit(vm *kubevirtv1.VirtualMachine) ([]string, error) {
+	__traceStack()
+
 	var patchOps types.PatchOps
 	limits := vm.Spec.Template.Spec.Domain.Resources.Limits
 	cpu := limits.Cpu()
@@ -106,7 +118,7 @@ func (m *vmMutator) patchResourceOvercommit(vm *kubevirtv1.VirtualMachine) ([]st
 		}
 	}
 	if !mem.IsZero() {
-		// Truncate to MiB
+
 		newRequest := mem.Value() * int64(100) / int64(overcommit.Memory) / 1048576 * 1048576
 		quantity := resource.NewQuantity(newRequest, mem.Format)
 		if requestsMissing {
@@ -114,9 +126,7 @@ func (m *vmMutator) patchResourceOvercommit(vm *kubevirtv1.VirtualMachine) ([]st
 		} else {
 			patchOps = append(patchOps, fmt.Sprintf(`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests/memory", "value": "%s"}`, quantity))
 		}
-		// Reserve 100MiB (104857600 Bytes) for QEMU on guest memory
-		// Ref: https://github.com/harvester/harvester/issues/1234
-		// TODO: handle hugepage memory
+
 		guestMemory := resource.NewQuantity(mem.Value()-104857600, mem.Format)
 		if vm.Spec.Template.Spec.Domain.Memory == nil {
 			patchOps = append(patchOps, fmt.Sprintf(`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"%s"}}`, guestMemory))
@@ -135,6 +145,8 @@ func (m *vmMutator) patchResourceOvercommit(vm *kubevirtv1.VirtualMachine) ([]st
 }
 
 func (m *vmMutator) getOvercommit() (*settings.Overcommit, error) {
+	__traceStack()
+
 	s, err := m.setting.Get("overcommit-config")
 	if err != nil {
 		if apierrors.IsNotFound(err) {

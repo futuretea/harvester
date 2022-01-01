@@ -11,13 +11,13 @@ import (
 	"github.com/harvester/harvester/tests/framework/ready"
 )
 
-// Destruct releases the runtime if "SKIP_HARVESTER_INSTALLATION" is not "true".
 func Destruct(ctx context.Context, kubeConfig *restclient.Config) error {
+	__traceStack()
+
 	if env.IsKeepingHarvesterInstallation() || env.IsSkipHarvesterInstallation() {
 		return nil
 	}
 
-	// uninstall harvester chart
 	err := uninstallHarvesterCharts(ctx, kubeConfig)
 	if err != nil {
 		return err
@@ -26,15 +26,14 @@ func Destruct(ctx context.Context, kubeConfig *restclient.Config) error {
 	return nil
 }
 
-// uninstallHarvesterCharts uninstalls the basic components of harvester.
 func uninstallHarvesterCharts(ctx context.Context, kubeConfig *restclient.Config) error {
-	// uninstall chart
+	__traceStack()
+
 	_, err := helm.UninstallChart(testChartReleaseName, testHarvesterNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to uninstall harvester chart: %v", err)
 	}
 
-	// verifies chart uninstallation
 	namespaceReadyCondition, err := ready.NewNamespaceCondition(kubeConfig, testHarvesterNamespace)
 	if err != nil {
 		return fmt.Errorf("faield to create namespace ready condition from kubernetes config: %w", err)

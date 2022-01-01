@@ -18,6 +18,8 @@ var UpdateRancherUISettings = map[string]string{
 }
 
 func (h *Handler) RancherSettingOnChange(key string, setting *rancherv3api.Setting) (*rancherv3api.Setting, error) {
+	__traceStack()
+
 	if setting == nil || setting.DeletionTimestamp != nil {
 		return nil, nil
 	}
@@ -44,6 +46,8 @@ func (h *Handler) RancherSettingOnChange(key string, setting *rancherv3api.Setti
 }
 
 func (h *Handler) initializeSystemNamespaces(setting *rancherv3api.Setting) (*rancherv3api.Setting, error) {
+	__traceStack()
+
 	sets := labels.Set{
 		defaultAdminLabelKey: defaultAdminLabelValue,
 	}
@@ -52,7 +56,7 @@ func (h *Handler) initializeSystemNamespaces(setting *rancherv3api.Setting) (*ra
 		return nil, err
 	}
 	if len(users) == 0 {
-		// The default admin and its namespace is not created, enqueue and check later
+
 		h.RancherSettingController.EnqueueAfter(setting.Name, 30*time.Second)
 		return nil, nil
 	}
@@ -74,9 +78,9 @@ func (h *Handler) initializeSystemNamespaces(setting *rancherv3api.Setting) (*ra
 	return h.RancherSettings.Update(toUpdate)
 }
 
-// syncCACert updates the cacerts setting to ca certificate of Harvester setting
-// or internal-cacerts when it is not specified.
 func (h *Handler) syncCACert(setting *rancherv3api.Setting) error {
+	__traceStack()
+
 	var cacert string
 	sslCertificate := &settings.SSLCertificate{}
 	if err := json.Unmarshal([]byte(settings.SSLCertificates.Get()), sslCertificate); err != nil {

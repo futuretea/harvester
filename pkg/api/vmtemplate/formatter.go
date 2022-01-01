@@ -5,9 +5,13 @@ import (
 )
 
 func formatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	resource.Links["versions"] = request.URLBuilder.Link(resource.Schema, resource.ID, "versions")
 }
 
 func versionFormatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	delete(resource.Links, "update")
 }

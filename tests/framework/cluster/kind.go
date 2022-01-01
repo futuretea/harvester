@@ -21,67 +21,46 @@ import (
 
 var _ Cluster = &LocalKindCluster{}
 
-// LocalKindCluster specifies the configurable parameters to launch a local kubernetes-sigs/kind cluster.
 type LocalKindCluster struct {
-	// Specify the exported ingress http port for running cluster,
-	// configure in "KIND_EXPORT_INGRESS_HTTP_PORT" env,
-	// default is created randomly.
-	ExportIngressHTTPPort int
-	// Specify the exported ingress https port for running cluster,
-	// configure in "KIND_EXPORT_INGRESS_HTTPS_PORT" env,
-	// default is created randomly.
-	ExportIngressHTTPSPort int
-	// Specify the exported image storage port for running cluster,
-	// configure in "KIND_EXPORT_IMAGE_STORAGE_PORT" env,
-	// default is created randomly.
-	ExportImageStoragePort int
-	// Specify the image for running cluster,
-	// configure in "KIND_IMAGE" env,
-	// default is "kindest/node:v1.18.2".
-	Image string
-	// Specify the image mirror,
-	// configure in "KIND_IMAGE_MIRROR" env,
-	// default is "".
-	ImageMirror string
-	// Specify the name of cluster,
-	// configure in "KIND_CLUSTER_NAME" env,
-	// default is "harvester".
-	ClusterName string
-	// Specify the amount of control-plane nodes,
-	// configure in "KIND_CONTROL_PLANES" env,
-	// default is "1".
-	ControlPlanes int
-	// Specify the amount of worker nodes,
-	// configure in "KIND_WORKERS" env,
-	// default is "3".
-	Workers int
-	// Specify the wait timeout for bringing up cluster,
-	// configure in "KIND_WAIT_TIMEOUT" env,
-	// default is "10m".
-	WaitTimeout time.Duration
-	// Specify the path of preset cluster configuration,
-	// configure in "KIND_CLUSTER_CONFIG_PATH" env.
-	ClusterConfigPath string
+	ExportIngressHTTPPort	int
+
+	ExportIngressHTTPSPort	int
+
+	ExportImageStoragePort	int
+
+	Image	string
+
+	ImageMirror	string
+
+	ClusterName	string
+
+	ControlPlanes	int
+
+	Workers	int
+
+	WaitTimeout	time.Duration
+
+	ClusterConfigPath	string
 }
 
 const (
-	DefaultControlPlanes = 1
-	DefaultWorkers       = 3
+	DefaultControlPlanes	= 1
+	DefaultWorkers		= 3
 )
 
 func (c *LocalKindCluster) Startup(output io.Writer) error {
+	__traceStack()
+
 	logger := logs.NewLogger(output, 0)
 	provider := cluster.NewProvider(
 		cluster.ProviderWithLogger(logger),
 	)
 
-	// check if the cluster is existed
 	existed, err := isClusterExisted(provider, c.ClusterName)
 	if err != nil {
 		return err
 	}
 
-	// remove the existed cluster
 	if existed {
 		err = provider.Delete(c.ClusterName, "")
 		if err != nil {
@@ -89,7 +68,6 @@ func (c *LocalKindCluster) Startup(output io.Writer) error {
 		}
 	}
 
-	// create configuration
 	var configOption cluster.CreateOption
 	if c.ClusterConfigPath == "" {
 		err = c.initExportPorts()
@@ -110,7 +88,6 @@ func (c *LocalKindCluster) Startup(output io.Writer) error {
 		configOption = cluster.CreateWithConfigFile(configPath)
 	}
 
-	// create cluster
 	err = provider.Create(
 		c.ClusterName,
 		configOption,
@@ -125,12 +102,14 @@ func (c *LocalKindCluster) Startup(output io.Writer) error {
 }
 
 func (c LocalKindCluster) LoadImages(output io.Writer) error {
+	__traceStack()
+
 	logger := logs.NewLogger(output, 0)
 
 	for _, image := range env.GetPreloadingImages() {
 		logger.V(0).Infof("Loading image %s...", image)
 		cmd := exec.Command("kind", "load", "docker-image", image, "--name", c.ClusterName)
-		// kind load prints messages to stderr
+
 		lines, err := exec.CombinedOutputLines(cmd)
 		if err != nil {
 			return err
@@ -142,12 +121,13 @@ func (c LocalKindCluster) LoadImages(output io.Writer) error {
 }
 
 func (c LocalKindCluster) Cleanup(output io.Writer) error {
+	__traceStack()
+
 	var logger = logs.NewLogger(output, 0)
 	var provider = cluster.NewProvider(
 		cluster.ProviderWithLogger(logger),
 	)
 
-	// check if the cluster is existed
 	var existed, err = isClusterExisted(provider, c.ClusterName)
 	if err != nil {
 		return err
@@ -157,7 +137,6 @@ func (c LocalKindCluster) Cleanup(output io.Writer) error {
 		return nil
 	}
 
-	// remove the existed cluster
 	err = provider.Delete(c.ClusterName, "")
 	if err != nil {
 		return fmt.Errorf("failed to clean the local test cluster, %v", err)
@@ -166,14 +145,20 @@ func (c LocalKindCluster) Cleanup(output io.Writer) error {
 }
 
 func (c LocalKindCluster) GetKind() string {
+	__traceStack()
+
 	return KindClusterKind
 }
 
 func (c LocalKindCluster) String() string {
+	__traceStack()
+
 	return fmt.Sprintf("Name: %s, Kind: %s, Image: %s", c.ClusterName, c.GetKind(), c.Image)
 }
 
 func (c *LocalKindCluster) initExportPorts() error {
+	__traceStack()
+
 	if c.ExportIngressHTTPSPort == 0 || c.ExportIngressHTTPPort == 0 || c.ExportImageStoragePort == 0 {
 		var ports, err = fuzz.FreePorts(3)
 		if err != nil {
@@ -187,6 +172,8 @@ func (c *LocalKindCluster) initExportPorts() error {
 }
 
 func (c LocalKindCluster) generateConfiguration() ([]byte, error) {
+	__traceStack()
+
 	var tpText = `---
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -244,6 +231,8 @@ nodes:
 }
 
 func isClusterExisted(provider *cluster.Provider, clusterName string) (bool, error) {
+	__traceStack()
+
 	var clusters, err = provider.List()
 	if err != nil {
 		return false, fmt.Errorf("failed to list all local clusters, %v", err)
@@ -258,24 +247,26 @@ func isClusterExisted(provider *cluster.Provider, clusterName string) (bool, err
 }
 
 var (
-	localKindClusterOnce sync.Once
-	localKindCluster     *LocalKindCluster
+	localKindClusterOnce	sync.Once
+	localKindCluster	*LocalKindCluster
 )
 
 func NewLocalKindCluster() *LocalKindCluster {
+	__traceStack()
+
 	localKindClusterOnce.Do(func() {
 		envFinder := finder.NewEnvFinder("kind")
 		localKindCluster = &LocalKindCluster{
-			ExportIngressHTTPPort:  envFinder.GetInt("exportIngressHttpPort", 0),
-			ExportIngressHTTPSPort: envFinder.GetInt("exportIngressHttpsPort", 0),
-			ExportImageStoragePort: envFinder.GetInt("exportImageStoragePort", 0),
-			Image:                  envFinder.Get("image", "kindest/node:v1.21.1"),
-			ImageMirror:            envFinder.Get("imageMirror", ""),
-			ClusterName:            envFinder.Get("clusterName", "harvester"),
-			ControlPlanes:          envFinder.GetInt("controlPlanes", DefaultControlPlanes),
-			Workers:                envFinder.GetInt("workers", DefaultWorkers),
-			WaitTimeout:            envFinder.GetDuration("waitTimeout", 10*time.Minute),
-			ClusterConfigPath:      envFinder.Get("clusterConfigPath", ""),
+			ExportIngressHTTPPort:	envFinder.GetInt("exportIngressHttpPort", 0),
+			ExportIngressHTTPSPort:	envFinder.GetInt("exportIngressHttpsPort", 0),
+			ExportImageStoragePort:	envFinder.GetInt("exportImageStoragePort", 0),
+			Image:			envFinder.Get("image", "kindest/node:v1.21.1"),
+			ImageMirror:		envFinder.Get("imageMirror", ""),
+			ClusterName:		envFinder.Get("clusterName", "harvester"),
+			ControlPlanes:		envFinder.GetInt("controlPlanes", DefaultControlPlanes),
+			Workers:		envFinder.GetInt("workers", DefaultWorkers),
+			WaitTimeout:		envFinder.GetDuration("waitTimeout", 10*time.Minute),
+			ClusterConfigPath:	envFinder.Get("clusterConfigPath", ""),
 		}
 	})
 	return localKindCluster

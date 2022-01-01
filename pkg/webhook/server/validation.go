@@ -21,6 +21,8 @@ import (
 )
 
 func Validation(clients *clients.Clients, options *config.Options) (http.Handler, []types.Resource, error) {
+	__traceStack()
+
 	resources := []types.Resource{}
 	validators := []types.Validator{
 		node.NewValidator(clients.Core.Node().Cache()),

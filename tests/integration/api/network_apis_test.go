@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	testNetworkNamespace = "default"
-	testBridgeVID        = 100
+	testNetworkNamespace	= "default"
+	testBridgeVID		= 100
 )
 
 type BridgeNetwork struct {
@@ -27,6 +27,8 @@ type BridgeNetwork struct {
 }
 
 func NewBridgeNetwork(name string, vid int) *BridgeNetwork {
+	__traceStack()
+
 	bridgeNetwork := BridgeNetwork{
 		NAD: NewNAD(name, builder.NetworkTypeVLAN, NewBridgeNetworkConfig(name, vid)),
 	}
@@ -34,19 +36,23 @@ func NewBridgeNetwork(name string, vid int) *BridgeNetwork {
 }
 
 func NewBridgeNetworkConfig(name string, vid int) string {
+	__traceStack()
+
 	return fmt.Sprintf(builder.NetworkVLANConfigTemplate, name, vid)
 }
 
 func NewNAD(name, networkType, config string) *cniv1.NetworkAttachmentDefinition {
+	__traceStack()
+
 	networkLabels := map[string]string{
-		"test.harvesterhci.io":      "harvester-test",
-		builder.LabelKeyNetworkType: networkType,
+		"test.harvesterhci.io":		"harvester-test",
+		builder.LabelKeyNetworkType:	networkType,
 	}
 	return &cniv1.NetworkAttachmentDefinition{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: testNetworkNamespace,
-			Labels:    networkLabels,
+			Name:		name,
+			Namespace:	testNetworkNamespace,
+			Labels:		networkLabels,
 		},
 		Spec: cniv1.NetworkAttachmentDefinitionSpec{
 			Config: config,
@@ -57,11 +63,11 @@ func NewNAD(name, networkType, config string) *cniv1.NetworkAttachmentDefinition
 var _ = Describe("verify network APIs", func() {
 
 	var (
-		scaled       *config.Scaled
-		vmBuilder    *builder.VMBuilder
-		vmNamespace  string
-		vmController ctlkubevirtv1.VirtualMachineController
-		networkName  string
+		scaled		*config.Scaled
+		vmBuilder	*builder.VMBuilder
+		vmNamespace	string
+		vmController	ctlkubevirtv1.VirtualMachineController
+		networkName	string
 	)
 
 	BeforeEach(func() {

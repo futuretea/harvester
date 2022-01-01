@@ -13,6 +13,8 @@ import (
 )
 
 func NewMutator() types.Mutator {
+	__traceStack()
+
 	return &templateVersionMutator{}
 }
 
@@ -21,23 +23,29 @@ type templateVersionMutator struct {
 }
 
 func newResource(ops []admissionregv1.OperationType) types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:           v1beta1.VirtualMachineTemplateVersionResourceName,
-		Scope:          admissionregv1.NamespacedScope,
-		APIGroup:       v1beta1.SchemeGroupVersion.Group,
-		APIVersion:     v1beta1.SchemeGroupVersion.Version,
-		ObjectType:     &v1beta1.VirtualMachineTemplateVersion{},
-		OperationTypes: ops,
+		Name:		v1beta1.VirtualMachineTemplateVersionResourceName,
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.VirtualMachineTemplateVersion{},
+		OperationTypes:	ops,
 	}
 }
 
 func (m *templateVersionMutator) Resource() types.Resource {
+	__traceStack()
+
 	return newResource([]admissionregv1.OperationType{
 		admissionregv1.Create,
 	})
 }
 
 func (m *templateVersionMutator) Create(request *types.Request, newObj runtime.Object) (types.PatchOps, error) {
+	__traceStack()
+
 	vmTemplVersion := newObj.(*v1beta1.VirtualMachineTemplateVersion)
 
 	templateID := vmTemplVersion.Spec.TemplateID
@@ -47,12 +55,10 @@ func (m *templateVersionMutator) Create(request *types.Request, newObj runtime.O
 
 	_, templateName := ref.Parse(templateID)
 
-	// Do not generate a name if there is a name.
 	if vmTemplVersion.Name != "" {
 		return nil, nil
 	}
 
-	// patch "metadata.generateName" with "{templateName}-"
 	var patchOps types.PatchOps
 	patchOps = append(patchOps, fmt.Sprintf(`{"op": "replace", "path": "/metadata/generateName", "value": "%s"}`, templateName+"-"))
 	return patchOps, nil

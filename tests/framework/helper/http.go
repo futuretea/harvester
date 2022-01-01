@@ -13,6 +13,8 @@ import (
 )
 
 func NewHTTPClient() *dataflow.Gout {
+	__traceStack()
+
 	return gout.
 		New(&http.Client{
 			Transport: &http.Transport{
@@ -22,14 +24,20 @@ func NewHTTPClient() *dataflow.Gout {
 }
 
 func BuildAPIURL(version, resource string, httpsPort int) string {
+	__traceStack()
+
 	return fmt.Sprintf("https://localhost:%d/%s/%s", httpsPort, version, resource)
 }
 
 func BuildResourceURL(api, namespace, name string) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s/%s/%s", api, namespace, name)
 }
 
 func GetCollection(url string) (collection *types.GenericCollection, respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		GET(url).
 		BindBody(&respBody).
@@ -48,6 +56,8 @@ func GetCollection(url string) (collection *types.GenericCollection, respCode in
 }
 
 func GetObject(url string, object interface{}) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		GET(url).
 		BindBody(&respBody).
@@ -66,6 +76,8 @@ func GetObject(url string, object interface{}) (respCode int, respBody []byte, e
 }
 
 func PutObject(url string, object interface{}) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		PUT(url).
 		SetJSON(object).
@@ -76,6 +88,8 @@ func PutObject(url string, object interface{}) (respCode int, respBody []byte, e
 }
 
 func DeleteObject(url string) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		DELETE(url).
 		BindBody(&respBody).
@@ -85,6 +99,8 @@ func DeleteObject(url string) (respCode int, respBody []byte, err error) {
 }
 
 func PostObject(url string, object interface{}) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		POST(url).
 		SetJSON(object).
@@ -96,6 +112,8 @@ func PostObject(url string, object interface{}) (respCode int, respBody []byte, 
 }
 
 func PostObjectByYAML(url string, object interface{}) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	var yamlData []byte
 	yamlData, err = yaml.Marshal(object)
 	if err != nil {
@@ -112,6 +130,8 @@ func PostObjectByYAML(url string, object interface{}) (respCode int, respBody []
 }
 
 func PostAction(url string, action string) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		POST(fmt.Sprintf("%s?action=%s", url, action)).
 		SetHeader().
@@ -122,6 +142,8 @@ func PostAction(url string, action string) (respCode int, respBody []byte, err e
 }
 
 func PostObjectAction(url string, object interface{}, action string) (respCode int, respBody []byte, err error) {
+	__traceStack()
+
 	err = NewHTTPClient().
 		POST(fmt.Sprintf("%s?action=%s", url, action)).
 		SetJSON(object).

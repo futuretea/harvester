@@ -24,11 +24,11 @@ import (
 var _ = Describe("verify vm APIs", func() {
 
 	var (
-		scaled        *config.Scaled
-		vmController  ctlkubevirtv1.VirtualMachineController
-		vmiController ctlkubevirtv1.VirtualMachineInstanceController
-		pvcController v1.PersistentVolumeClaimController
-		vmNamespace   string
+		scaled		*config.Scaled
+		vmController	ctlkubevirtv1.VirtualMachineController
+		vmiController	ctlkubevirtv1.VirtualMachineInstanceController
+		pvcController	v1.PersistentVolumeClaimController
+		vmNamespace	string
 	)
 
 	BeforeEach(func() {
@@ -77,7 +77,6 @@ var _ = Describe("verify vm APIs", func() {
 
 		Specify("verify vm api", func() {
 
-			// create
 			By("create a virtual machine should fail if name missing")
 			vm, err := NewDefaultTestVMBuilder(testResourceLabels).Name("").
 				NetworkInterface(testVMInterfaceName, testVMInterfaceModel, "", builder.NetworkInterfaceTypeMasquerade, "").
@@ -90,11 +89,11 @@ var _ = Describe("verify vm APIs", func() {
 			By("when create a virtual machine with cloud-init")
 			vmName := testVMGenerateName + fuzz.String(5)
 			vmCloudInit := &VMCloudInit{
-				Name:     vmName,
-				UserName: "fedora",
-				Password: "root",
-				Address:  "10.5.2.100/24",
-				Gateway:  "10.5.2.1",
+				Name:		vmName,
+				UserName:	"fedora",
+				Password:	"root",
+				Address:	"10.5.2.100/24",
+				Gateway:	"10.5.2.1",
 			}
 			userData := fmt.Sprintf(testVMCloudInitUserDataTemplate, vmCloudInit.UserName, vmCloudInit.Password)
 			networkData := fmt.Sprintf(testVMCloudInitNetworkDataTemplate, vmCloudInit.Address, vmCloudInit.Gateway)
@@ -102,9 +101,9 @@ var _ = Describe("verify vm APIs", func() {
 				NetworkInterface(testVMInterfaceName, testVMInterfaceModel, "", builder.NetworkInterfaceTypeMasquerade, "").
 				ContainerDisk(testVMContainerDiskName, testVMDefaultDiskBus, false, 1, testVMContainerDiskImageName, testVMContainerDiskImagePullPolicy).
 				CloudInitDisk(testVMCloudInitDiskName, testVMDefaultDiskBus, false, 0, builder.CloudInitSource{
-					CloudInitType: builder.CloudInitTypeNoCloud,
-					UserData:      userData,
-					NetworkData:   networkData,
+					CloudInitType:	builder.CloudInitTypeNoCloud,
+					UserData:	userData,
+					NetworkData:	networkData,
 				}).Run(true).VM()
 			MustNotError(err)
 			respCode, respBody, err = helper.PostObject(vmsAPI, vm)
@@ -115,18 +114,16 @@ var _ = Describe("verify vm APIs", func() {
 			vm, err = vmController.Get(vmNamespace, vmName, metav1.GetOptions{})
 			MustNotError(err)
 
-			// ejectCdRom
 			By("ejectCdRom should fail if there are no CdRoms in the virtual machine")
 			vmURL := helper.BuildResourceURL(vmsAPI, vmNamespace, vmName)
 			respCode, respBody, err = helper.PostObjectAction(vmURL, apivm.EjectCdRomActionInput{}, "ejectCdRom")
 			MustRespCodeIs(http.StatusUnprocessableEntity, "ejectCdRom", err, respCode, respBody)
 
-			// edit
 			By("when edit virtual machine")
 			vm, err = builder.NewVMBuilder(testCreator).Update(vm).CPU(testVMUpdatedCPUCore).Memory(testVMUpdatedMemory).
 				PVCDisk(testVMCDRomDiskName, testVMCDRomBus, true, false, 2, testVMDiskSize, "", &builder.PersistentVolumeClaimOption{
-					VolumeMode: builder.PersistentVolumeModeFilesystem,
-					AccessMode: builder.PersistentVolumeAccessModeReadWriteOnce,
+					VolumeMode:	builder.PersistentVolumeModeFilesystem,
+					AccessMode:	builder.PersistentVolumeAccessModeReadWriteOnce,
 				}).VM()
 			MustNotError(err)
 			respCode, respBody, err = helper.PutObject(vmURL, vm)
@@ -148,7 +145,6 @@ var _ = Describe("verify vm APIs", func() {
 					return true
 				})
 
-			// restart
 			By("when call restart action")
 			respCode, respBody, err = helper.PostAction(fmt.Sprintf("%s/%s/%s", vmsAPI, vmNamespace, vmName), "restart")
 			MustRespCodeIs(http.StatusNoContent, "post restart action", err, respCode, respBody)
@@ -163,7 +159,6 @@ var _ = Describe("verify vm APIs", func() {
 					return true
 				})
 
-			// ejectCdRom
 			By("ejectCdRom should fail if request without any CdRoms")
 			vmURL = helper.BuildResourceURL(vmsAPI, vmNamespace, vmName)
 			respCode, respBody, err = helper.PostObjectAction(vmURL, apivm.EjectCdRomActionInput{}, "ejectCdRom")
@@ -194,7 +189,6 @@ var _ = Describe("verify vm APIs", func() {
 					return true
 				})
 
-			// stop
 			By("when call stop action")
 			respCode, respBody, err = helper.PostAction(vmURL, "stop")
 			MustRespCodeIs(http.StatusNoContent, "post stop action", err, respCode, respBody)
@@ -202,7 +196,6 @@ var _ = Describe("verify vm APIs", func() {
 			By("then the virtual machine is stopped")
 			HasNoneVMI(vmController, vmNamespace, vmName, vmiController)
 
-			// start
 			By("when call start action")
 			respCode, respBody, err = helper.PostAction(vmURL, "start")
 			MustRespCodeIs(http.StatusNoContent, "post start action", err, respCode, respBody)
@@ -210,7 +203,6 @@ var _ = Describe("verify vm APIs", func() {
 			By("then the virtual machine is started")
 			MustVMIRunning(vmController, vmNamespace, vmName, vmiController)
 
-			// pause
 			By("when call pause action")
 			respCode, respBody, err = helper.PostAction(vmURL, "pause")
 			MustRespCodeIs(http.StatusNoContent, "post pause action", err, respCode, respBody)
@@ -218,7 +210,6 @@ var _ = Describe("verify vm APIs", func() {
 			By("then the virtual machine is paused")
 			MustVMPaused(vmController, vmNamespace, vmName)
 
-			// unpause
 			By("when call unpause action")
 			respCode, respBody, err = helper.PostAction(vmURL, "unpause")
 			MustRespCodeIs(http.StatusNoContent, "post unpause action", err, respCode, respBody)
@@ -226,7 +217,6 @@ var _ = Describe("verify vm APIs", func() {
 			By("then the virtual machine is running")
 			MustVMRunning(vmController, vmNamespace, vmName)
 
-			// delete
 			By("when delete the virtual machine")
 			respCode, respBody, err = helper.DeleteObject(vmURL)
 			MustRespCodeIs(http.StatusOK, "delete action", err, respCode, respBody)
@@ -241,8 +231,8 @@ var _ = Describe("verify vm APIs", func() {
 			vm, err := NewDefaultTestVMBuilder(testResourceLabels).Name(vmName).
 				NetworkInterface(testVMInterfaceName, testVMInterfaceModel, "", builder.NetworkInterfaceTypeMasquerade, "").
 				PVCDisk(testVMRemoveDiskName, testVMDefaultDiskBus, false, false, 1, testVMDiskSize, testVMRemoveDiskName, &builder.PersistentVolumeClaimOption{
-					VolumeMode: builder.PersistentVolumeModeFilesystem,
-					AccessMode: builder.PersistentVolumeAccessModeReadWriteOnce,
+					VolumeMode:	builder.PersistentVolumeModeFilesystem,
+					AccessMode:	builder.PersistentVolumeAccessModeReadWriteOnce,
 				}).
 				Run(true).VM()
 			MustNotError(err)

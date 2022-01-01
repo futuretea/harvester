@@ -14,16 +14,18 @@ import (
 )
 
 const (
-	nodeComponent     = "node"
-	manifestComponent = "manifest"
+	nodeComponent		= "node"
+	manifestComponent	= "manifest"
 
-	labelArch               = "kubernetes.io/arch"
-	labelCriticalAddonsOnly = "CriticalAddonsOnly"
+	labelArch		= "kubernetes.io/arch"
+	labelCriticalAddonsOnly	= "CriticalAddonsOnly"
 
-	defaultTTLSecondsAfterFinished = 1200
+	defaultTTLSecondsAfterFinished	= 1200
 )
 
 func setNodeUpgradeStatus(upgrade *harvesterv1.Upgrade, nodeName string, state, reason, message string) {
+	__traceStack()
+
 	if upgrade == nil {
 		return
 	}
@@ -35,9 +37,9 @@ func setNodeUpgradeStatus(upgrade *harvesterv1.Upgrade, nodeName string, state, 
 		return
 	}
 	upgrade.Status.NodeStatuses[nodeName] = harvesterv1.NodeUpgradeStatus{
-		State:   state,
-		Reason:  reason,
-		Message: message,
+		State:		state,
+		Reason:		reason,
+		Message:	message,
 	}
 	if state == StateFailed {
 		setNodesUpgradedCondition(upgrade, corev1.ConditionFalse, reason, message)
@@ -55,6 +57,8 @@ func setNodeUpgradeStatus(upgrade *harvesterv1.Upgrade, nodeName string, state, 
 }
 
 func setImageReadyCondition(upgrade *harvesterv1.Upgrade, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	harvesterv1.ImageReady.SetStatus(upgrade, string(status))
 	harvesterv1.ImageReady.Reason(upgrade, reason)
 	harvesterv1.ImageReady.Message(upgrade, message)
@@ -62,6 +66,8 @@ func setImageReadyCondition(upgrade *harvesterv1.Upgrade, status corev1.Conditio
 }
 
 func setRepoProvisionedCondition(upgrade *harvesterv1.Upgrade, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	harvesterv1.RepoProvisioned.SetStatus(upgrade, string(status))
 	harvesterv1.RepoProvisioned.Reason(upgrade, reason)
 	harvesterv1.RepoProvisioned.Message(upgrade, message)
@@ -69,6 +75,8 @@ func setRepoProvisionedCondition(upgrade *harvesterv1.Upgrade, status corev1.Con
 }
 
 func setNodesPreparedCondition(upgrade *harvesterv1.Upgrade, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	harvesterv1.NodesPrepared.SetStatus(upgrade, string(status))
 	harvesterv1.NodesPrepared.Reason(upgrade, reason)
 	harvesterv1.NodesPrepared.Message(upgrade, message)
@@ -76,6 +84,8 @@ func setNodesPreparedCondition(upgrade *harvesterv1.Upgrade, status corev1.Condi
 }
 
 func setNodesUpgradedCondition(upgrade *harvesterv1.Upgrade, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	harvesterv1.NodesUpgraded.SetStatus(upgrade, string(status))
 	harvesterv1.NodesUpgraded.Reason(upgrade, reason)
 	harvesterv1.NodesUpgraded.Message(upgrade, message)
@@ -83,6 +93,8 @@ func setNodesUpgradedCondition(upgrade *harvesterv1.Upgrade, status corev1.Condi
 }
 
 func setUpgradeCompletedCondition(upgrade *harvesterv1.Upgrade, state string, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	upgrade.Labels[upgradeStateLabel] = state
 	harvesterv1.UpgradeCompleted.SetStatus(upgrade, string(status))
 	harvesterv1.UpgradeCompleted.Reason(upgrade, reason)
@@ -90,6 +102,8 @@ func setUpgradeCompletedCondition(upgrade *harvesterv1.Upgrade, state string, st
 }
 
 func setHelmChartUpgradeStatus(upgrade *harvesterv1.Upgrade, status corev1.ConditionStatus, reason, message string) {
+	__traceStack()
+
 	if upgrade == nil ||
 		harvesterv1.SystemServicesUpgraded.IsTrue(upgrade) ||
 		harvesterv1.SystemServicesUpgraded.IsFalse(upgrade) {
@@ -102,6 +116,8 @@ func setHelmChartUpgradeStatus(upgrade *harvesterv1.Upgrade, status corev1.Condi
 }
 
 func markComplete(upgrade *harvesterv1.Upgrade) {
+	__traceStack()
+
 	if upgrade.Labels == nil {
 		upgrade.Labels = make(map[string]string)
 	}
@@ -118,70 +134,71 @@ func markComplete(upgrade *harvesterv1.Upgrade) {
 }
 
 func preparePlan(upgrade *harvesterv1.Upgrade) *upgradev1.Plan {
+	__traceStack()
+
 	planVersion := upgrade.Name
 
-	// Use current running version because new images are not preloaded yet.
 	imageVersion := upgrade.Status.PreviousVersion
 	return &upgradev1.Plan{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-prepare", upgrade.Name),
-			Namespace: sucNamespace,
+			Name:		fmt.Sprintf("%s-prepare", upgrade.Name),
+			Namespace:	sucNamespace,
 			Labels: map[string]string{
-				harvesterUpgradeLabel:          upgrade.Name,
-				harvesterUpgradeComponentLabel: nodeComponent,
+				harvesterUpgradeLabel:		upgrade.Name,
+				harvesterUpgradeComponentLabel:	nodeComponent,
 			},
 		},
 		Spec: upgradev1.PlanSpec{
-			Concurrency: int64(1),
-			Version:     planVersion,
+			Concurrency:	int64(1),
+			Version:	planVersion,
 			NodeSelector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					harvesterManagedLabel: "true",
 				},
 			},
-			ServiceAccountName: upgradeServiceAccount,
+			ServiceAccountName:	upgradeServiceAccount,
 			Tolerations: []corev1.Toleration{
 				{
-					Key:      labelCriticalAddonsOnly,
-					Operator: corev1.TolerationOpExists,
+					Key:		labelCriticalAddonsOnly,
+					Operator:	corev1.TolerationOpExists,
 				},
 				{
-					Key:      "kubevirt.io/drain",
-					Operator: corev1.TolerationOpExists,
-					Effect:   corev1.TaintEffectNoSchedule,
+					Key:		"kubevirt.io/drain",
+					Operator:	corev1.TolerationOpExists,
+					Effect:		corev1.TaintEffectNoSchedule,
 				},
 				{
-					Key:      node.KubeControlPlaneNodeLabelKey,
-					Operator: corev1.TolerationOpExists,
-					Effect:   corev1.TaintEffectNoExecute,
+					Key:		node.KubeControlPlaneNodeLabelKey,
+					Operator:	corev1.TolerationOpExists,
+					Effect:		corev1.TaintEffectNoExecute,
 				},
 				{
-					Key:      labelArch,
-					Operator: corev1.TolerationOpEqual,
-					Effect:   corev1.TaintEffectNoSchedule,
-					Value:    "amd64",
+					Key:		labelArch,
+					Operator:	corev1.TolerationOpEqual,
+					Effect:		corev1.TaintEffectNoSchedule,
+					Value:		"amd64",
 				},
 				{
-					Key:      labelArch,
-					Operator: corev1.TolerationOpEqual,
-					Effect:   corev1.TaintEffectNoSchedule,
-					Value:    "arm64",
+					Key:		labelArch,
+					Operator:	corev1.TolerationOpEqual,
+					Effect:		corev1.TaintEffectNoSchedule,
+					Value:		"arm64",
 				},
 				{
-					Key:      labelArch,
-					Operator: corev1.TolerationOpEqual,
-					Effect:   corev1.TaintEffectNoSchedule,
-					Value:    "arm",
+					Key:		labelArch,
+					Operator:	corev1.TolerationOpEqual,
+					Effect:		corev1.TaintEffectNoSchedule,
+					Value:		"arm",
 				},
 			},
 			Upgrade: &upgradev1.ContainerSpec{
-				Image:   fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
-				Command: []string{"upgrade_node.sh"},
-				Args:    []string{"prepare"},
+				Image:		fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
+				Command:	[]string{"upgrade_node.sh"},
+				Args:		[]string{"prepare"},
 				Env: []corev1.EnvVar{
 					{
-						Name:  "HARVESTER_UPGRADE_NAME",
-						Value: upgrade.Name,
+						Name:	"HARVESTER_UPGRADE_NAME",
+						Value:	upgrade.Name,
 					},
 				},
 			},
@@ -190,57 +207,58 @@ func preparePlan(upgrade *harvesterv1.Upgrade) *upgradev1.Plan {
 }
 
 func applyNodeJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo, nodeName string, jobType string) *batchv1.Job {
-	// Use the image tag in the upgrade repo because it's already preloaded and might contain updated codes.
+	__traceStack()
+
 	imageVersion := repoInfo.Release.Harvester
 	hostPathDirectory := corev1.HostPathDirectory
 	privileged := true
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-%s-%s", upgrade.Name, jobType, nodeName),
-			Namespace: upgrade.Namespace,
+			Name:		fmt.Sprintf("%s-%s-%s", upgrade.Name, jobType, nodeName),
+			Namespace:	upgrade.Namespace,
 			Labels: map[string]string{
-				harvesterUpgradeLabel:          upgrade.Name,
-				harvesterUpgradeComponentLabel: nodeComponent,
-				harvesterNodeLabel:             nodeName,
-				upgradeJobTypeLabel:            jobType,
+				harvesterUpgradeLabel:		upgrade.Name,
+				harvesterUpgradeComponentLabel:	nodeComponent,
+				harvesterNodeLabel:		nodeName,
+				upgradeJobTypeLabel:		jobType,
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				upgradeReference(upgrade),
 			},
 		},
 		Spec: batchv1.JobSpec{
-			TTLSecondsAfterFinished: pointer.Int32Ptr(defaultTTLSecondsAfterFinished),
+			TTLSecondsAfterFinished:	pointer.Int32Ptr(defaultTTLSecondsAfterFinished),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						harvesterUpgradeLabel:          upgrade.Name,
-						harvesterUpgradeComponentLabel: nodeComponent,
-						upgradeJobTypeLabel:            jobType,
+						harvesterUpgradeLabel:		upgrade.Name,
+						harvesterUpgradeComponentLabel:	nodeComponent,
+						upgradeJobTypeLabel:		jobType,
 					},
 				},
 				Spec: corev1.PodSpec{
-					HostIPC:       true,
-					HostPID:       true,
-					HostNetwork:   true,
-					DNSPolicy:     corev1.DNSClusterFirstWithHostNet,
-					RestartPolicy: corev1.RestartPolicyNever,
+					HostIPC:	true,
+					HostPID:	true,
+					HostNetwork:	true,
+					DNSPolicy:	corev1.DNSClusterFirstWithHostNet,
+					RestartPolicy:	corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
-							Name:    "apply",
-							Image:   fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
-							Command: []string{"upgrade_node.sh"},
-							Args:    []string{jobType},
+							Name:		"apply",
+							Image:		fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
+							Command:	[]string{"upgrade_node.sh"},
+							Args:		[]string{jobType},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "HARVESTER_UPGRADE_NAME",
-									Value: upgrade.Name,
+									Name:	"HARVESTER_UPGRADE_NAME",
+									Value:	upgrade.Name,
 								},
 								{
-									Name:  "HARVESTER_UPGRADE_NODE_NAME",
-									Value: nodeName,
+									Name:	"HARVESTER_UPGRADE_NODE_NAME",
+									Value:	nodeName,
 								},
 								{
-									Name: "HARVESTER_UPGRADE_POD_NAME",
+									Name:	"HARVESTER_UPGRADE_POD_NAME",
 									ValueFrom: &corev1.EnvVarSource{
 										FieldRef: &corev1.ObjectFieldSelector{
 											FieldPath: "metadata.name",
@@ -252,7 +270,7 @@ func applyNodeJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo, nodeN
 								{Name: "host-root", MountPath: "/host"},
 							},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: &privileged,
+								Privileged:	&privileged,
 								Capabilities: &corev1.Capabilities{
 									Add: []corev1.Capability{
 										corev1.Capability("CAP_SYS_BOOT"),
@@ -261,14 +279,14 @@ func applyNodeJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo, nodeN
 							},
 						},
 					},
-					ServiceAccountName: "harvester",
+					ServiceAccountName:	"harvester",
 					Affinity: &corev1.Affinity{
 						NodeAffinity: &corev1.NodeAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 								NodeSelectorTerms: []corev1.NodeSelectorTerm{{
 									MatchExpressions: []corev1.NodeSelectorRequirement{{
-										Key:      corev1.LabelHostname,
-										Operator: corev1.NodeSelectorOpIn,
+										Key:		corev1.LabelHostname,
+										Operator:	corev1.NodeSelectorOpIn,
 										Values: []string{
 											nodeName,
 										},
@@ -277,13 +295,13 @@ func applyNodeJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo, nodeN
 							},
 						},
 					},
-					Tolerations: getDefaultTolerations(),
+					Tolerations:	getDefaultTolerations(),
 					Volumes: []corev1.Volume{
 						{
-							Name: `host-root`,
+							Name:	`host-root`,
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
-									Path: "/", Type: &hostPathDirectory,
+									Path:	"/", Type: &hostPathDirectory,
 								},
 							},
 						},
@@ -295,46 +313,47 @@ func applyNodeJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo, nodeN
 }
 
 func applyManifestsJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo) *batchv1.Job {
-	// Use the image tag in the upgrade repo because it's already preloaded and might contain updated codes.
+	__traceStack()
+
 	imageVersion := repoInfo.Release.Harvester
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-apply-manifests", upgrade.Name),
-			Namespace: upgrade.Namespace,
+			Name:		fmt.Sprintf("%s-apply-manifests", upgrade.Name),
+			Namespace:	upgrade.Namespace,
 			Labels: map[string]string{
-				harvesterUpgradeLabel:          upgrade.Name,
-				harvesterUpgradeComponentLabel: manifestComponent,
+				harvesterUpgradeLabel:		upgrade.Name,
+				harvesterUpgradeComponentLabel:	manifestComponent,
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				upgradeReference(upgrade),
 			},
 		},
 		Spec: batchv1.JobSpec{
-			TTLSecondsAfterFinished: pointer.Int32Ptr(defaultTTLSecondsAfterFinished),
+			TTLSecondsAfterFinished:	pointer.Int32Ptr(defaultTTLSecondsAfterFinished),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						harvesterUpgradeLabel:          upgrade.Name,
-						harvesterUpgradeComponentLabel: manifestComponent,
+						harvesterUpgradeLabel:		upgrade.Name,
+						harvesterUpgradeComponentLabel:	manifestComponent,
 					},
 				},
 				Spec: corev1.PodSpec{
-					RestartPolicy: corev1.RestartPolicyNever,
+					RestartPolicy:	corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
-							Name:    "apply",
-							Image:   fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
-							Command: []string{"upgrade_manifests.sh"},
+							Name:		"apply",
+							Image:		fmt.Sprintf("%s:%s", upgradeImageRepository, imageVersion),
+							Command:	[]string{"upgrade_manifests.sh"},
 							Env: []corev1.EnvVar{
 								{
-									Name:  "HARVESTER_UPGRADE_NAME",
-									Value: upgrade.Name,
+									Name:	"HARVESTER_UPGRADE_NAME",
+									Value:	upgrade.Name,
 								},
 							},
 						},
 					},
-					ServiceAccountName: "harvester",
-					Tolerations:        getDefaultTolerations(),
+					ServiceAccountName:	"harvester",
+					Tolerations:		getDefaultTolerations(),
 				},
 			},
 		},
@@ -342,69 +361,75 @@ func applyManifestsJob(upgrade *harvesterv1.Upgrade, repoInfo *UpgradeRepoInfo) 
 }
 
 func getDefaultTolerations() []corev1.Toleration {
+	__traceStack()
+
 	return []corev1.Toleration{
 		{
-			Key:      corev1.TaintNodeUnschedulable,
-			Operator: corev1.TolerationOpExists,
-			Effect:   corev1.TaintEffectNoSchedule,
+			Key:		corev1.TaintNodeUnschedulable,
+			Operator:	corev1.TolerationOpExists,
+			Effect:		corev1.TaintEffectNoSchedule,
 		},
 		{
-			Key:      node.KubeControlPlaneNodeLabelKey,
-			Operator: corev1.TolerationOpExists,
-			Effect:   corev1.TaintEffectNoExecute,
+			Key:		node.KubeControlPlaneNodeLabelKey,
+			Operator:	corev1.TolerationOpExists,
+			Effect:		corev1.TaintEffectNoExecute,
 		},
 		{
-			Key:      "kubevirt.io/drain",
-			Operator: corev1.TolerationOpExists,
-			Effect:   corev1.TaintEffectNoSchedule,
+			Key:		"kubevirt.io/drain",
+			Operator:	corev1.TolerationOpExists,
+			Effect:		corev1.TaintEffectNoSchedule,
 		},
 		{
-			Key:      labelCriticalAddonsOnly,
-			Operator: corev1.TolerationOpExists,
+			Key:		labelCriticalAddonsOnly,
+			Operator:	corev1.TolerationOpExists,
 		},
 		{
-			Key:      corev1.TaintNodeUnreachable,
-			Operator: corev1.TolerationOpExists,
-			Effect:   corev1.TaintEffectNoExecute,
+			Key:		corev1.TaintNodeUnreachable,
+			Operator:	corev1.TolerationOpExists,
+			Effect:		corev1.TaintEffectNoExecute,
 		},
 		{
-			Key:      labelArch,
-			Operator: corev1.TolerationOpEqual,
-			Effect:   corev1.TaintEffectNoSchedule,
-			Value:    "amd64",
+			Key:		labelArch,
+			Operator:	corev1.TolerationOpEqual,
+			Effect:		corev1.TaintEffectNoSchedule,
+			Value:		"amd64",
 		},
 		{
-			Key:      labelArch,
-			Operator: corev1.TolerationOpEqual,
-			Effect:   corev1.TaintEffectNoSchedule,
-			Value:    "arm64",
+			Key:		labelArch,
+			Operator:	corev1.TolerationOpEqual,
+			Effect:		corev1.TaintEffectNoSchedule,
+			Value:		"arm64",
 		},
 		{
-			Key:      labelArch,
-			Operator: corev1.TolerationOpEqual,
-			Effect:   corev1.TaintEffectNoSchedule,
-			Value:    "arm",
+			Key:		labelArch,
+			Operator:	corev1.TolerationOpEqual,
+			Effect:		corev1.TaintEffectNoSchedule,
+			Value:		"arm",
 		},
 	}
 }
 
 const (
-	testJobName      = "test-job"
-	testPlanName     = "test-plan"
-	testNodeName     = "test-node"
-	testUpgradeName  = "test-upgrade"
-	testVersion      = "test-version"
-	testUpgradeImage = "test-upgrade-image"
-	testPlanHash     = "test-hash"
+	testJobName		= "test-job"
+	testPlanName		= "test-plan"
+	testNodeName		= "test-node"
+	testUpgradeName		= "test-upgrade"
+	testVersion		= "test-version"
+	testUpgradeImage	= "test-upgrade-image"
+	testPlanHash		= "test-hash"
 )
 
 func newTestNodeJobBuilder() *jobBuilder {
+	__traceStack()
+
 	return newJobBuilder(testJobName).
 		WithLabel(upgradePlanLabel, testPlanName).
 		WithLabel(upgradeNodeLabel, testNodeName)
 }
 
 func newTestPlanBuilder() *planBuilder {
+	__traceStack()
+
 	return newPlanBuilder(testPlanName).
 		Version(testVersion).
 		WithLabel(harvesterUpgradeLabel, testUpgradeName).
@@ -412,11 +437,15 @@ func newTestPlanBuilder() *planBuilder {
 }
 
 func newTestChartJobBuilder() *jobBuilder {
+	__traceStack()
+
 	return newJobBuilder(testJobName).
 		WithLabel(harvesterUpgradeComponentLabel, manifestComponent)
 }
 
 func newTestUpgradeBuilder() *upgradeBuilder {
+	__traceStack()
+
 	return newUpgradeBuilder(testUpgradeName).
 		WithLabel(harvesterLatestUpgradeLabel, "true").
 		Version(testVersion)
@@ -427,17 +456,21 @@ type jobBuilder struct {
 }
 
 func newJobBuilder(name string) *jobBuilder {
+	__traceStack()
+
 	return &jobBuilder{
 		job: &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: upgradeNamespace,
+				Name:		name,
+				Namespace:	upgradeNamespace,
 			},
 		},
 	}
 }
 
 func (j *jobBuilder) WithLabel(key, value string) *jobBuilder {
+	__traceStack()
+
 	if j.job.Labels == nil {
 		j.job.Labels = make(map[string]string)
 	}
@@ -446,31 +479,39 @@ func (j *jobBuilder) WithLabel(key, value string) *jobBuilder {
 }
 
 func (j *jobBuilder) Running() *jobBuilder {
+	__traceStack()
+
 	j.job.Status.Active = 1
 	return j
 }
 
 func (j *jobBuilder) Completed() *jobBuilder {
+	__traceStack()
+
 	j.job.Status.Succeeded = 1
 	j.job.Status.Conditions = append(j.job.Status.Conditions, batchv1.JobCondition{
-		Type:   batchv1.JobComplete,
-		Status: "True",
+		Type:	batchv1.JobComplete,
+		Status:	"True",
 	})
 	return j
 }
 
 func (j *jobBuilder) Failed(reason, message string) *jobBuilder {
+	__traceStack()
+
 	j.job.Status.Failed = 1
 	j.job.Status.Conditions = append(j.job.Status.Conditions, batchv1.JobCondition{
-		Type:    batchv1.JobFailed,
-		Status:  "True",
-		Reason:  reason,
-		Message: message,
+		Type:		batchv1.JobFailed,
+		Status:		"True",
+		Reason:		reason,
+		Message:	message,
 	})
 	return j
 }
 
 func (j *jobBuilder) Build() *batchv1.Job {
+	__traceStack()
+
 	return j.job
 }
 
@@ -479,17 +520,21 @@ type upgradeBuilder struct {
 }
 
 func newUpgradeBuilder(name string) *upgradeBuilder {
+	__traceStack()
+
 	return &upgradeBuilder{
 		upgrade: &harvesterv1.Upgrade{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: harvesterSystemNamespace,
+				Name:		name,
+				Namespace:	harvesterSystemNamespace,
 			},
 		},
 	}
 }
 
 func (p *upgradeBuilder) WithLabel(key, value string) *upgradeBuilder {
+	__traceStack()
+
 	if p.upgrade.Labels == nil {
 		p.upgrade.Labels = make(map[string]string)
 	}
@@ -498,6 +543,8 @@ func (p *upgradeBuilder) WithLabel(key, value string) *upgradeBuilder {
 }
 
 func (p *upgradeBuilder) WithAnnotation(key, value string) *upgradeBuilder {
+	__traceStack()
+
 	if p.upgrade.Annotations == nil {
 		p.upgrade.Annotations = make(map[string]string)
 	}
@@ -506,56 +553,78 @@ func (p *upgradeBuilder) WithAnnotation(key, value string) *upgradeBuilder {
 }
 
 func (p *upgradeBuilder) WithImage(image string) *upgradeBuilder {
+	__traceStack()
+
 	p.upgrade.Spec.Image = fmt.Sprintf("%s/%s", upgradeNamespace, image)
 	return p
 }
 
 func (p *upgradeBuilder) Version(version string) *upgradeBuilder {
+	__traceStack()
+
 	p.upgrade.Spec.Version = version
 	return p
 }
 
 func (p *upgradeBuilder) ImageReadyCondition(status corev1.ConditionStatus, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setImageReadyCondition(p.upgrade, status, reason, message)
 	return p
 }
 
 func (p *upgradeBuilder) RepoProvisionedCondition(status corev1.ConditionStatus, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setRepoProvisionedCondition(p.upgrade, status, "", "")
 	return p
 }
 
 func (p *upgradeBuilder) NodeUpgradeStatus(nodeName string, state, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setNodeUpgradeStatus(p.upgrade, nodeName, state, reason, message)
 	return p
 }
 
 func (p *upgradeBuilder) ImageIDStatus(imageName string) *upgradeBuilder {
+	__traceStack()
+
 	p.upgrade.Status.ImageID = imageName
 	return p
 }
 
 func (p *upgradeBuilder) NodesPreparedCondition(status corev1.ConditionStatus, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setNodesPreparedCondition(p.upgrade, status, reason, message)
 	return p
 }
 
 func (p *upgradeBuilder) NodesUpgradedCondition(status corev1.ConditionStatus, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setNodesUpgradedCondition(p.upgrade, status, reason, message)
 	return p
 }
 
 func (p *upgradeBuilder) ChartUpgradeStatus(status corev1.ConditionStatus, reason, message string) *upgradeBuilder {
+	__traceStack()
+
 	setHelmChartUpgradeStatus(p.upgrade, status, reason, message)
 	return p
 }
 
 func (p *upgradeBuilder) InitStatus() *upgradeBuilder {
+	__traceStack()
+
 	initStatus(p.upgrade)
 	return p
 }
 
 func (p *upgradeBuilder) Build() *harvesterv1.Upgrade {
+	__traceStack()
+
 	return p.upgrade
 }
 
@@ -564,17 +633,21 @@ type versionBuilder struct {
 }
 
 func newVersionBuilder(name string) *versionBuilder {
+	__traceStack()
+
 	return &versionBuilder{
 		version: &harvesterv1.Version{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: upgradeNamespace,
+				Name:		name,
+				Namespace:	upgradeNamespace,
 			},
 		},
 	}
 }
 
 func (v *versionBuilder) Build() *harvesterv1.Version {
+	__traceStack()
+
 	return v.version
 }
 
@@ -583,17 +656,21 @@ type planBuilder struct {
 }
 
 func newPlanBuilder(name string) *planBuilder {
+	__traceStack()
+
 	return &planBuilder{
 		plan: &upgradev1.Plan{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: sucNamespace,
+				Name:		name,
+				Namespace:	sucNamespace,
 			},
 		},
 	}
 }
 
 func (p *planBuilder) WithLabel(key, value string) *planBuilder {
+	__traceStack()
+
 	if p.plan.Labels == nil {
 		p.plan.Labels = make(map[string]string)
 	}
@@ -602,16 +679,22 @@ func (p *planBuilder) WithLabel(key, value string) *planBuilder {
 }
 
 func (p *planBuilder) Version(version string) *planBuilder {
+	__traceStack()
+
 	p.plan.Spec.Version = version
 	return p
 }
 
 func (p *planBuilder) Hash(hash string) *planBuilder {
+	__traceStack()
+
 	p.plan.Status.LatestHash = hash
 	return p
 }
 
 func (p *planBuilder) Build() *upgradev1.Plan {
+	__traceStack()
+
 	return p.plan
 }
 
@@ -620,6 +703,8 @@ type nodeBuilder struct {
 }
 
 func newNodeBuilder(name string) *nodeBuilder {
+	__traceStack()
+
 	return &nodeBuilder{
 		node: &corev1.Node{
 			ObjectMeta: metav1.ObjectMeta{
@@ -630,16 +715,22 @@ func newNodeBuilder(name string) *nodeBuilder {
 }
 
 func (n *nodeBuilder) ControlPlane() *nodeBuilder {
+	__traceStack()
+
 	n.WithLabel(node.KubeControlPlaneNodeLabelKey, "true")
 	return n
 }
 
 func (n *nodeBuilder) Managed() *nodeBuilder {
+	__traceStack()
+
 	n.WithLabel(harvesterManagedLabel, "true")
 	return n
 }
 
 func (n *nodeBuilder) WithLabel(key, value string) *nodeBuilder {
+	__traceStack()
+
 	if n.node.Labels == nil {
 		n.node.Labels = make(map[string]string)
 	}
@@ -648,14 +739,18 @@ func (n *nodeBuilder) WithLabel(key, value string) *nodeBuilder {
 }
 
 func (n *nodeBuilder) Build() *corev1.Node {
+	__traceStack()
+
 	return n.node
 }
 
 func upgradeReference(upgrade *harvesterv1.Upgrade) metav1.OwnerReference {
+	__traceStack()
+
 	return metav1.OwnerReference{
-		Name:       upgrade.Name,
-		Kind:       upgrade.Kind,
-		UID:        upgrade.UID,
-		APIVersion: upgrade.APIVersion,
+		Name:		upgrade.Name,
+		Kind:		upgrade.Kind,
+		UID:		upgrade.UID,
+		APIVersion:	upgrade.APIVersion,
 	}
 }

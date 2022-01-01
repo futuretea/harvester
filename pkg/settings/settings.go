@@ -12,52 +12,54 @@ import (
 )
 
 var (
-	releasePattern = regexp.MustCompile("^v[0-9]")
-	settings       = map[string]Setting{}
-	provider       Provider
-	InjectDefaults string
+	releasePattern	= regexp.MustCompile("^v[0-9]")
+	settings	= map[string]Setting{}
+	provider	Provider
+	InjectDefaults	string
 
-	AdditionalCA                 = NewSetting(AdditionalCASettingName, "")
-	APIUIVersion                 = NewSetting("api-ui-version", "1.1.9") // Please update the HARVESTER_API_UI_VERSION in package/Dockerfile when updating the version here.
-	ClusterRegistrationURL       = NewSetting("cluster-registration-url", "")
-	ServerVersion                = NewSetting("server-version", "dev")
-	UIIndex                      = NewSetting("ui-index", DefaultDashboardUIURL)
-	UIPath                       = NewSetting("ui-path", "/usr/share/harvester/harvester")
-	UISource                     = NewSetting("ui-source", "auto") // Options are 'auto', 'external' or 'bundled'
-	VolumeSnapshotClass          = NewSetting("volume-snapshot-class", "longhorn")
-	BackupTargetSet              = NewSetting(BackupTargetSettingName, InitBackupTargetToString())
-	UpgradableVersions           = NewSetting("upgradable-versions", "")
-	UpgradeCheckerEnabled        = NewSetting("upgrade-checker-enabled", "true")
-	UpgradeCheckerURL            = NewSetting("upgrade-checker-url", "https://harvester-upgrade-responder.rancher.io/v1/checkupgrade")
-	LogLevel                     = NewSetting("log-level", "info") // options are info, debug and trace
-	SSLCertificates              = NewSetting(SSLCertificatesSettingName, "{}")
-	SSLParameters                = NewSetting(SSLParametersName, "{}")
-	SupportBundleImage           = NewSetting("support-bundle-image", "rancher/support-bundle-kit:v0.0.5")
-	SupportBundleImagePullPolicy = NewSetting("support-bundle-image-pull-policy", "IfNotPresent")
-	SupportBundleNamespaces      = NewSetting("support-bundle-namespaces", "")
-	SupportBundleTimeout         = NewSetting(SupportBundleTimeoutSettingName, "10") // Unit is minute. 0 means disable timeout.
-	DefaultStorageClass          = NewSetting("default-storage-class", "longhorn")
-	HTTPProxy                    = NewSetting(HttpProxySettingName, "{}")
-	VMForceResetPolicySet        = NewSetting(VMForceResetPolicySettingName, InitVMForceResetPolicy())
-	OvercommitConfig             = NewSetting(OvercommitConfigSettingName, `{"cpu":1600,"memory":150,"storage":200}`)
-	VipPools                     = NewSetting(VipPoolsConfigSettingName, "")
-	AutoDiskProvisionPaths       = NewSetting("auto-disk-provision-paths", "")
+	AdditionalCA			= NewSetting(AdditionalCASettingName, "")
+	APIUIVersion			= NewSetting("api-ui-version", "1.1.9")
+	ClusterRegistrationURL		= NewSetting("cluster-registration-url", "")
+	ServerVersion			= NewSetting("server-version", "dev")
+	UIIndex				= NewSetting("ui-index", DefaultDashboardUIURL)
+	UIPath				= NewSetting("ui-path", "/usr/share/harvester/harvester")
+	UISource			= NewSetting("ui-source", "auto")
+	VolumeSnapshotClass		= NewSetting("volume-snapshot-class", "longhorn")
+	BackupTargetSet			= NewSetting(BackupTargetSettingName, InitBackupTargetToString())
+	UpgradableVersions		= NewSetting("upgradable-versions", "")
+	UpgradeCheckerEnabled		= NewSetting("upgrade-checker-enabled", "true")
+	UpgradeCheckerURL		= NewSetting("upgrade-checker-url", "https://harvester-upgrade-responder.rancher.io/v1/checkupgrade")
+	LogLevel			= NewSetting("log-level", "info")
+	SSLCertificates			= NewSetting(SSLCertificatesSettingName, "{}")
+	SSLParameters			= NewSetting(SSLParametersName, "{}")
+	SupportBundleImage		= NewSetting("support-bundle-image", "rancher/support-bundle-kit:v0.0.5")
+	SupportBundleImagePullPolicy	= NewSetting("support-bundle-image-pull-policy", "IfNotPresent")
+	SupportBundleNamespaces		= NewSetting("support-bundle-namespaces", "")
+	SupportBundleTimeout		= NewSetting(SupportBundleTimeoutSettingName, "10")
+	DefaultStorageClass		= NewSetting("default-storage-class", "longhorn")
+	HTTPProxy			= NewSetting(HttpProxySettingName, "{}")
+	VMForceResetPolicySet		= NewSetting(VMForceResetPolicySettingName, InitVMForceResetPolicy())
+	OvercommitConfig		= NewSetting(OvercommitConfigSettingName, `{"cpu":1600,"memory":150,"storage":200}`)
+	VipPools			= NewSetting(VipPoolsConfigSettingName, "")
+	AutoDiskProvisionPaths		= NewSetting("auto-disk-provision-paths", "")
 )
 
 const (
-	AdditionalCASettingName         = "additional-ca"
-	BackupTargetSettingName         = "backup-target"
-	VMForceResetPolicySettingName   = "vm-force-reset-policy"
-	SupportBundleTimeoutSettingName = "support-bundle-timeout"
-	HttpProxySettingName            = "http-proxy"
-	OvercommitConfigSettingName     = "overcommit-config"
-	SSLCertificatesSettingName      = "ssl-certificates"
-	SSLParametersName               = "ssl-parameters"
-	VipPoolsConfigSettingName       = "vip-pools"
-	DefaultDashboardUIURL           = "https://releases.rancher.com/harvester-ui/dashboard/latest/index.html"
+	AdditionalCASettingName		= "additional-ca"
+	BackupTargetSettingName		= "backup-target"
+	VMForceResetPolicySettingName	= "vm-force-reset-policy"
+	SupportBundleTimeoutSettingName	= "support-bundle-timeout"
+	HttpProxySettingName		= "http-proxy"
+	OvercommitConfigSettingName	= "overcommit-config"
+	SSLCertificatesSettingName	= "ssl-certificates"
+	SSLParametersName		= "ssl-parameters"
+	VipPoolsConfigSettingName	= "vip-pools"
+	DefaultDashboardUIURL		= "https://releases.rancher.com/harvester-ui/dashboard/latest/index.html"
 )
 
 func init() {
+	__traceStack()
+
 	if InjectDefaults == "" {
 		return
 	}
@@ -83,12 +85,14 @@ type Provider interface {
 }
 
 type Setting struct {
-	Name     string
-	Default  string
-	ReadOnly bool
+	Name		string
+	Default		string
+	ReadOnly	bool
 }
 
 func (s Setting) SetIfUnset(value string) error {
+	__traceStack()
+
 	if provider == nil {
 		return s.Set(value)
 	}
@@ -96,6 +100,8 @@ func (s Setting) SetIfUnset(value string) error {
 }
 
 func (s Setting) Set(value string) error {
+	__traceStack()
+
 	if provider == nil {
 		s, ok := settings[s.Name]
 		if ok {
@@ -109,6 +115,8 @@ func (s Setting) Set(value string) error {
 }
 
 func (s Setting) Get() string {
+	__traceStack()
+
 	if provider == nil {
 		s := settings[s.Name]
 		return s.Default
@@ -117,6 +125,8 @@ func (s Setting) Get() string {
 }
 
 func (s Setting) GetInt() int {
+	__traceStack()
+
 	v := s.Get()
 	i, err := strconv.Atoi(v)
 	if err == nil {
@@ -131,6 +141,8 @@ func (s Setting) GetInt() int {
 }
 
 func SetProvider(p Provider) error {
+	__traceStack()
+
 	if err := p.SetAll(settings); err != nil {
 		return err
 	}
@@ -139,47 +151,55 @@ func SetProvider(p Provider) error {
 }
 
 func NewSetting(name, def string) Setting {
+	__traceStack()
+
 	s := Setting{
-		Name:    name,
-		Default: def,
+		Name:		name,
+		Default:	def,
 	}
 	settings[s.Name] = s
 	return s
 }
 
 func GetEnvKey(key string) string {
+	__traceStack()
+
 	return "HARVESTER_" + strings.ToUpper(strings.Replace(key, "-", "_", -1))
 }
 
 func IsRelease() bool {
+	__traceStack()
+
 	return !strings.Contains(ServerVersion.Get(), "head") && releasePattern.MatchString(ServerVersion.Get())
 }
 
 type TargetType string
 
 const (
-	S3BackupType  TargetType = "s3"
-	NFSBackupType TargetType = "nfs"
+	S3BackupType	TargetType	= "s3"
+	NFSBackupType	TargetType	= "nfs"
 )
 
 type BackupTarget struct {
-	Type               TargetType `json:"type"`
-	Endpoint           string     `json:"endpoint"`
-	AccessKeyID        string     `json:"accessKeyId"`
-	SecretAccessKey    string     `json:"secretAccessKey"`
-	BucketName         string     `json:"bucketName"`
-	BucketRegion       string     `json:"bucketRegion"`
-	Cert               string     `json:"cert"`
-	VirtualHostedStyle bool       `json:"virtualHostedStyle"`
+	Type			TargetType	`json:"type"`
+	Endpoint		string		`json:"endpoint"`
+	AccessKeyID		string		`json:"accessKeyId"`
+	SecretAccessKey		string		`json:"secretAccessKey"`
+	BucketName		string		`json:"bucketName"`
+	BucketRegion		string		`json:"bucketRegion"`
+	Cert			string		`json:"cert"`
+	VirtualHostedStyle	bool		`json:"virtualHostedStyle"`
 }
 
 type VMForceResetPolicy struct {
-	Enable bool `json:"enable"`
-	// Period means how many seconds to wait for a node get back.
-	Period int64 `json:"period"`
+	Enable	bool	`json:"enable"`
+
+	Period	int64	`json:"period"`
 }
 
 func InitBackupTargetToString() string {
+	__traceStack()
+
 	target := &BackupTarget{}
 	targetStr, err := json.Marshal(target)
 	if err != nil {
@@ -189,6 +209,8 @@ func InitBackupTargetToString() string {
 }
 
 func DecodeBackupTarget(value string) (*BackupTarget, error) {
+	__traceStack()
+
 	target := &BackupTarget{}
 	if err := json.Unmarshal([]byte(value), target); err != nil {
 		return nil, fmt.Errorf("unmarshal failed, error: %w, value: %s", err, value)
@@ -198,6 +220,8 @@ func DecodeBackupTarget(value string) (*BackupTarget, error) {
 }
 
 func (target *BackupTarget) IsDefaultBackupTarget() bool {
+	__traceStack()
+
 	if target == nil || target.Type != "" {
 		return false
 	}
@@ -207,9 +231,11 @@ func (target *BackupTarget) IsDefaultBackupTarget() bool {
 }
 
 func InitVMForceResetPolicy() string {
+	__traceStack()
+
 	policy := &VMForceResetPolicy{
-		Enable: true,
-		Period: 5 * 60, // 5 minutes
+		Enable:	true,
+		Period:	5 * 60,
 	}
 	policyStr, err := json.Marshal(policy)
 	if err != nil {
@@ -219,6 +245,8 @@ func InitVMForceResetPolicy() string {
 }
 
 func DecodeVMForceResetPolicy(value string) (*VMForceResetPolicy, error) {
+	__traceStack()
+
 	policy := &VMForceResetPolicy{}
 	if err := json.Unmarshal([]byte(value), policy); err != nil {
 		return nil, fmt.Errorf("unmarshal failed, error: %w, value: %s", err, value)
@@ -228,18 +256,18 @@ func DecodeVMForceResetPolicy(value string) (*VMForceResetPolicy, error) {
 }
 
 type Overcommit struct {
-	Cpu     int `json:"cpu"`
-	Memory  int `json:"memory"`
-	Storage int `json:"storage"`
+	Cpu	int	`json:"cpu"`
+	Memory	int	`json:"memory"`
+	Storage	int	`json:"storage"`
 }
 
 type SSLCertificate struct {
-	CA                string `json:"ca"`
-	PublicCertificate string `json:"publicCertificate"`
-	PrivateKey        string `json:"privateKey"`
+	CA			string	`json:"ca"`
+	PublicCertificate	string	`json:"publicCertificate"`
+	PrivateKey		string	`json:"privateKey"`
 }
 
 type SSLParameter struct {
-	Protocols string `json:"protocols"`
-	Ciphers   string `json:"ciphers"`
+	Protocols	string	`json:"protocols"`
+	Ciphers		string	`json:"ciphers"`
 }

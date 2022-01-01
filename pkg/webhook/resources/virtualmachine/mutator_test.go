@@ -16,97 +16,99 @@ import (
 )
 
 func Test_virtualmachine_mutator(t *testing.T) {
+	__traceStack()
+
 	tests := []struct {
-		name        string
-		resourceReq kubevirtv1.ResourceRequirements
-		memory      *kubevirtv1.Memory
-		patchOps    []string
-		setting     string
+		name		string
+		resourceReq	kubevirtv1.ResourceRequirements
+		memory		*kubevirtv1.Memory
+		patchOps	[]string
+		setting		string
 	}{
 		{
-			name:        "has no limits",
-			resourceReq: kubevirtv1.ResourceRequirements{},
-			patchOps:    nil,
-			setting:     "",
+			name:		"has no limits",
+			resourceReq:	kubevirtv1.ResourceRequirements{},
+			patchOps:	nil,
+			setting:	"",
 		},
 		{
-			name: "has memory limit and other requests",
+			name:	"has memory limit and other requests",
 			resourceReq: kubevirtv1.ResourceRequirements{
 				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI), // 1Gi
+					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI),
 				},
 				Requests: map[v1.ResourceName]resource.Quantity{
 					v1.ResourceCPU: *resource.NewMilliQuantity(1000, resource.DecimalSI),
 				},
 			},
-			memory: nil,
+			memory:	nil,
 			patchOps: []string{
 				`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests/memory", "value": "256Mi"}`,
-				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`, // 1Gi - 100Mi
+				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`,
 			},
-			setting: "",
+			setting:	"",
 		},
 		{
-			name: "has cpu limit and other requests",
+			name:	"has cpu limit and other requests",
 			resourceReq: kubevirtv1.ResourceRequirements{
 				Limits: map[v1.ResourceName]resource.Quantity{
 					v1.ResourceCPU: *resource.NewMilliQuantity(1000, resource.DecimalSI),
 				},
 				Requests: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI), // 1Gi
+					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI),
 				},
 			},
-			memory: nil,
+			memory:	nil,
 			patchOps: []string{
 				`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests/cpu", "value": "500m"}`,
 			},
-			setting: "",
+			setting:	"",
 		},
 		{
-			name: "has both cpu and memory limits but not requests",
+			name:	"has both cpu and memory limits but not requests",
 			resourceReq: kubevirtv1.ResourceRequirements{
 				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceCPU:    *resource.NewMilliQuantity(1000, resource.DecimalSI),
-					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI), // 1Gi
+					v1.ResourceCPU:		*resource.NewMilliQuantity(1000, resource.DecimalSI),
+					v1.ResourceMemory:	*resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI),
 				},
 			},
-			memory: nil,
+			memory:	nil,
 			patchOps: []string{
-				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`, // 1Gi - 100Mi
+				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`,
 				`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests", "value": {"cpu":"500m","memory":"256Mi"}}`,
 			},
 		},
 		{
-			name: "use value instead of default setting",
+			name:	"use value instead of default setting",
 			resourceReq: kubevirtv1.ResourceRequirements{
 				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceCPU:    *resource.NewMilliQuantity(1000, resource.DecimalSI),
-					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI), // 1Gi
+					v1.ResourceCPU:		*resource.NewMilliQuantity(1000, resource.DecimalSI),
+					v1.ResourceMemory:	*resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI),
 				},
 			},
-			memory: nil,
+			memory:	nil,
 			patchOps: []string{
-				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`, // 1Gi - 100Mi
+				`{"op": "replace", "path": "/spec/template/spec/domain/memory", "value": {"guest":"924Mi"}}`,
 				`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests", "value": {"cpu":"100m","memory":"102Mi"}}`,
 			},
-			setting: `{"cpu":1000,"memory":1000,"storage":800}`,
+			setting:	`{"cpu":1000,"memory":1000,"storage":800}`,
 		},
 		{
-			name: "replace old guest memory",
+			name:	"replace old guest memory",
 			resourceReq: kubevirtv1.ResourceRequirements{
 				Limits: map[v1.ResourceName]resource.Quantity{
-					v1.ResourceCPU:    *resource.NewMilliQuantity(1000, resource.DecimalSI),
-					v1.ResourceMemory: *resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI), // 1Gi
+					v1.ResourceCPU:		*resource.NewMilliQuantity(1000, resource.DecimalSI),
+					v1.ResourceMemory:	*resource.NewQuantity(int64(math.Pow(2, 30)), resource.BinarySI),
 				},
 			},
 			memory: &kubevirtv1.Memory{
-				Guest: resource.NewQuantity(int64(math.Pow(2, 40)), resource.BinarySI), // 1Ti
+				Guest: resource.NewQuantity(int64(math.Pow(2, 40)), resource.BinarySI),
 			},
 			patchOps: []string{
-				`{"op": "replace", "path": "/spec/template/spec/domain/memory/guest", "value": "924Mi"}`, // 1Gi - 100Mi
+				`{"op": "replace", "path": "/spec/template/spec/domain/memory/guest", "value": "924Mi"}`,
 				`{"op": "replace", "path": "/spec/template/spec/domain/resources/requests", "value": {"cpu":"100m","memory":"102Mi"}}`,
 			},
-			setting: `{"cpu":1000,"memory":1000,"storage":800}`,
+			setting:	`{"cpu":1000,"memory":1000,"storage":800}`,
 		},
 	}
 
@@ -114,12 +116,12 @@ func Test_virtualmachine_mutator(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "overcommit-config",
 		},
-		Default: `{"cpu":200,"memory":400,"storage":800}`,
+		Default:	`{"cpu":200,"memory":400,"storage":800}`,
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			// arrage
+
 			clientset := fake.NewSimpleClientset()
 			settingCpy := setting.DeepCopy()
 			if tc.setting != "" {
@@ -131,21 +133,19 @@ func Test_virtualmachine_mutator(t *testing.T) {
 			vm := &kubevirtv1.VirtualMachine{
 				Spec: kubevirtv1.VirtualMachineSpec{
 					Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
-						ObjectMeta: metav1.ObjectMeta{},
+						ObjectMeta:	metav1.ObjectMeta{},
 						Spec: kubevirtv1.VirtualMachineInstanceSpec{
 							Domain: kubevirtv1.DomainSpec{
-								Resources: tc.resourceReq,
-								Memory:    tc.memory,
+								Resources:	tc.resourceReq,
+								Memory:		tc.memory,
 							},
 						},
 					},
 				},
 			}
 
-			// act
 			actual, err := mutator.(*vmMutator).patchResourceOvercommit(vm)
 
-			// assert
 			assert.Nil(t, err, tc.name)
 			assert.Equal(t, tc.patchOps, actual)
 		})

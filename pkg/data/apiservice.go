@@ -11,19 +11,21 @@ const (
 )
 
 func addAPIService(apply apply.Apply, namespace string) error {
+	__traceStack()
+
 	return apply.
 		WithDynamicLookup().
 		WithSetID("harvester-apiservice").
 		ApplyObjects(&v3.APIService{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "harvester",
-				Namespace: namespace,
+				Name:		"harvester",
+				Namespace:	namespace,
 			},
 			Spec: v3.APIServiceSpec{
-				SecretName:      AggregationSecretName,
-				SecretNamespace: namespace,
-				PathPrefixes:    []string{"/v1/harvester/", "/dashboard/"},
-				Paths:           []string{"/v1/harvester"},
+				SecretName:		AggregationSecretName,
+				SecretNamespace:	namespace,
+				PathPrefixes:		[]string{"/v1/harvester/", "/dashboard/"},
+				Paths:			[]string{"/v1/harvester"},
 			},
 		})
 }

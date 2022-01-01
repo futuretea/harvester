@@ -19,6 +19,8 @@ type templateLinkHandler struct {
 }
 
 func (h *templateLinkHandler) byIDHandler(request *types.APIRequest) (types.APIObject, error) {
+	__traceStack()
+
 	if request.Link == "versions" {
 		versions, err := h.getVersions(request.Namespace, request.Name)
 		if err != nil {
@@ -32,6 +34,8 @@ func (h *templateLinkHandler) byIDHandler(request *types.APIRequest) (types.APIO
 }
 
 func (h *templateLinkHandler) getVersions(templateNs, templateName string) (types.APIObjectList, error) {
+	__traceStack()
+
 	sets := labels.Set{
 		template.TemplateLabel: templateName,
 	}
@@ -44,9 +48,9 @@ func (h *templateLinkHandler) getVersions(templateNs, templateName string) (type
 	for _, vtr := range versions {
 		id := fmt.Sprintf("%s/%s", vtr.Namespace, vtr.Name)
 		result = append(result, types.APIObject{
-			Type:   templateVersionSchemaID,
-			ID:     id,
-			Object: vtr,
+			Type:	templateVersionSchemaID,
+			ID:	id,
+			Object:	vtr,
 		})
 	}
 

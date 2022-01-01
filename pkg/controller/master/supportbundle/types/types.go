@@ -1,41 +1,33 @@
-// shared types for support bundle controller and manager
 package types
 
 import "time"
 
 const (
-	StateNone       = ""
-	StateGenerating = "generating"
-	StateError      = "error"
-	StateReady      = "ready"
+	StateNone	= ""
+	StateGenerating	= "generating"
+	StateError	= "error"
+	StateReady	= "ready"
 
-	// labels
-	SupportBundleLabelKey = "rancher/supportbundle"
-	DrainKey              = "kubevirt.io/drain"
+	SupportBundleLabelKey	= "rancher/supportbundle"
+	DrainKey		= "kubevirt.io/drain"
 
-	AppManager = "support-bundle-manager"
-	AppAgent   = "support-bundle-agent"
+	AppManager	= "support-bundle-manager"
+	AppAgent	= "support-bundle-agent"
 
-	BundleCreationTimeout = 8 * time.Minute
-	NodeBundleWaitTimeout = "5m"
+	BundleCreationTimeout	= 8 * time.Minute
+	NodeBundleWaitTimeout	= "5m"
 )
 
 type ManagerStatus struct {
-	// phase to collect bundle
-	Phase string
+	Phase	string
 
-	// fail to collect bundle
-	Error bool
+	Error	bool
 
-	// error message
-	ErrorMessage string
+	ErrorMessage	string
 
-	// progress of the bundle collecting. 0 - 100.
-	Progress int
+	Progress	int
 
-	// bundle filename
-	Filename string
+	Filename	string
 
-	// bundle filesize
-	Filesize int64
+	Filesize	int64
 }

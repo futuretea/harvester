@@ -11,6 +11,8 @@ const (
 )
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	keyPairs := management.HarvesterFactory.Harvesterhci().V1beta1().KeyPair()
 	controller := &Handler{
 		keyPairClient: keyPairs,

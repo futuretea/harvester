@@ -13,12 +13,13 @@ import (
 )
 
 func (h *Handler) syncOvercommitConfig(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	overcommit := &settings.Overcommit{}
 	if err := json.Unmarshal([]byte(setting.Value), overcommit); err != nil {
 		return fmt.Errorf("Invalid JSON `%s`: %s", setting.Value, err.Error())
 	}
 
-	// Longhorn storage overcommit
 	storage, err := h.longhornSettingCache.Get(util.LonghornSystemNamespaceName, string(longhorn.SettingNameStorageOverProvisioningPercentage))
 	if err != nil {
 		return err

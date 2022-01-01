@@ -39,8 +39,8 @@ var _ = Describe("verify volume APIs", func() {
 		Specify("verify required fileds for volumes", func() {
 
 			var (
-				volumeName = fuzz.String(5)
-				volumeMode = corev1.PersistentVolumeFilesystem
+				volumeName	= fuzz.String(5)
+				volumeMode	= corev1.PersistentVolumeFilesystem
 			)
 
 			By("create a volume with name missing", func() {
@@ -49,8 +49,8 @@ var _ = Describe("verify volume APIs", func() {
 						Namespace: namespace,
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						VolumeMode:  &volumeMode,
+						AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						VolumeMode:	&volumeMode,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse("1Gi"),
@@ -65,12 +65,12 @@ var _ = Describe("verify volume APIs", func() {
 			By("create a volume with size missing", func() {
 				var volume = corev1.PersistentVolumeClaim{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      volumeName,
-						Namespace: namespace,
+						Name:		volumeName,
+						Namespace:	namespace,
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						VolumeMode:  &volumeMode,
+						AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						VolumeMode:	&volumeMode,
 					},
 				}
 				respCode, respBody, err := helper.PostObject(volumeAPI, volume)
@@ -81,12 +81,12 @@ var _ = Describe("verify volume APIs", func() {
 		Specify("verify volume fields set", func() {
 
 			var (
-				volumeName = fuzz.String(5)
-				volumeMode = corev1.PersistentVolumeFilesystem
-				volume     = corev1.PersistentVolumeClaim{
+				volumeName	= fuzz.String(5)
+				volumeMode	= corev1.PersistentVolumeFilesystem
+				volume		= corev1.PersistentVolumeClaim{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      volumeName,
-						Namespace: namespace,
+						Name:		volumeName,
+						Namespace:	namespace,
 						Labels: map[string]string{
 							"test.harvesterhci.io": "for-test",
 						},
@@ -95,8 +95,8 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						VolumeMode:  &volumeMode,
+						AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						VolumeMode:	&volumeMode,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse("1Gi"),
@@ -104,8 +104,8 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 				}
-				getVolumeURL = fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
-				retVolume    corev1.PersistentVolumeClaim
+				getVolumeURL	= fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
+				retVolume	corev1.PersistentVolumeClaim
 			)
 
 			By("create an empty volume")
@@ -123,12 +123,12 @@ var _ = Describe("verify volume APIs", func() {
 		Specify("verify volume fields set by yaml", func() {
 
 			var (
-				volumeName = fuzz.String(5)
-				volumeMode = corev1.PersistentVolumeFilesystem
-				volume     = corev1.PersistentVolumeClaim{
+				volumeName	= fuzz.String(5)
+				volumeMode	= corev1.PersistentVolumeFilesystem
+				volume		= corev1.PersistentVolumeClaim{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      volumeName,
-						Namespace: namespace,
+						Name:		volumeName,
+						Namespace:	namespace,
 						Labels: map[string]string{
 							"test.harvesterhci.io": "for-test",
 						},
@@ -137,8 +137,8 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						VolumeMode:  &volumeMode,
+						AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						VolumeMode:	&volumeMode,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse("1Gi"),
@@ -146,8 +146,8 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 				}
-				getVolumeURL = fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
-				retVolume    corev1.PersistentVolumeClaim
+				getVolumeURL	= fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
+				retVolume	corev1.PersistentVolumeClaim
 			)
 
 			By("create an empty source volume")
@@ -164,12 +164,12 @@ var _ = Describe("verify volume APIs", func() {
 
 		Specify("verify update and delete volumes", func() {
 			var (
-				volumeName = fuzz.String(5)
-				volumeMode = corev1.PersistentVolumeFilesystem
-				volume     = corev1.PersistentVolumeClaim{
+				volumeName	= fuzz.String(5)
+				volumeMode	= corev1.PersistentVolumeFilesystem
+				volume		= corev1.PersistentVolumeClaim{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      volumeName,
-						Namespace: namespace,
+						Name:		volumeName,
+						Namespace:	namespace,
 						Labels: map[string]string{
 							"test.harvesterhci.io": "for-test",
 						},
@@ -178,8 +178,8 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-						VolumeMode:  &volumeMode,
+						AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+						VolumeMode:	&volumeMode,
 						Resources: corev1.ResourceRequirements{
 							Requests: corev1.ResourceList{
 								corev1.ResourceStorage: resource.MustParse("1Gi"),
@@ -188,10 +188,10 @@ var _ = Describe("verify volume APIs", func() {
 					},
 				}
 
-				toUpdateVolume = corev1.PersistentVolumeClaim{
+				toUpdateVolume	= corev1.PersistentVolumeClaim{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      volumeName,
-						Namespace: namespace,
+						Name:		volumeName,
+						Namespace:	namespace,
 						Labels: map[string]string{
 							"test.harvesterhci.io": "for-test-update",
 						},
@@ -200,15 +200,15 @@ var _ = Describe("verify volume APIs", func() {
 						},
 					},
 				}
-				volumeURL = fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
-				retVolume corev1.PersistentVolumeClaim
+				volumeURL	= fmt.Sprintf("%s/%s/%s", volumeAPI, namespace, volumeName)
+				retVolume	corev1.PersistentVolumeClaim
 			)
 			By("create volume")
 			respCode, respBody, err := helper.PostObject(volumeAPI, volume)
 			MustRespCodeIs(http.StatusCreated, "post volume", err, respCode, respBody)
 
 			By("update volume")
-			// Do retries on update conflicts
+
 			MustFinallyBeTrue(func() bool {
 				respCode, respBody, err = helper.GetObject(volumeURL, &retVolume)
 				MustRespCodeIs(http.StatusOK, "get volume", err, respCode, respBody)

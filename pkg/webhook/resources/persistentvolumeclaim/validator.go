@@ -17,25 +17,29 @@ import (
 )
 
 func NewValidator(pvcCache v1.PersistentVolumeClaimCache, vmCache ctlkv1.VirtualMachineCache) types.Validator {
+	__traceStack()
+
 	return &pvcValidator{
-		pvcCache: pvcCache,
-		vmCache:  vmCache,
+		pvcCache:	pvcCache,
+		vmCache:	vmCache,
 	}
 }
 
 type pvcValidator struct {
 	types.DefaultValidator
-	pvcCache v1.PersistentVolumeClaimCache
-	vmCache  ctlkv1.VirtualMachineCache
+	pvcCache	v1.PersistentVolumeClaimCache
+	vmCache		ctlkv1.VirtualMachineCache
 }
 
 func (v *pvcValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       "persistentvolumeclaims",
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   corev1.SchemeGroupVersion.Group,
-		APIVersion: corev1.SchemeGroupVersion.Version,
-		ObjectType: &corev1.PersistentVolumeClaim{},
+		Name:		"persistentvolumeclaims",
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	corev1.SchemeGroupVersion.Group,
+		APIVersion:	corev1.SchemeGroupVersion.Version,
+		ObjectType:	&corev1.PersistentVolumeClaim{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Delete,
 			admissionregv1.Update,
@@ -44,6 +48,8 @@ func (v *pvcValidator) Resource() types.Resource {
 }
 
 func (v *pvcValidator) Delete(request *types.Request, oldObj runtime.Object) error {
+	__traceStack()
+
 	if request.IsGarbageCollection() {
 		return nil
 	}
@@ -85,6 +91,8 @@ func (v *pvcValidator) Delete(request *types.Request, oldObj runtime.Object) err
 }
 
 func (v *pvcValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	oldPVC := oldObj.(*corev1.PersistentVolumeClaim)
 	newPVC := newObj.(*corev1.PersistentVolumeClaim)
 
@@ -94,7 +102,6 @@ func (v *pvcValidator) Update(request *types.Request, oldObj runtime.Object, new
 		return nil
 	}
 
-	// Validation for offline resizing
 	annotationSchemaOwners, err := ref.GetSchemaOwnersFromAnnotation(oldPVC)
 	if err != nil {
 		return fmt.Errorf("failed to get schema owners from annotation: %v", err)

@@ -19,45 +19,46 @@ import (
 )
 
 const (
-	StateUpgrading               = "Upgrading"
-	StateCreatingUpgradeImage    = "CreatingUpgradeImage"
-	StatePreparingRepo           = "PreparingRepo"
-	StateRepoPrepared            = "RepoPrepared"
-	StatePreparingNodes          = "PreparingNodes"
-	StateUpgradingSystemServices = "UpgradingSystemServices"
-	StateUpgradingNodes          = "UpgradingNodes"
-	StateSucceeded               = "Succeeded"
-	StateFailed                  = "Failed"
+	StateUpgrading			= "Upgrading"
+	StateCreatingUpgradeImage	= "CreatingUpgradeImage"
+	StatePreparingRepo		= "PreparingRepo"
+	StateRepoPrepared		= "RepoPrepared"
+	StatePreparingNodes		= "PreparingNodes"
+	StateUpgradingSystemServices	= "UpgradingSystemServices"
+	StateUpgradingNodes		= "UpgradingNodes"
+	StateSucceeded			= "Succeeded"
+	StateFailed			= "Failed"
 
-	nodeStateImagesPreloading       = "Images preloading"
-	nodeStateImagesPreloaded        = "Images preloaded"
-	nodeStatePreDraining            = "Pre-draining"
-	nodeStatePreDrained             = "Pre-drained"
-	nodeStatePostDraining           = "Post-draining"
-	nodeStateWatingReboot           = "Waiting Reboot"
-	upgradePlanLabel                = "upgrade.cattle.io/plan"
-	upgradeNodeLabel                = "upgrade.cattle.io/node"
-	upgradeStateLabel               = "harvesterhci.io/upgradeState"
-	upgradeJobTypeLabel             = "harvesterhci.io/upgradeJobType"
-	upgradeJobTypePreDrain          = "pre-drain"
-	upgradeJobTypePostDrain         = "post-drain"
-	upgradeJobTypeSingleNodeUpgrade = "single-node-upgrade"
+	nodeStateImagesPreloading	= "Images preloading"
+	nodeStateImagesPreloaded	= "Images preloaded"
+	nodeStatePreDraining		= "Pre-draining"
+	nodeStatePreDrained		= "Pre-drained"
+	nodeStatePostDraining		= "Post-draining"
+	nodeStateWatingReboot		= "Waiting Reboot"
+	upgradePlanLabel		= "upgrade.cattle.io/plan"
+	upgradeNodeLabel		= "upgrade.cattle.io/node"
+	upgradeStateLabel		= "harvesterhci.io/upgradeState"
+	upgradeJobTypeLabel		= "harvesterhci.io/upgradeJobType"
+	upgradeJobTypePreDrain		= "pre-drain"
+	upgradeJobTypePostDrain		= "post-drain"
+	upgradeJobTypeSingleNodeUpgrade	= "single-node-upgrade"
 )
 
-// jobHandler syncs upgrade CRD status on upgrade job changes
 type jobHandler struct {
-	namespace     string
-	planCache     upgradev1.PlanCache
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
+	namespace	string
+	planCache	upgradev1.PlanCache
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
 
-	machineClient clusterv1ctl.MachineClient
-	machineCache  clusterv1ctl.MachineCache
-	nodeClient    ctlcorev1.NodeClient
-	nodeCache     ctlcorev1.NodeCache
+	machineClient	clusterv1ctl.MachineClient
+	machineCache	clusterv1ctl.MachineCache
+	nodeClient	ctlcorev1.NodeClient
+	nodeCache	ctlcorev1.NodeCache
 }
 
 func (h *jobHandler) OnChanged(key string, job *batchv1.Job) (*batchv1.Job, error) {
+	__traceStack()
+
 	if job == nil || job.DeletionTimestamp != nil || job.Labels == nil || (job.Namespace != upgradeNamespace && job.Namespace != sucNamespace) {
 		return job, nil
 	}
@@ -81,6 +82,8 @@ func (h *jobHandler) OnChanged(key string, job *batchv1.Job) (*batchv1.Job, erro
 }
 
 func (h *jobHandler) syncNodeJob(job *batchv1.Job) (*batchv1.Job, error) {
+	__traceStack()
+
 	jobType, ok := job.Labels[upgradeJobTypeLabel]
 	if !ok {
 		return nil, errors.New("Sync a job without type")
@@ -138,7 +141,7 @@ func (h *jobHandler) syncNodeJob(job *batchv1.Job) (*batchv1.Job, error) {
 					if err := h.setNodeWaitRebootLabel(node, repoInfo); err != nil {
 						return nil, err
 					}
-					// postDrain ack will be handled in node controller
+
 				}
 			} else if jobType == upgradeJobTypeSingleNodeUpgrade {
 				logrus.Debugf("Single-node-upgrade job %s is done.", job.Name)
@@ -184,6 +187,8 @@ func (h *jobHandler) syncNodeJob(job *batchv1.Job) (*batchv1.Job, error) {
 }
 
 func (h *jobHandler) syncPlanJob(job *batchv1.Job, planName string, nodeName string) (*batchv1.Job, error) {
+	__traceStack()
+
 	plan, err := h.planCache.Get(sucNamespace, planName)
 	if err != nil {
 		return job, err
@@ -224,6 +229,8 @@ func (h *jobHandler) syncPlanJob(job *batchv1.Job, planName string, nodeName str
 }
 
 func (h *jobHandler) syncManifestJob(job *batchv1.Job) (*batchv1.Job, error) {
+	__traceStack()
+
 	sets := labels.Set{
 		harvesterLatestUpgradeLabel: "true",
 	}
@@ -258,6 +265,8 @@ func (h *jobHandler) syncManifestJob(job *batchv1.Job) (*batchv1.Job, error) {
 }
 
 func (h *jobHandler) setNodeWaitRebootLabel(node *v1.Node, repoInfo *UpgradeRepoInfo) error {
+	__traceStack()
+
 	nodeUpdate := node.DeepCopy()
 	nodeUpdate.Annotations[harvesterNodePendingOSImage] = repoInfo.Release.OS
 	_, err := h.nodeClient.Update(nodeUpdate)

@@ -13,6 +13,8 @@ const (
 )
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	sbs := management.HarvesterFactory.Harvesterhci().V1beta1().SupportBundle()
 	nodeCache := management.CoreFactory.Core().V1().Node().Cache()
 	podCache := management.CoreFactory.Core().V1().Pod().Cache()
@@ -21,18 +23,18 @@ func Register(ctx context.Context, management *config.Management, options config
 	services := management.CoreFactory.Core().V1().Service()
 
 	handler := &Handler{
-		supportBundles:          sbs,
-		supportBundleController: sbs,
-		nodeCache:               nodeCache,
-		podCache:                podCache,
-		deployments:             deployments,
-		daemonSets:              daemonsets,
-		services:                services,
+		supportBundles:			sbs,
+		supportBundleController:	sbs,
+		nodeCache:			nodeCache,
+		podCache:			podCache,
+		deployments:			deployments,
+		daemonSets:			daemonsets,
+		services:			services,
 		manager: &Manager{
-			deployments: deployments,
-			nodeCache:   nodeCache,
-			podCache:    podCache,
-			services:    services,
+			deployments:	deployments,
+			nodeCache:	nodeCache,
+			podCache:	podCache,
+			services:	services,
 			httpClient: http.Client{
 				Timeout: 30 * time.Second,
 			},

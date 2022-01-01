@@ -6,8 +6,9 @@ import (
 	harvesterv1 "github.com/harvester/harvester/pkg/apis/harvesterhci.io/v1beta1"
 )
 
-// setLogLevel updates the log level on setting changes
 func (h *Handler) setLogLevel(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	level, err := logrus.ParseLevel(setting.Value)
 	if err != nil {
 		return err

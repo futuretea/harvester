@@ -9,14 +9,17 @@ import (
 )
 
 func (h *Handler) TLSSecretOnChange(_ string, secret *corev1.Secret) (*corev1.Secret, error) {
+	__traceStack()
+
 	if secret == nil || secret.DeletionTimestamp != nil || secret.Namespace != util.CattleSystemNamespaceName || secret.Name != util.InternalTLSSecretName {
 		return nil, nil
 	}
 	return nil, h.addVIPToSAN()
 }
 
-// addVIPToSAN writes VIP to TLS SAN of the serving cert
 func (h *Handler) addVIPToSAN() error {
+	__traceStack()
+
 	vipConfig, err := h.getVipConfig()
 	if err != nil {
 		return err
@@ -35,7 +38,7 @@ func (h *Handler) addVIPToSAN() error {
 	if toUpdate.Annotations == nil {
 		toUpdate.Annotations = make(map[string]string)
 	}
-	//clean up other cns
+
 	newAnnotations := map[string]string{}
 	for k, v := range toUpdate.Annotations {
 		if !strings.Contains(k, tlsCNPrefix) {

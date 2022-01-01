@@ -16,51 +16,75 @@ import (
 type LonghornSettingClient func(string) lhtype.SettingInterface
 
 func (c LonghornSettingClient) Create(setting *longhornv1.Setting) (*longhornv1.Setting, error) {
+	__traceStack()
+
 	return c(setting.Namespace).Create(context.TODO(), setting, metav1.CreateOptions{})
 }
 
 func (c LonghornSettingClient) Update(setting *longhornv1.Setting) (*longhornv1.Setting, error) {
+	__traceStack()
+
 	return c(setting.Namespace).Update(context.TODO(), setting, metav1.UpdateOptions{})
 }
 
 func (c LonghornSettingClient) UpdateStatus(setting *longhornv1.Setting) (*longhornv1.Setting, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c LonghornSettingClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *options)
 }
 
 func (c LonghornSettingClient) Get(namespace, name string, options metav1.GetOptions) (*longhornv1.Setting, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, options)
 }
 
 func (c LonghornSettingClient) List(namespace string, opts metav1.ListOptions) (*longhornv1.SettingList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c LonghornSettingClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c LonghornSettingClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *longhornv1.Setting, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }
 
 type LonghornSettingCache func(string) lhtype.SettingInterface
 
 func (c LonghornSettingCache) Get(namespace, name string) (*longhornv1.Setting, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c LonghornSettingCache) List(namespace string, selector labels.Selector) ([]*longhornv1.Setting, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c LonghornSettingCache) AddIndexer(indexName string, indexer longhornv1ctl.SettingIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c LonghornSettingCache) GetByIndex(indexName, key string) ([]*longhornv1.Setting, error) {
+	__traceStack()
+
 	panic("implement me")
 }

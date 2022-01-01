@@ -10,8 +10,9 @@ import (
 	"github.com/harvester/harvester/pkg/ref"
 )
 
-// setOwnerlessPVCReference tries to set the target VirtualMachine as the annotation schema owner of the PVC.
 func setOwnerlessPVCReference(pvcClient v1.PersistentVolumeClaimClient, pvc *corev1.PersistentVolumeClaim, vm *kubevirtapis.VirtualMachine) error {
+	__traceStack()
+
 	if vm == nil || pvc == nil || pvc.DeletionTimestamp != nil {
 		return nil
 	}
@@ -34,8 +35,9 @@ func setOwnerlessPVCReference(pvcClient v1.PersistentVolumeClaimClient, pvc *cor
 	return err
 }
 
-// numberOfBoundedPVCReference tries to get the number of bounded references on a PVC
 func numberOfBoundedPVCReference(pvc *corev1.PersistentVolumeClaim) (int, error) {
+	__traceStack()
+
 	annotationSchemaOwners, err := ref.GetSchemaOwnersFromAnnotation(pvc)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get schema owners from object: %w", err)
@@ -45,8 +47,9 @@ func numberOfBoundedPVCReference(pvc *corev1.PersistentVolumeClaim) (int, error)
 	return length, nil
 }
 
-// unsetBoundedPVCReference tries to unset the PVC's annotation schema owner of the target VirtualMachine.
 func unsetBoundedPVCReference(pvcClient v1.PersistentVolumeClaimClient, pvc *corev1.PersistentVolumeClaim, vm *kubevirtapis.VirtualMachine) error {
+	__traceStack()
+
 	if vm == nil || pvc == nil || pvc.DeletionTimestamp != nil {
 		return nil
 	}

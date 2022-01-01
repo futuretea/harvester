@@ -20,64 +20,66 @@ import (
 )
 
 func TestHandler_OnKeyPairChanged(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key     string
-		keyPair *harvesterv1.KeyPair
+		key	string
+		keyPair	*harvesterv1.KeyPair
 	}
 	type output struct {
-		keyPair *harvesterv1.KeyPair
-		err     error
+		keyPair	*harvesterv1.KeyPair
+		err	error
 	}
 
 	var testPublicKey, testPublicKeyFingerprint, err = generateSSHPublicKey()
 	assert.Nil(t, err, "mock SSH public key should be created")
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "nil resource",
+			name:	"nil resource",
 			given: input{
-				key:     "",
-				keyPair: nil,
+				key:		"",
+				keyPair:	nil,
 			},
 			expected: output{
-				keyPair: nil,
-				err:     nil,
+				keyPair:	nil,
+				err:		nil,
 			},
 		},
 		{
-			name: "deleted resource",
+			name:	"deleted resource",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						DeletionTimestamp:	&metav1.Time{},
 					},
 				},
 			},
 			expected: output{
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						DeletionTimestamp:	&metav1.Time{},
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "blank public key",
+			name:	"blank public key",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "",
@@ -87,24 +89,24 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 			expected: output{
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "",
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "not blank fingerprint",
+			name:	"not blank fingerprint",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "FAKE_PUBLIC_KEY",
@@ -117,8 +119,8 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 			expected: output{
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "FAKE_PUBLIC_KEY",
@@ -127,17 +129,17 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 						FingerPrint: "FAKE_FINGER_PRINT",
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "illegal public key",
+			name:	"illegal public key",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "FAKE_PUBLIC_KEY",
@@ -147,8 +149,8 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 			expected: output{
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: "FAKE_PUBLIC_KEY",
@@ -156,24 +158,24 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 					Status: harvesterv1.KeyPairStatus{
 						Conditions: []harvesterv1.Condition{
 							{
-								Type:   harvesterv1.KeyPairValidated,
-								Status: corev1.ConditionFalse,
-								Reason: "failed to parse the public key, error: ssh: no key found",
+								Type:	harvesterv1.KeyPairValidated,
+								Status:	corev1.ConditionFalse,
+								Reason:	"failed to parse the public key, error: ssh: no key found",
 							},
 						},
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "generate fingerprint for legal public key",
+			name:	"generate fingerprint for legal public key",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: testPublicKey,
@@ -183,8 +185,8 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 			expected: output{
 				keyPair: &harvesterv1.KeyPair{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: testPublicKey,
@@ -192,14 +194,14 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 					Status: harvesterv1.KeyPairStatus{
 						Conditions: []harvesterv1.Condition{
 							{
-								Type:   harvesterv1.KeyPairValidated,
-								Status: corev1.ConditionTrue,
+								Type:	harvesterv1.KeyPairValidated,
+								Status:	corev1.ConditionTrue,
 							},
 						},
-						FingerPrint: testPublicKeyFingerprint,
+						FingerPrint:	testPublicKeyFingerprint,
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 	}
@@ -216,7 +218,7 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 		}
 		var actual output
 		actual.keyPair, actual.err = handler.OnKeyPairChanged(tc.given.key, tc.given.keyPair)
-		// NB(thxCode) we don't need to compare the `lastUpdateTime` and `lastTransitionTime` of conditions.
+
 		if actual.keyPair != nil {
 			for i := range actual.keyPair.Status.Conditions {
 				actual.keyPair.Status.Conditions[i].LastUpdateTime = ""
@@ -229,6 +231,8 @@ func TestHandler_OnKeyPairChanged(t *testing.T) {
 }
 
 func generateSSHPublicKey() (pk string, fingerprint string, err error) {
+	__traceStack()
+
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate RSA key, %v", err)
@@ -245,33 +249,49 @@ func generateSSHPublicKey() (pk string, fingerprint string, err error) {
 type fakeKeyPairClient func(string) typeharv1.KeyPairInterface
 
 func (c fakeKeyPairClient) Create(pair *harvesterv1.KeyPair) (*harvesterv1.KeyPair, error) {
+	__traceStack()
+
 	return c(pair.Namespace).Create(context.TODO(), pair, metav1.CreateOptions{})
 }
 
 func (c fakeKeyPairClient) Update(pair *harvesterv1.KeyPair) (*harvesterv1.KeyPair, error) {
+	__traceStack()
+
 	return c(pair.Namespace).Update(context.TODO(), pair, metav1.UpdateOptions{})
 }
 
 func (c fakeKeyPairClient) UpdateStatus(pair *harvesterv1.KeyPair) (*harvesterv1.KeyPair, error) {
+	__traceStack()
+
 	return c(pair.Namespace).UpdateStatus(context.TODO(), pair, metav1.UpdateOptions{})
 }
 
 func (c fakeKeyPairClient) Delete(namespace, name string, opts *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *opts)
 }
 
 func (c fakeKeyPairClient) Get(namespace, name string, opts metav1.GetOptions) (*harvesterv1.KeyPair, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, opts)
 }
 
 func (c fakeKeyPairClient) List(namespace string, opts metav1.ListOptions) (*harvesterv1.KeyPairList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c fakeKeyPairClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c fakeKeyPairClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *harvesterv1.KeyPair, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }

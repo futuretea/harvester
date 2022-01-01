@@ -19,6 +19,8 @@ import (
 )
 
 func NewValidator(pvcCache v1.PersistentVolumeClaimCache) types.Validator {
+	__traceStack()
+
 	return &vmValidator{
 		pvcCache: pvcCache,
 	}
@@ -26,16 +28,18 @@ func NewValidator(pvcCache v1.PersistentVolumeClaimCache) types.Validator {
 
 type vmValidator struct {
 	types.DefaultValidator
-	pvcCache v1.PersistentVolumeClaimCache
+	pvcCache	v1.PersistentVolumeClaimCache
 }
 
 func (v *vmValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       "virtualmachines",
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   kubevirtv1.SchemeGroupVersion.Group,
-		APIVersion: kubevirtv1.SchemeGroupVersion.Version,
-		ObjectType: &kubevirtv1.VirtualMachine{},
+		Name:		"virtualmachines",
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	kubevirtv1.SchemeGroupVersion.Group,
+		APIVersion:	kubevirtv1.SchemeGroupVersion.Version,
+		ObjectType:	&kubevirtv1.VirtualMachine{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Update,
@@ -44,6 +48,8 @@ func (v *vmValidator) Resource() types.Resource {
 }
 
 func (v *vmValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	vm := newObj.(*kubevirtv1.VirtualMachine)
 
 	if err := v.checkVMSpec(vm); err != nil {
@@ -53,6 +59,8 @@ func (v *vmValidator) Create(request *types.Request, newObj runtime.Object) erro
 }
 
 func (v *vmValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	vm := newObj.(*kubevirtv1.VirtualMachine)
 
 	if err := v.checkVMSpec(vm); err != nil {
@@ -62,6 +70,8 @@ func (v *vmValidator) Update(request *types.Request, oldObj runtime.Object, newO
 }
 
 func (v *vmValidator) checkVMSpec(vm *kubevirtv1.VirtualMachine) error {
+	__traceStack()
+
 	if err := v.checkVolumeClaimTemplatesAnnotation(vm); err != nil {
 		message := fmt.Sprintf("the volumeClaimTemplates annotaion is invalid: %v", err)
 		return werror.NewInvalidError(message, "metadata.annotations")
@@ -73,6 +83,8 @@ func (v *vmValidator) checkVMSpec(vm *kubevirtv1.VirtualMachine) error {
 }
 
 func (v *vmValidator) checkVolumeClaimTemplatesAnnotation(vm *kubevirtv1.VirtualMachine) error {
+	__traceStack()
+
 	if vm == nil {
 		return nil
 	}
@@ -93,6 +105,8 @@ func (v *vmValidator) checkVolumeClaimTemplatesAnnotation(vm *kubevirtv1.Virtual
 }
 
 func (v *vmValidator) checkOccupiedPVCs(vm *kubevirtv1.VirtualMachine) error {
+	__traceStack()
+
 	if vm == nil {
 		return nil
 	}

@@ -9,6 +9,8 @@ import (
 )
 
 func GetConfig(kubeConfig string) (clientcmd.ClientConfig, error) {
+	__traceStack()
+
 	if isManual(kubeConfig) {
 		return kubeconfig.GetNonInteractiveClientConfig(kubeConfig), nil
 	}
@@ -17,6 +19,8 @@ func GetConfig(kubeConfig string) (clientcmd.ClientConfig, error) {
 }
 
 func isManual(kubeConfig string) bool {
+	__traceStack()
+
 	if kubeConfig != "" {
 		return true
 	}
@@ -25,5 +29,7 @@ func isManual(kubeConfig string) bool {
 }
 
 func getEmbedded() (clientcmd.ClientConfig, error) {
+	__traceStack()
+
 	return nil, fmt.Errorf("embedded only supported on linux")
 }

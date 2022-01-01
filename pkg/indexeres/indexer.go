@@ -12,18 +12,22 @@ import (
 )
 
 const (
-	UserNameIndex           = "auth.harvesterhci.io/user-username-index"
-	RbByRoleAndSubjectIndex = "auth.harvesterhci.io/crb-by-role-and-subject"
-	PVCByVMIndex            = "harvesterhci.io/pvc-by-vm-index"
-	VMByNetworkIndex        = "vm.harvesterhci.io/vm-by-network"
+	UserNameIndex		= "auth.harvesterhci.io/user-username-index"
+	RbByRoleAndSubjectIndex	= "auth.harvesterhci.io/crb-by-role-and-subject"
+	PVCByVMIndex		= "harvesterhci.io/pvc-by-vm-index"
+	VMByNetworkIndex	= "vm.harvesterhci.io/vm-by-network"
 )
 
 func RegisterScaledIndexers(scaled *config.Scaled) {
+	__traceStack()
+
 	vmInformer := scaled.Management.VirtFactory.Kubevirt().V1().VirtualMachine().Cache()
 	vmInformer.AddIndexer(VMByNetworkIndex, VMByNetwork)
 }
 
 func RegisterManagementIndexers(management *config.Management) {
+	__traceStack()
+
 	crbInformer := management.RbacFactory.Rbac().V1().ClusterRoleBinding().Cache()
 	crbInformer.AddIndexer(RbByRoleAndSubjectIndex, rbByRoleAndSubject)
 	pvcInformer := management.CoreFactory.Core().V1().PersistentVolumeClaim().Cache()
@@ -31,6 +35,8 @@ func RegisterManagementIndexers(management *config.Management) {
 }
 
 func rbByRoleAndSubject(obj *rbacv1.ClusterRoleBinding) ([]string, error) {
+	__traceStack()
+
 	keys := make([]string, 0, len(obj.Subjects))
 	for _, s := range obj.Subjects {
 		keys = append(keys, RbRoleSubjectKey(obj.RoleRef.Name, s))
@@ -39,10 +45,14 @@ func rbByRoleAndSubject(obj *rbacv1.ClusterRoleBinding) ([]string, error) {
 }
 
 func RbRoleSubjectKey(roleName string, subject rbacv1.Subject) string {
+	__traceStack()
+
 	return roleName + "." + subject.Kind + "." + subject.Name
 }
 
 func pvcByVM(obj *corev1.PersistentVolumeClaim) ([]string, error) {
+	__traceStack()
+
 	annotationSchemaOwners, err := ref.GetSchemaOwnersFromAnnotation(obj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get schema owners from PVC %s's annotation: %w", obj.Name, err)
@@ -51,6 +61,8 @@ func pvcByVM(obj *corev1.PersistentVolumeClaim) ([]string, error) {
 }
 
 func VMByNetwork(obj *kubevirtv1.VirtualMachine) ([]string, error) {
+	__traceStack()
+
 	networks := obj.Spec.Template.Spec.Networks
 	networkNameList := make([]string, 0, len(networks))
 	for _, network := range networks {

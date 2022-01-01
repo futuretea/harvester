@@ -15,27 +15,31 @@ import (
 )
 
 const (
-	fieldTemplateID = "spec.templateId"
-	fieldKeyPairIds = "spec.keyPairIds"
+	fieldTemplateID	= "spec.templateId"
+	fieldKeyPairIds	= "spec.keyPairIds"
 )
 
 func NewValidator(templateCache ctlharvesterv1.VirtualMachineTemplateCache, templateVersionCache ctlharvesterv1.VirtualMachineTemplateVersionCache, keypairs ctlharvesterv1.KeyPairCache) types.Validator {
+	__traceStack()
+
 	return &templateVersionValidator{
-		templateCache:        templateCache,
-		templateVersionCache: templateVersionCache,
-		keypairs:             keypairs,
+		templateCache:		templateCache,
+		templateVersionCache:	templateVersionCache,
+		keypairs:		keypairs,
 	}
 }
 
 type templateVersionValidator struct {
 	types.DefaultValidator
 
-	templateCache        ctlharvesterv1.VirtualMachineTemplateCache
-	templateVersionCache ctlharvesterv1.VirtualMachineTemplateVersionCache
-	keypairs             ctlharvesterv1.KeyPairCache
+	templateCache		ctlharvesterv1.VirtualMachineTemplateCache
+	templateVersionCache	ctlharvesterv1.VirtualMachineTemplateVersionCache
+	keypairs		ctlharvesterv1.KeyPairCache
 }
 
 func (v *templateVersionValidator) Resource() types.Resource {
+	__traceStack()
+
 	return newResource([]admissionregv1.OperationType{
 		admissionregv1.Create,
 		admissionregv1.Update,
@@ -44,6 +48,8 @@ func (v *templateVersionValidator) Resource() types.Resource {
 }
 
 func (v *templateVersionValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	vmTemplVersion := newObj.(*v1beta1.VirtualMachineTemplateVersion)
 
 	templateID := vmTemplVersion.Spec.TemplateID
@@ -77,6 +83,8 @@ func (v *templateVersionValidator) Create(request *types.Request, newObj runtime
 }
 
 func (v *templateVersionValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	if request.IsFromController() {
 		return nil
 	}
@@ -85,8 +93,8 @@ func (v *templateVersionValidator) Update(request *types.Request, oldObj runtime
 }
 
 func (v *templateVersionValidator) Delete(request *types.Request, oldObj runtime.Object) error {
-	// If a template is deleted, its versions are garbage collected.
-	// No need to check for template existence or if a version is the default version or not.
+	__traceStack()
+
 	if request.IsGarbageCollection() {
 		return nil
 	}

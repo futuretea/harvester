@@ -13,14 +13,17 @@ type DefinitionsChain []DefinitionsFunc
 type DefinitionsFunc func(map[string]common.OpenAPIDefinition)
 
 func SetDefinitions(definitions map[string]common.OpenAPIDefinition) map[string]common.OpenAPIDefinition {
+	__traceStack()
+
 	for _, f := range defaultDefinitionsChain {
 		f(definitions)
 	}
 	return definitions
 }
 
-// MetaRequired sets name, kind, and apiVersion to be required
 func MetaRequired(definitions map[string]common.OpenAPIDefinition) {
+	__traceStack()
+
 	objectMetaKey := "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"
 	if objectMeta, ok := definitions[objectMetaKey]; ok {
 		objectMeta.Schema.Required = append(objectMeta.Schema.Required, "name")

@@ -14,6 +14,8 @@ const (
 )
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	settings := management.HarvesterFactory.Harvesterhci().V1beta1().Setting()
 	secrets := management.CoreFactory.Core().V1().Secret()
 	clusters := management.ProvisioningFactory.Provisioning().V1().Cluster()
@@ -24,29 +26,29 @@ func Register(ctx context.Context, management *config.Management, options config
 	ingresses := management.NetworkingFactory.Networking().V1().Ingress()
 	helmChartConfigs := management.HelmFactory.Helm().V1().HelmChartConfig()
 	controller := &Handler{
-		namespace:            options.Namespace,
-		apply:                management.Apply,
-		settings:             settings,
-		secrets:              secrets,
-		secretCache:          secrets.Cache(),
-		clusters:             clusters,
-		clusterCache:         clusters.Cache(),
-		deployments:          deployments,
-		deploymentCache:      deployments.Cache(),
-		ingresses:            ingresses,
-		ingressCache:         ingresses.Cache(),
-		longhornSettings:     lhs,
-		longhornSettingCache: lhs.Cache(),
-		configmaps:           configmaps,
-		configmapCache:       configmaps.Cache(),
-		managedCharts:        managedCharts,
-		managedChartCache:    managedCharts.Cache(),
-		helmChartConfigs:     helmChartConfigs,
-		helmChartConfigCache: helmChartConfigs.Cache(),
+		namespace:		options.Namespace,
+		apply:			management.Apply,
+		settings:		settings,
+		secrets:		secrets,
+		secretCache:		secrets.Cache(),
+		clusters:		clusters,
+		clusterCache:		clusters.Cache(),
+		deployments:		deployments,
+		deploymentCache:	deployments.Cache(),
+		ingresses:		ingresses,
+		ingressCache:		ingresses.Cache(),
+		longhornSettings:	lhs,
+		longhornSettingCache:	lhs.Cache(),
+		configmaps:		configmaps,
+		configmapCache:		configmaps.Cache(),
+		managedCharts:		managedCharts,
+		managedChartCache:	managedCharts.Cache(),
+		helmChartConfigs:	helmChartConfigs,
+		helmChartConfigCache:	helmChartConfigs.Cache(),
 		httpClient: http.Client{
-			Timeout: 30 * time.Second,
+			Timeout:	30 * time.Second,
 			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
+				Proxy:	http.ProxyFromEnvironment,
 				TLSClientConfig: &tls.Config{
 					InsecureSkipVerify: true,
 				},
@@ -55,15 +57,15 @@ func Register(ctx context.Context, management *config.Management, options config
 	}
 
 	syncers = map[string]syncerFunc{
-		"additional-ca":             controller.syncAdditionalTrustedCAs,
-		"cluster-registration-url":  controller.registerCluster,
-		"http-proxy":                controller.syncHTTPProxy,
-		"log-level":                 controller.setLogLevel,
-		"overcommit-config":         controller.syncOvercommitConfig,
-		"vip-pools":                 controller.syncVipPoolsConfig,
-		"auto-disk-provision-paths": controller.syncNDMAutoProvisionPaths,
-		"ssl-certificates":          controller.syncSSLCertificate,
-		"ssl-parameters":            controller.syncSSLParameters,
+		"additional-ca":		controller.syncAdditionalTrustedCAs,
+		"cluster-registration-url":	controller.registerCluster,
+		"http-proxy":			controller.syncHTTPProxy,
+		"log-level":			controller.setLogLevel,
+		"overcommit-config":		controller.syncOvercommitConfig,
+		"vip-pools":			controller.syncVipPoolsConfig,
+		"auto-disk-provision-paths":	controller.syncNDMAutoProvisionPaths,
+		"ssl-certificates":		controller.syncSSLCertificate,
+		"ssl-parameters":		controller.syncSSLParameters,
 	}
 
 	settings.OnChange(ctx, controllerName, controller.settingOnChanged)

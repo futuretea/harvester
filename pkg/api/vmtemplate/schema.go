@@ -9,11 +9,13 @@ import (
 )
 
 const (
-	templateSchemaID        = "harvesterhci.io.virtualmachinetemplate"
-	templateVersionSchemaID = "harvesterhci.io.virtualmachinetemplateversion"
+	templateSchemaID	= "harvesterhci.io.virtualmachinetemplate"
+	templateVersionSchemaID	= "harvesterhci.io.virtualmachinetemplateversion"
 )
 
 func RegisterSchema(scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	templateVersionCache := scaled.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineTemplateVersion().Cache()
 	th := &templateLinkHandler{
 		templateVersionCache: templateVersionCache,
@@ -21,15 +23,15 @@ func RegisterSchema(scaled *config.Scaled, server *server.Server, options config
 
 	t := []schema.Template{
 		{
-			ID:        templateSchemaID,
-			Formatter: formatter,
+			ID:		templateSchemaID,
+			Formatter:	formatter,
 			Customize: func(apiSchema *types.APISchema) {
 				apiSchema.ByIDHandler = th.byIDHandler
 			},
 		},
 		{
-			ID:        templateVersionSchemaID,
-			Formatter: versionFormatter,
+			ID:		templateVersionSchemaID,
+			Formatter:	versionFormatter,
 		},
 	}
 

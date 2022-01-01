@@ -16,11 +16,13 @@ import (
 )
 
 func Register(ctx context.Context, scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	sp := &settingsProvider{
-		context:        ctx,
-		settings:       scaled.HarvesterFactory.Harvesterhci().V1beta1().Setting(),
-		settingsLister: scaled.HarvesterFactory.Harvesterhci().V1beta1().Setting().Cache(),
-		fallback:       map[string]string{},
+		context:	ctx,
+		settings:	scaled.HarvesterFactory.Harvesterhci().V1beta1().Setting(),
+		settingsLister:	scaled.HarvesterFactory.Harvesterhci().V1beta1().Setting().Cache(),
+		fallback:	map[string]string{},
 	}
 
 	if err := settings.SetProvider(sp); err != nil {
@@ -31,13 +33,15 @@ func Register(ctx context.Context, scaled *config.Scaled, server *server.Server,
 }
 
 type settingsProvider struct {
-	context        context.Context
-	settings       ctlharvesterv1.SettingClient
-	settingsLister ctlharvesterv1.SettingCache
-	fallback       map[string]string
+	context		context.Context
+	settings	ctlharvesterv1.SettingClient
+	settingsLister	ctlharvesterv1.SettingCache
+	fallback	map[string]string
 }
 
 func (s *settingsProvider) Get(name string) string {
+	__traceStack()
+
 	value := os.Getenv(settings.GetEnvKey(name))
 	if value != "" {
 		return value
@@ -57,6 +61,8 @@ func (s *settingsProvider) Get(name string) string {
 }
 
 func (s *settingsProvider) Set(name, value string) error {
+	__traceStack()
+
 	envValue := os.Getenv(settings.GetEnvKey(name))
 	if envValue != "" {
 		return fmt.Errorf("setting %s can not be set because it is from environment variable", name)
@@ -72,6 +78,8 @@ func (s *settingsProvider) Set(name, value string) error {
 }
 
 func (s *settingsProvider) SetIfUnset(name, value string) error {
+	__traceStack()
+
 	obj, err := s.settings.Get(name, v1.GetOptions{})
 	if err != nil {
 		return err
@@ -87,6 +95,8 @@ func (s *settingsProvider) SetIfUnset(name, value string) error {
 }
 
 func (s *settingsProvider) SetAll(settingsMap map[string]settings.Setting) error {
+	__traceStack()
+
 	fallback := map[string]string{}
 
 	for name, setting := range settingsMap {
@@ -99,7 +109,7 @@ func (s *settingsProvider) SetAll(settingsMap map[string]settings.Setting) error
 				ObjectMeta: v1.ObjectMeta{
 					Name: setting.Name,
 				},
-				Default: setting.Default,
+				Default:	setting.Default,
 			}
 			if value != "" {
 				newSetting.Value = value

@@ -17,20 +17,26 @@ import (
 )
 
 func Formatter(request *types.APIRequest, resource *types.RawResource) {
+	__traceStack()
+
 	resource.Actions = nil
 	delete(resource.Links, "update")
 }
 
 func CollectionFormatter(request *types.APIRequest, collection *types.GenericCollection) {
+	__traceStack()
+
 	collection.AddAction(request, "keygen")
 }
 
 type KeyGenActionHandler struct {
-	KeyPairs     ctlharvesterv1.KeyPairClient
-	KeyPairCache ctlharvesterv1.KeyPairCache
+	KeyPairs	ctlharvesterv1.KeyPairClient
+	KeyPairCache	ctlharvesterv1.KeyPairCache
 }
 
 func (h KeyGenActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	__traceStack()
+
 	if err := h.do(rw, req); err != nil {
 		status := http.StatusInternalServerError
 		if e, ok := err.(*apierror.APIError); ok {
@@ -44,6 +50,8 @@ func (h KeyGenActionHandler) ServeHTTP(rw http.ResponseWriter, req *http.Request
 }
 
 func (h KeyGenActionHandler) do(rw http.ResponseWriter, req *http.Request) error {
+	__traceStack()
+
 	input := &harvesterv1.KeyGenInput{}
 	if err := json.NewDecoder(req.Body).Decode(input); err != nil {
 		return apierror.NewAPIError(validation.InvalidBodyContent, fmt.Sprintf("Failed to parse body: %v", err))
@@ -63,8 +71,8 @@ func (h KeyGenActionHandler) do(rw http.ResponseWriter, req *http.Request) error
 
 	keyPair := &harvesterv1.KeyPair{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      input.Name,
-			Namespace: input.Namespace,
+			Name:		input.Name,
+			Namespace:	input.Namespace,
 		},
 		Spec: harvesterv1.KeyPairSpec{
 			PublicKey: string(publicKey),

@@ -18,39 +18,59 @@ import (
 type VirtualMachineImageClient func(string) harv1type.VirtualMachineImageInterface
 
 func (c VirtualMachineImageClient) Update(virtualMachineImage *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	return c(virtualMachineImage.Namespace).Update(context.TODO(), virtualMachineImage, metav1.UpdateOptions{})
 }
 func (c VirtualMachineImageClient) Get(namespace, name string, options metav1.GetOptions) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 func (c VirtualMachineImageClient) Create(virtualMachineImage *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	if virtualMachineImage.GenerateName != "" {
 		virtualMachineImage.Name = fmt.Sprintf("%s%s", virtualMachineImage.GenerateName, fuzz.String(5))
 	}
 	return c(virtualMachineImage.Namespace).Create(context.TODO(), virtualMachineImage, metav1.CreateOptions{})
 }
 func (c VirtualMachineImageClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VirtualMachineImageClient) List(namespace string, opts metav1.ListOptions) (*harvesterv1.VirtualMachineImageList, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VirtualMachineImageClient) UpdateStatus(*harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VirtualMachineImageClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VirtualMachineImageClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *harvesterv1.VirtualMachineImage, err error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 type VirtualMachineImageCache func(string) harv1type.VirtualMachineImageInterface
 
 func (c VirtualMachineImageCache) Get(namespace, name string) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 func (c VirtualMachineImageCache) List(namespace string, selector labels.Selector) ([]*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	list, err := c(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: selector.String()})
 	if err != nil {
 		return nil, err
@@ -62,8 +82,12 @@ func (c VirtualMachineImageCache) List(namespace string, selector labels.Selecto
 	return result, err
 }
 func (c VirtualMachineImageCache) AddIndexer(indexName string, indexer ctlharvesterv1.VirtualMachineImageIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VirtualMachineImageCache) GetByIndex(indexName, key string) ([]*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	panic("implement me")
 }

@@ -9,6 +9,8 @@ import (
 )
 
 func MustPVCDeleted(controller v1.PersistentVolumeClaimController, namespace, name string) {
+	__traceStack()
+
 	gomega.Eventually(func() bool {
 		_, err := controller.Get(namespace, name, metav1.GetOptions{})
 		if err != nil && apierrors.IsNotFound(err) {

@@ -9,32 +9,21 @@ var (
 	SettingConfigured condition.Cond = "configured"
 )
 
-// +genclient
-// +genclient:nonNamespaced
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:resource:scope=Cluster
-// +kubebuilder:printcolumn:name="VALUE",type="string",JSONPath=`.value`
-
 type Setting struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta		`json:",inline"`
+	metav1.ObjectMeta	`json:"metadata,omitempty"`
 
-	// +optional
-	Value string `json:"value,omitempty"`
+	Value	string	`json:"value,omitempty"`
 
-	// +optional
-	Default string `json:"default,omitempty"`
+	Default	string	`json:"default,omitempty"`
 
-	// +optional
-	Customized bool `json:"customized,omitempty"`
+	Customized	bool	`json:"customized,omitempty"`
 
-	// +optional
-	Source string `json:"source,omitempty"`
+	Source	string	`json:"source,omitempty"`
 
-	Status SettingStatus `json:"status,omitempty"`
+	Status	SettingStatus	`json:"status,omitempty"`
 }
 
 type SettingStatus struct {
-	// +optional
 	Conditions []Condition `json:"conditions,omitempty"`
 }

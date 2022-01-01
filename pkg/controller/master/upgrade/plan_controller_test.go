@@ -17,34 +17,38 @@ import (
 )
 
 func newTestPreparePlan() *upgradeapiv1.Plan {
+	__traceStack()
+
 	plan := preparePlan(newTestUpgradeBuilder().Build())
 	plan.Status.LatestHash = testPlanHash
 	return plan
 }
 
 func TestPlanHandler_OnChanged(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key     string
-		plan    *upgradeapiv1.Plan
-		upgrade *harvesterv1.Upgrade
-		nodes   []*v1.Node
+		key	string
+		plan	*upgradeapiv1.Plan
+		upgrade	*harvesterv1.Upgrade
+		nodes	[]*v1.Node
 	}
 	type output struct {
-		plan    *upgradeapiv1.Plan
-		upgrade *harvesterv1.Upgrade
-		err     error
+		plan	*upgradeapiv1.Plan
+		upgrade	*harvesterv1.Upgrade
+		err	error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "prepare plan is running",
+			name:	"prepare plan is running",
 			given: input{
-				key:     testPlanName,
-				plan:    newTestPreparePlan(),
-				upgrade: newTestUpgradeBuilder().NodeUpgradeStatus("node-1", StateSucceeded, "", "").Build(),
+				key:		testPlanName,
+				plan:		newTestPreparePlan(),
+				upgrade:	newTestUpgradeBuilder().NodeUpgradeStatus("node-1", StateSucceeded, "", "").Build(),
 				nodes: []*v1.Node{
 					newNodeBuilder("node-1").Managed().ControlPlane().WithLabel(upgrade.LabelPlanName(newTestPreparePlan().Name), testPlanHash).Build(),
 					newNodeBuilder("node-2").Managed().ControlPlane().Build(),
@@ -52,15 +56,15 @@ func TestPlanHandler_OnChanged(t *testing.T) {
 				},
 			},
 			expected: output{
-				plan: newTestPreparePlan(),
-				err:  nil,
+				plan:	newTestPreparePlan(),
+				err:	nil,
 			},
 		},
 		{
-			name: "set NodesPrepared condition when prepare plan completes",
+			name:	"set NodesPrepared condition when prepare plan completes",
 			given: input{
-				key:  testPlanName,
-				plan: newTestPreparePlan(),
+				key:	testPlanName,
+				plan:	newTestPreparePlan(),
 				upgrade: newTestUpgradeBuilder().
 					NodeUpgradeStatus("node-1", nodeStateImagesPreloaded, "", "").
 					NodeUpgradeStatus("node-2", nodeStateImagesPreloaded, "", "").
@@ -83,7 +87,7 @@ func TestPlanHandler_OnChanged(t *testing.T) {
 					NodeUpgradeStatus("node-4", nodeStateImagesPreloaded, "", "").
 					NodesPreparedCondition(v1.ConditionTrue, "", "").
 					Build(),
-				err: nil,
+				err:	nil,
 			},
 		},
 	}
@@ -95,11 +99,11 @@ func TestPlanHandler_OnChanged(t *testing.T) {
 		}
 		var k8sclientset = k8sfake.NewSimpleClientset(nodes...)
 		var handler = &planHandler{
-			namespace:     harvesterSystemNamespace,
-			upgradeClient: fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
-			upgradeCache:  fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
-			nodeCache:     fakeclients.NodeCache(k8sclientset.CoreV1().Nodes),
-			planClient:    fakeclients.PlanClient(clientset.UpgradeV1().Plans),
+			namespace:	harvesterSystemNamespace,
+			upgradeClient:	fakeclients.UpgradeClient(clientset.HarvesterhciV1beta1().Upgrades),
+			upgradeCache:	fakeclients.UpgradeCache(clientset.HarvesterhciV1beta1().Upgrades),
+			nodeCache:	fakeclients.NodeCache(k8sclientset.CoreV1().Nodes),
+			planClient:	fakeclients.PlanClient(clientset.UpgradeV1().Plans),
 		}
 		var actual output
 		var err error
@@ -121,8 +125,9 @@ func TestPlanHandler_OnChanged(t *testing.T) {
 	}
 }
 
-// sanitizeStatus resets hash and timestamps that may fail the comparison
 func sanitizeStatus(status *upgradeapiv1.PlanStatus) {
+	__traceStack()
+
 	status.LatestHash = ""
 	for i, cond := range status.Conditions {
 		cond.LastTransitionTime = ""

@@ -14,52 +14,53 @@ import (
 )
 
 type App struct {
-	app     *cli.App
-	Options *config.CommonOptions
+	app	*cli.App
+	Options	*config.CommonOptions
 }
 
 type Action func(*config.CommonOptions) error
 
 func NewApp(name string, usage string, flags []cli.Flag, action Action) *App {
+	__traceStack()
+
 	cliApp := cli.NewApp()
 
 	cliApp.Name = name
 	cliApp.Version = version.FriendlyVersion()
 	cliApp.Usage = usage
 
-	// common flags
 	options := config.CommonOptions{}
 	cliApp.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:        "kubeconfig",
-			EnvVar:      "KUBECONFIG",
-			Usage:       "Kube config for accessing k8s cluster",
-			Destination: &options.KubeConfig,
+			Name:		"kubeconfig",
+			EnvVar:		"KUBECONFIG",
+			Usage:		"Kube config for accessing k8s cluster",
+			Destination:	&options.KubeConfig,
 		},
 		cli.StringFlag{
-			Name:        "profile-listen-address",
-			Value:       "0.0.0.0:6060",
-			Usage:       "Address to listen on for profiling",
-			Destination: &options.ProfilerAddress,
+			Name:		"profile-listen-address",
+			Value:		"0.0.0.0:6060",
+			Usage:		"Address to listen on for profiling",
+			Destination:	&options.ProfilerAddress,
 		},
 		cli.BoolFlag{
-			Name:        "debug",
-			EnvVar:      "HARVESTER_DEBUG",
-			Usage:       "Enable debug logs",
-			Destination: &options.Debug,
+			Name:		"debug",
+			EnvVar:		"HARVESTER_DEBUG",
+			Usage:		"Enable debug logs",
+			Destination:	&options.Debug,
 		},
 		cli.BoolFlag{
-			Name:        "trace",
-			EnvVar:      "HARVESTER_TRACE",
-			Usage:       "Enable trace logs",
-			Destination: &options.Trace,
+			Name:		"trace",
+			EnvVar:		"HARVESTER_TRACE",
+			Usage:		"Enable trace logs",
+			Destination:	&options.Trace,
 		},
 		cli.StringFlag{
-			Name:        "log-format",
-			EnvVar:      "HARVESTER_LOG_FORMAT",
-			Usage:       "Log format",
-			Value:       "text",
-			Destination: &options.LogFormat,
+			Name:		"log-format",
+			EnvVar:		"HARVESTER_LOG_FORMAT",
+			Usage:		"Log format",
+			Value:		"text",
+			Destination:	&options.LogFormat,
 		},
 	}
 
@@ -71,13 +72,14 @@ func NewApp(name string, usage string, flags []cli.Flag, action Action) *App {
 	}
 
 	return &App{
-		app:     cliApp,
-		Options: &options,
+		app:		cliApp,
+		Options:	&options,
 	}
 }
 
 func initProfiling(options *config.CommonOptions) {
-	// enable profiler
+	__traceStack()
+
 	if options.ProfilerAddress != "" {
 		go func() {
 			log.Println(http.ListenAndServe(options.ProfilerAddress, nil))
@@ -86,6 +88,8 @@ func initProfiling(options *config.CommonOptions) {
 }
 
 func initLogs(options *config.CommonOptions) {
+	__traceStack()
+
 	switch options.LogFormat {
 	case "simple":
 		logrus.SetFormatter(&simplelog.StandardFormatter{})
@@ -106,6 +110,8 @@ func initLogs(options *config.CommonOptions) {
 }
 
 func (a *App) Run() {
+	__traceStack()
+
 	if err := a.app.Run(os.Args); err != nil {
 		logrus.Fatal(err)
 	}

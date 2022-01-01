@@ -11,42 +11,44 @@ import (
 )
 
 func Test_validateOvercommitConfig(t *testing.T) {
+	__traceStack()
+
 	tests := []struct {
-		name   string
-		args   *v1beta1.Setting
-		errMsg string
+		name	string
+		args	*v1beta1.Setting
+		errMsg	string
 	}{
 		{
-			name: "invalid json",
+			name:	"invalid json",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: "overcommit-config"},
-				Value:      `{"cpu":100,"memory":100,"storage":100`,
+				ObjectMeta:	v1.ObjectMeta{Name: "overcommit-config"},
+				Value:		`{"cpu":100,"memory":100,"storage":100`,
 			},
-			errMsg: `Invalid JSON: {"cpu":100,"memory":100,"storage":100`,
+			errMsg:	`Invalid JSON: {"cpu":100,"memory":100,"storage":100`,
 		},
 		{
-			name: "cpu undercommmit",
+			name:	"cpu undercommmit",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: "overcommit-config"},
-				Value:      `{"cpu":99,"memory":100,"storage":100}`,
+				ObjectMeta:	v1.ObjectMeta{Name: "overcommit-config"},
+				Value:		`{"cpu":99,"memory":100,"storage":100}`,
 			},
-			errMsg: `Cannot undercommit. Should be greater than or equal to 100 but got 99`,
+			errMsg:	`Cannot undercommit. Should be greater than or equal to 100 but got 99`,
 		},
 		{
-			name: "memory undercommmit",
+			name:	"memory undercommmit",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: "overcommit-config"},
-				Value:      `{"cpu":100,"memory":98,"storage":100}`,
+				ObjectMeta:	v1.ObjectMeta{Name: "overcommit-config"},
+				Value:		`{"cpu":100,"memory":98,"storage":100}`,
 			},
-			errMsg: `Cannot undercommit. Should be greater than or equal to 100 but got 98`,
+			errMsg:	`Cannot undercommit. Should be greater than or equal to 100 but got 98`,
 		},
 		{
-			name: "storage undercommmit",
+			name:	"storage undercommmit",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: "overcommit-config"},
-				Value:      `{"cpu":100,"memory":100,"storage":97}`,
+				ObjectMeta:	v1.ObjectMeta{Name: "overcommit-config"},
+				Value:		`{"cpu":100,"memory":100,"storage":97}`,
 			},
-			errMsg: `Cannot undercommit. Should be greater than or equal to 100 but got 97`,
+			errMsg:	`Cannot undercommit. Should be greater than or equal to 100 but got 97`,
 		},
 	}
 
@@ -62,50 +64,52 @@ func Test_validateOvercommitConfig(t *testing.T) {
 }
 
 func Test_validateSupportBundleTimeout(t *testing.T) {
+	__traceStack()
+
 	tests := []struct {
-		name        string
-		args        *v1beta1.Setting
-		expectedErr bool
+		name		string
+		args		*v1beta1.Setting
+		expectedErr	bool
 	}{
 		{
-			name: "invalid int",
+			name:	"invalid int",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
-				Value:      "not int",
+				ObjectMeta:	v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
+				Value:		"not int",
 			},
-			expectedErr: true,
+			expectedErr:	true,
 		},
 		{
-			name: "negative int",
+			name:	"negative int",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
-				Value:      "-1",
+				ObjectMeta:	v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
+				Value:		"-1",
 			},
-			expectedErr: true,
+			expectedErr:	true,
 		},
 		{
-			name: "input 0",
+			name:	"input 0",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
-				Value:      "0",
+				ObjectMeta:	v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
+				Value:		"0",
 			},
-			expectedErr: false,
+			expectedErr:	false,
 		},
 		{
-			name: "empty input",
+			name:	"empty input",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
-				Value:      "",
+				ObjectMeta:	v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
+				Value:		"",
 			},
-			expectedErr: false,
+			expectedErr:	false,
 		},
 		{
-			name: "positive int",
+			name:	"positive int",
 			args: &v1beta1.Setting{
-				ObjectMeta: v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
-				Value:      "1",
+				ObjectMeta:	v1.ObjectMeta{Name: settings.SupportBundleTimeoutSettingName},
+				Value:		"1",
 			},
-			expectedErr: false,
+			expectedErr:	false,
 		},
 	}
 
@@ -122,40 +126,42 @@ func Test_validateSupportBundleTimeout(t *testing.T) {
 }
 
 func Test_validateSSLProtocols(t *testing.T) {
+	__traceStack()
+
 	tests := []struct {
-		name        string
-		args        *settings.SSLParameter
-		expectedErr bool
+		name		string
+		args		*settings.SSLParameter
+		expectedErr	bool
 	}{
 		{
-			name:        "Supported protocol 'TLSv1.2'",
-			args:        &settings.SSLParameter{Protocols: "TLSv1.2"},
-			expectedErr: false,
+			name:		"Supported protocol 'TLSv1.2'",
+			args:		&settings.SSLParameter{Protocols: "TLSv1.2"},
+			expectedErr:	false,
 		},
 		{
-			name:        "Unsupported protocol 'MyTLSv99.9'",
-			args:        &settings.SSLParameter{Protocols: "MyTLSv99.9"},
-			expectedErr: true,
+			name:		"Unsupported protocol 'MyTLSv99.9'",
+			args:		&settings.SSLParameter{Protocols: "MyTLSv99.9"},
+			expectedErr:	true,
 		},
 		{
-			name:        "A list of supported protocols separated by whitespace",
-			args:        &settings.SSLParameter{Protocols: "TLSv1.1 TLSv1.2"},
-			expectedErr: false,
+			name:		"A list of supported protocols separated by whitespace",
+			args:		&settings.SSLParameter{Protocols: "TLSv1.1 TLSv1.2"},
+			expectedErr:	false,
 		},
 		{
-			name:        "A list of supported protocols separated by multiple whitespace",
-			args:        &settings.SSLParameter{Protocols: "  TLSv1.1    TLSv1.2  "},
-			expectedErr: false,
+			name:		"A list of supported protocols separated by multiple whitespace",
+			args:		&settings.SSLParameter{Protocols: "  TLSv1.1    TLSv1.2  "},
+			expectedErr:	false,
 		},
 		{
-			name:        "One unsupported protocol in a list",
-			args:        &settings.SSLParameter{Protocols: "TLSv1.2 TLSv1.1 MyTLSv99.9"},
-			expectedErr: true,
+			name:		"One unsupported protocol in a list",
+			args:		&settings.SSLParameter{Protocols: "TLSv1.2 TLSv1.1 MyTLSv99.9"},
+			expectedErr:	true,
 		},
 		{
-			name:        "Protocols separate by characters other than whitespace is invalid",
-			args:        &settings.SSLParameter{Protocols: "TLSv1.1,TLSv1.2,TLSv1.3"},
-			expectedErr: true,
+			name:		"Protocols separate by characters other than whitespace is invalid",
+			args:		&settings.SSLParameter{Protocols: "TLSv1.1,TLSv1.2,TLSv1.3"},
+			expectedErr:	true,
 		},
 	}
 

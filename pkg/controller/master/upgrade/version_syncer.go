@@ -32,53 +32,59 @@ type CheckUpgradeResponse struct {
 }
 
 type Version struct {
-	Name                 string   `json:"name"` // must be in semantic versioning
-	ReleaseDate          string   `json:"releaseDate"`
-	MinUpgradableVersion string   `json:"minUpgradableVersion,omitempty"`
-	Tags                 []string `json:"tags"`
-	ISOURL               string   `json:"isoURL"`
-	ISOChecksum          string   `json:"isoChecksum"`
-	Checksum             string   `json:"checksum"`
+	Name			string		`json:"name"`
+	ReleaseDate		string		`json:"releaseDate"`
+	MinUpgradableVersion	string		`json:"minUpgradableVersion,omitempty"`
+	Tags			[]string	`json:"tags"`
+	ISOURL			string		`json:"isoURL"`
+	ISOChecksum		string		`json:"isoChecksum"`
+	Checksum		string		`json:"checksum"`
 }
 
 func (v *Version) createVersionCR(namespace string) *harvesterv1.Version {
+	__traceStack()
+
 	return &harvesterv1.Version{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      v.Name,
+			Namespace:	namespace,
+			Name:		v.Name,
 		},
 		Spec: harvesterv1.VersionSpec{
-			ISOURL:               v.ISOURL,
-			ISOChecksum:          v.ISOChecksum,
-			ReleaseDate:          v.ReleaseDate,
-			MinUpgradableVersion: v.MinUpgradableVersion,
-			Tags:                 v.Tags,
+			ISOURL:			v.ISOURL,
+			ISOChecksum:		v.ISOChecksum,
+			ReleaseDate:		v.ReleaseDate,
+			MinUpgradableVersion:	v.MinUpgradableVersion,
+			Tags:			v.Tags,
 		},
 	}
 }
 
 type versionSyncer struct {
-	ctx        context.Context
-	namespace  string
-	httpClient *http.Client
+	ctx		context.Context
+	namespace	string
+	httpClient	*http.Client
 
-	versionClient ctlharvesterv1.VersionClient
-	versionCache  ctlharvesterv1.VersionCache
+	versionClient	ctlharvesterv1.VersionClient
+	versionCache	ctlharvesterv1.VersionCache
 }
 
 func newVersionSyncer(ctx context.Context, namespace string, versionClient ctlharvesterv1.VersionClient, versionCache ctlharvesterv1.VersionCache) *versionSyncer {
+	__traceStack()
+
 	return &versionSyncer{
-		ctx:       ctx,
-		namespace: namespace,
+		ctx:		ctx,
+		namespace:	namespace,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-		versionClient: versionClient,
-		versionCache:  versionCache,
+		versionClient:	versionClient,
+		versionCache:	versionCache,
 	}
 }
 
 func (s *versionSyncer) start() {
+	__traceStack()
+
 	ticker := time.NewTicker(syncInterval)
 	for {
 		select {
@@ -94,6 +100,8 @@ func (s *versionSyncer) start() {
 }
 
 func (s *versionSyncer) sync() error {
+	__traceStack()
+
 	upgradeCheckerEnabled := settings.UpgradeCheckerEnabled.Get()
 	upgradeCheckerURL := settings.UpgradeCheckerURL.Get()
 	if upgradeCheckerEnabled != "true" || upgradeCheckerURL == "" {
@@ -125,6 +133,8 @@ func (s *versionSyncer) sync() error {
 }
 
 func (s *versionSyncer) syncVersions(resp CheckUpgradeResponse, currentVersion string) error {
+	__traceStack()
+
 	if err := s.cleanupVersions(currentVersion); err != nil {
 		return err
 	}
@@ -150,8 +160,9 @@ func (s *versionSyncer) syncVersions(resp CheckUpgradeResponse, currentVersion s
 	return nil
 }
 
-// cleanupVersions remove version resources that's can't be upgraded to anymore
 func (s *versionSyncer) cleanupVersions(currentVersion string) error {
+	__traceStack()
+
 	versions, err := s.versionClient.List(s.namespace, metav1.ListOptions{})
 	if err != nil {
 		return err
@@ -169,6 +180,8 @@ func (s *versionSyncer) cleanupVersions(currentVersion string) error {
 }
 
 func canUpgrade(currentVersion string, newVersion *harvesterv1.Version) bool {
+	__traceStack()
+
 	switch {
 	case newVersion.Spec.ISOURL == "" || newVersion.Spec.ISOChecksum == "":
 		return false

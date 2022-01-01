@@ -20,6 +20,8 @@ const (
 )
 
 func NewValidator(upgrades ctlharvesterv1.UpgradeCache) types.Validator {
+	__traceStack()
+
 	return &upgradeValidator{
 		upgrades: upgrades,
 	}
@@ -28,16 +30,18 @@ func NewValidator(upgrades ctlharvesterv1.UpgradeCache) types.Validator {
 type upgradeValidator struct {
 	types.DefaultValidator
 
-	upgrades ctlharvesterv1.UpgradeCache
+	upgrades	ctlharvesterv1.UpgradeCache
 }
 
 func (v *upgradeValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       v1beta1.UpgradeResourceName,
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   v1beta1.SchemeGroupVersion.Group,
-		APIVersion: v1beta1.SchemeGroupVersion.Version,
-		ObjectType: &v1beta1.Upgrade{},
+		Name:		v1beta1.UpgradeResourceName,
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.Upgrade{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 		},
@@ -45,6 +49,8 @@ func (v *upgradeValidator) Resource() types.Resource {
 }
 
 func (v *upgradeValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	newUpgrade := newObj.(*v1beta1.Upgrade)
 
 	if newUpgrade.Spec.Version == "" && newUpgrade.Spec.Image == "" {

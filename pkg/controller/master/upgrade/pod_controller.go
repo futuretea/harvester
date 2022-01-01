@@ -11,15 +11,16 @@ import (
 	upgradev1 "github.com/harvester/harvester/pkg/generated/controllers/upgrade.cattle.io/v1"
 )
 
-// podHandler syncs upgrade CRD status on upgrade pod status changes
 type podHandler struct {
-	namespace     string
-	planCache     upgradev1.PlanCache
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
+	namespace	string
+	planCache	upgradev1.PlanCache
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
 }
 
 func (h *podHandler) OnChanged(key string, pod *v1.Pod) (*v1.Pod, error) {
+	__traceStack()
+
 	if pod == nil || pod.DeletionTimestamp != nil || pod.Labels == nil || pod.Namespace != upgradeNamespace || pod.Labels[harvesterUpgradeLabel] == "" {
 		return pod, nil
 	}
@@ -50,6 +51,8 @@ func (h *podHandler) OnChanged(key string, pod *v1.Pod) (*v1.Pod, error) {
 }
 
 func (h *podHandler) syncHelmChartPod(pod *v1.Pod) (*v1.Pod, error) {
+	__traceStack()
+
 	if pod.Status.Phase == v1.PodSucceeded {
 		return pod, nil
 	}
@@ -82,6 +85,8 @@ func (h *podHandler) syncHelmChartPod(pod *v1.Pod) (*v1.Pod, error) {
 }
 
 func (h *podHandler) syncNodeUpgradePod(pod *v1.Pod, planName string, nodeName string) (*v1.Pod, error) {
+	__traceStack()
+
 	if pod.Status.Phase == v1.PodSucceeded {
 		return pod, nil
 	}
@@ -111,6 +116,8 @@ func (h *podHandler) syncNodeUpgradePod(pod *v1.Pod, planName string, nodeName s
 }
 
 func getPodWaitingStatus(pod *v1.Pod) (reason string, message string) {
+	__traceStack()
+
 	var containerStatuses []v1.ContainerStatus
 	containerStatuses = append(containerStatuses, pod.Status.InitContainerStatuses...)
 	containerStatuses = append(containerStatuses, pod.Status.ContainerStatuses...)

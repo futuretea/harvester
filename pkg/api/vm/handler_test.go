@@ -24,42 +24,44 @@ import (
 )
 
 func TestMigrateAction(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		namespace  string
-		name       string
-		nodeName   string
-		vmInstance *kubevirtapis.VirtualMachineInstance
+		namespace	string
+		name		string
+		nodeName	string
+		vmInstance	*kubevirtapis.VirtualMachineInstance
 	}
 	type output struct {
-		vmInstanceMigrations []*kubevirtapis.VirtualMachineInstanceMigration
-		err                  error
+		vmInstanceMigrations	[]*kubevirtapis.VirtualMachineInstanceMigration
+		err			error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "VMI not found",
+			name:	"VMI not found",
 			given: input{
-				namespace:  "default",
-				name:       "test",
-				vmInstance: nil,
+				namespace:	"default",
+				name:		"test",
+				vmInstance:	nil,
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  apierrors.NewNotFound(kubevirtapis.Resource("virtualmachineinstances"), "test"),
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			apierrors.NewNotFound(kubevirtapis.Resource("virtualmachineinstances"), "test"),
 			},
 		},
 		{
-			name: "VMI is not running",
+			name:	"VMI is not running",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
 						Phase: kubevirtapis.Pending,
@@ -67,78 +69,78 @@ func TestMigrateAction(t *testing.T) {
 				},
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  errors.New("The VM is not in running state"),
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			errors.New("The VM is not in running state"),
 			},
 		},
 		{
-			name: "VMI's ready status is false",
+			name:	"VMI's ready status is false",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase: kubevirtapis.Running,
+						Phase:	kubevirtapis.Running,
 						Conditions: []kubevirtapis.VirtualMachineInstanceCondition{
 							{
-								Type:   kubevirtapis.VirtualMachineInstanceReady,
-								Status: corev1.ConditionFalse,
+								Type:	kubevirtapis.VirtualMachineInstanceReady,
+								Status:	corev1.ConditionFalse,
 							},
 						},
 					},
 				},
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  errors.New("Can't migrate the VM, the VM is not in ready status"),
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			errors.New("Can't migrate the VM, the VM is not in ready status"),
 			},
 		},
 		{
-			name: "VMI's ready status is unknown",
+			name:	"VMI's ready status is unknown",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase: kubevirtapis.Running,
+						Phase:	kubevirtapis.Running,
 						Conditions: []kubevirtapis.VirtualMachineInstanceCondition{
 							{
-								Type:   kubevirtapis.VirtualMachineInstanceReady,
-								Status: corev1.ConditionUnknown,
+								Type:	kubevirtapis.VirtualMachineInstanceReady,
+								Status:	corev1.ConditionUnknown,
 							},
 						},
 					},
 				},
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  errors.New("Can't migrate the VM, the VM is not in ready status"),
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			errors.New("Can't migrate the VM, the VM is not in ready status"),
 			},
 		},
 		{
-			name: "Migration is triggered",
+			name:	"Migration is triggered",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase: kubevirtapis.Running,
+						Phase:	kubevirtapis.Running,
 						Conditions: []kubevirtapis.VirtualMachineInstanceCondition{
 							{
-								Type:   kubevirtapis.VirtualMachineInstanceReady,
-								Status: corev1.ConditionTrue,
+								Type:	kubevirtapis.VirtualMachineInstanceReady,
+								Status:	corev1.ConditionTrue,
 							},
 						},
 					},
@@ -148,15 +150,15 @@ func TestMigrateAction(t *testing.T) {
 				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace:    "default",
-							GenerateName: "test-",
+							Namespace:	"default",
+							GenerateName:	"test-",
 						},
 						Spec: kubevirtapis.VirtualMachineInstanceMigrationSpec{
 							VMIName: "test",
 						},
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 	}
@@ -169,10 +171,10 @@ func TestMigrateAction(t *testing.T) {
 		}
 
 		var handler = &vmActionHandler{
-			vmis:      fakeVirtualMachineInstanceClient(clientset.KubevirtV1().VirtualMachineInstances),
-			vmiCache:  fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
-			vmims:     fakeVirtualMachineInstanceMigrationClient(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
-			vmimCache: fakeVirtualMachineInstanceMigrationCache(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
+			vmis:		fakeVirtualMachineInstanceClient(clientset.KubevirtV1().VirtualMachineInstances),
+			vmiCache:	fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
+			vmims:		fakeVirtualMachineInstanceMigrationClient(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
+			vmimCache:	fakeVirtualMachineInstanceMigrationCache(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
 		}
 
 		var actual output
@@ -183,7 +185,7 @@ func TestMigrateAction(t *testing.T) {
 
 		assert.Equal(t, tc.expected.vmInstanceMigrations, actual.vmInstanceMigrations, "case %q", tc.name)
 		if tc.expected.err != nil && actual.err != nil {
-			//errors from pkg/errors track stacks so we only compare the error string here
+
 			assert.Equal(t, tc.expected.err.Error(), actual.err.Error(), "case %q", tc.name)
 		} else {
 			assert.Equal(t, tc.expected.err, actual.err, "case %q", tc.name)
@@ -193,55 +195,57 @@ func TestMigrateAction(t *testing.T) {
 }
 
 func TestAbortMigrateAction(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		namespace           string
-		name                string
-		vmInstance          *kubevirtapis.VirtualMachineInstance
-		vmInstanceMigration *kubevirtapis.VirtualMachineInstanceMigration
+		namespace		string
+		name			string
+		vmInstance		*kubevirtapis.VirtualMachineInstance
+		vmInstanceMigration	*kubevirtapis.VirtualMachineInstanceMigration
 	}
 	type output struct {
-		vmInstanceMigrations []*kubevirtapis.VirtualMachineInstanceMigration
-		err                  error
+		vmInstanceMigrations	[]*kubevirtapis.VirtualMachineInstanceMigration
+		err			error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "VMI migration is not started",
+			name:	"VMI migration is not started",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase:          kubevirtapis.Pending,
-						MigrationState: nil,
+						Phase:		kubevirtapis.Pending,
+						MigrationState:	nil,
 					},
 				},
-				vmInstanceMigration: nil,
+				vmInstanceMigration:	nil,
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  errors.New("The VM is not in migrating state"),
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			errors.New("The VM is not in migrating state"),
 			},
 		},
 		{
-			name: "VMI migration is completed",
+			name:	"VMI migration is completed",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase: kubevirtapis.Pending,
+						Phase:	kubevirtapis.Pending,
 						MigrationState: &kubevirtapis.VirtualMachineInstanceMigrationState{
 							Completed: true,
 						},
@@ -249,8 +253,8 @@ func TestAbortMigrateAction(t *testing.T) {
 				},
 				vmInstanceMigration: &kubevirtapis.VirtualMachineInstanceMigration{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test-migration",
+						Namespace:	"default",
+						Name:		"test-migration",
 					},
 					Spec: kubevirtapis.VirtualMachineInstanceMigrationSpec{
 						VMIName: "test",
@@ -264,8 +268,8 @@ func TestAbortMigrateAction(t *testing.T) {
 				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{
 					{
 						ObjectMeta: metav1.ObjectMeta{
-							Namespace: "default",
-							Name:      "test-migration",
+							Namespace:	"default",
+							Name:		"test-migration",
 						},
 						Spec: kubevirtapis.VirtualMachineInstanceMigrationSpec{
 							VMIName: "test",
@@ -275,36 +279,36 @@ func TestAbortMigrateAction(t *testing.T) {
 						},
 					},
 				},
-				err: errors.New("The VM is not in migrating state"),
+				err:	errors.New("The VM is not in migrating state"),
 			},
 		},
 		{
-			name: "Abort VMI migration successfully",
+			name:	"Abort VMI migration successfully",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 						Annotations: map[string]string{
-							util.AnnotationMigrationTarget: "test-uid",
-							util.AnnotationMigrationState:  migration.StateMigrating,
+							util.AnnotationMigrationTarget:	"test-uid",
+							util.AnnotationMigrationState:	migration.StateMigrating,
 						},
 					},
 					Status: kubevirtapis.VirtualMachineInstanceStatus{
-						Phase: kubevirtapis.Running,
+						Phase:	kubevirtapis.Running,
 						MigrationState: &kubevirtapis.VirtualMachineInstanceMigrationState{
-							Completed:    false,
-							MigrationUID: "test-uid",
+							Completed:	false,
+							MigrationUID:	"test-uid",
 						},
 					},
 				},
 				vmInstanceMigration: &kubevirtapis.VirtualMachineInstanceMigration{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test-migration",
-						UID:       "test-uid",
+						Namespace:	"default",
+						Name:		"test-migration",
+						UID:		"test-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineInstanceMigrationSpec{
 						VMIName: "test",
@@ -315,8 +319,8 @@ func TestAbortMigrateAction(t *testing.T) {
 				},
 			},
 			expected: output{
-				vmInstanceMigrations: []*kubevirtapis.VirtualMachineInstanceMigration{},
-				err:                  nil,
+				vmInstanceMigrations:	[]*kubevirtapis.VirtualMachineInstanceMigration{},
+				err:			nil,
 			},
 		},
 	}
@@ -333,10 +337,10 @@ func TestAbortMigrateAction(t *testing.T) {
 		}
 
 		var handler = &vmActionHandler{
-			vmis:      fakeVirtualMachineInstanceClient(clientset.KubevirtV1().VirtualMachineInstances),
-			vmiCache:  fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
-			vmims:     fakeVirtualMachineInstanceMigrationClient(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
-			vmimCache: fakeVirtualMachineInstanceMigrationCache(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
+			vmis:		fakeVirtualMachineInstanceClient(clientset.KubevirtV1().VirtualMachineInstances),
+			vmiCache:	fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
+			vmims:		fakeVirtualMachineInstanceMigrationClient(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
+			vmimCache:	fakeVirtualMachineInstanceMigrationCache(clientset.KubevirtV1().VirtualMachineInstanceMigrations),
 		}
 
 		var actual output
@@ -347,7 +351,7 @@ func TestAbortMigrateAction(t *testing.T) {
 
 		assert.Equal(t, tc.expected.vmInstanceMigrations, actual.vmInstanceMigrations, "case %q", tc.name)
 		if tc.expected.err != nil && actual.err != nil {
-			//errors from pkg/errors track stacks so we only compare the error string here
+
 			assert.Equal(t, tc.expected.err.Error(), actual.err.Error(), "case %q", tc.name)
 		} else {
 			assert.Equal(t, tc.expected.err, actual.err, "case %q", tc.name)
@@ -357,28 +361,30 @@ func TestAbortMigrateAction(t *testing.T) {
 }
 
 func TestAddVolume(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		namespace string
-		name      string
-		input     AddVolumeInput
-		pvc       *corev1.PersistentVolumeClaim
+		namespace	string
+		name		string
+		input		AddVolumeInput
+		pvc		*corev1.PersistentVolumeClaim
 	}
 	type output struct {
 		err error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "Volume source not found",
+			name:	"Volume source not found",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				input: AddVolumeInput{
-					DiskName:         "disk",
-					VolumeSourceName: "not-exist",
+					DiskName:		"disk",
+					VolumeSourceName:	"not-exist",
 				},
 			},
 			expected: output{
@@ -402,7 +408,7 @@ func TestAddVolume(t *testing.T) {
 		actual.err = handler.addVolume(context.Background(), tc.given.namespace, tc.given.namespace, tc.given.input)
 
 		if tc.expected.err != nil && actual.err != nil {
-			//errors from pkg/errors track stacks so we only compare the error string here
+
 			assert.Equal(t, tc.expected.err.Error(), actual.err.Error(), "case %q", tc.name)
 		} else {
 			assert.Equal(t, tc.expected.err, actual.err, "case %q", tc.name)
@@ -411,25 +417,27 @@ func TestAddVolume(t *testing.T) {
 }
 
 func TestRemoveVolume(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		namespace  string
-		name       string
-		input      RemoveVolumeInput
-		vmInstance *kubevirtapis.VirtualMachineInstance
+		namespace	string
+		name		string
+		input		RemoveVolumeInput
+		vmInstance	*kubevirtapis.VirtualMachineInstance
 	}
 	type output struct {
 		err error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "VM instance not found",
+			name:	"VM instance not found",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				input: RemoveVolumeInput{
 					DiskName: "test",
 				},
@@ -439,22 +447,22 @@ func TestRemoveVolume(t *testing.T) {
 			},
 		},
 		{
-			name: "Hotplug disk not found",
+			name:	"Hotplug disk not found",
 			given: input{
-				namespace: "default",
-				name:      "test",
+				namespace:	"default",
+				name:		"test",
 				input: RemoveVolumeInput{
 					DiskName: "not-exist",
 				},
 				vmInstance: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 					Spec: kubevirtapis.VirtualMachineInstanceSpec{
 						Volumes: nil,
 					},
-					Status: kubevirtapis.VirtualMachineInstanceStatus{Phase: kubevirtapis.Running, MigrationState: nil},
+					Status:	kubevirtapis.VirtualMachineInstanceStatus{Phase: kubevirtapis.Running, MigrationState: nil},
 				},
 			},
 			expected: output{
@@ -472,15 +480,15 @@ func TestRemoveVolume(t *testing.T) {
 		}
 
 		var handler = &vmActionHandler{
-			vmiCache: fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
-			pvcCache: fakeclients.PersistentVolumeClaimCache(coreclientset.CoreV1().PersistentVolumeClaims),
+			vmiCache:	fakeVirtualMachineInstanceCache(clientset.KubevirtV1().VirtualMachineInstances),
+			pvcCache:	fakeclients.PersistentVolumeClaimCache(coreclientset.CoreV1().PersistentVolumeClaims),
 		}
 
 		var actual output
 		actual.err = handler.removeVolume(context.Background(), tc.given.namespace, tc.given.name, tc.given.input)
 
 		if tc.expected.err != nil && actual.err != nil {
-			//errors from pkg/errors track stacks so we only compare the error string here
+
 			assert.Equal(t, tc.expected.err.Error(), actual.err.Error(), "case %q", tc.name)
 		} else {
 			assert.Equal(t, tc.expected.err, actual.err, "case %q", tc.name)
@@ -491,62 +499,90 @@ func TestRemoveVolume(t *testing.T) {
 type fakeVirtualMachineInstanceCache func(string) kubevirttype.VirtualMachineInstanceInterface
 
 func (c fakeVirtualMachineInstanceCache) Get(namespace, name string) (*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c fakeVirtualMachineInstanceCache) List(namespace string, selector labels.Selector) ([]*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVirtualMachineInstanceCache) AddIndexer(indexName string, indexer kubevirtctrl.VirtualMachineInstanceIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVirtualMachineInstanceCache) GetByIndex(indexName, key string) ([]*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 type fakeVirtualMachineInstanceClient func(string) kubevirttype.VirtualMachineInstanceInterface
 
 func (c fakeVirtualMachineInstanceClient) Create(virtualMachine *kubevirtapis.VirtualMachineInstance) (*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).Create(context.TODO(), virtualMachine, metav1.CreateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceClient) Update(virtualMachine *kubevirtapis.VirtualMachineInstance) (*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).Update(context.TODO(), virtualMachine, metav1.UpdateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceClient) UpdateStatus(virtualMachine *kubevirtapis.VirtualMachineInstance) (*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).UpdateStatus(context.TODO(), virtualMachine, metav1.UpdateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceClient) Delete(namespace, name string, opts *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *opts)
 }
 
 func (c fakeVirtualMachineInstanceClient) Get(namespace, name string, opts metav1.GetOptions) (*kubevirtapis.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, opts)
 }
 
 func (c fakeVirtualMachineInstanceClient) List(namespace string, opts metav1.ListOptions) (*kubevirtapis.VirtualMachineInstanceList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c fakeVirtualMachineInstanceClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c fakeVirtualMachineInstanceClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *kubevirtapis.VirtualMachineInstance, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }
 
 type fakeVirtualMachineInstanceMigrationCache func(string) kubevirttype.VirtualMachineInstanceMigrationInterface
 
 func (c fakeVirtualMachineInstanceMigrationCache) Get(namespace, name string) (*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c fakeVirtualMachineInstanceMigrationCache) List(namespace string, selector labels.Selector) ([]*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	list, err := c(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: selector.String(),
 	})
@@ -561,43 +597,63 @@ func (c fakeVirtualMachineInstanceMigrationCache) List(namespace string, selecto
 }
 
 func (c fakeVirtualMachineInstanceMigrationCache) AddIndexer(indexName string, indexer kubevirtctrl.VirtualMachineInstanceMigrationIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVirtualMachineInstanceMigrationCache) GetByIndex(indexName, key string) ([]*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 type fakeVirtualMachineInstanceMigrationClient func(string) kubevirttype.VirtualMachineInstanceMigrationInterface
 
 func (c fakeVirtualMachineInstanceMigrationClient) Create(virtualMachine *kubevirtapis.VirtualMachineInstanceMigration) (*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).Create(context.TODO(), virtualMachine, metav1.CreateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) Update(virtualMachine *kubevirtapis.VirtualMachineInstanceMigration) (*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).Update(context.TODO(), virtualMachine, metav1.UpdateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) UpdateStatus(virtualMachine *kubevirtapis.VirtualMachineInstanceMigration) (*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	return c(virtualMachine.Namespace).UpdateStatus(context.TODO(), virtualMachine, metav1.UpdateOptions{})
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) Delete(namespace, name string, opts *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *opts)
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) Get(namespace, name string, opts metav1.GetOptions) (*kubevirtapis.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, opts)
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) List(namespace string, opts metav1.ListOptions) (*kubevirtapis.VirtualMachineInstanceMigrationList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c fakeVirtualMachineInstanceMigrationClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *kubevirtapis.VirtualMachineInstanceMigration, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }

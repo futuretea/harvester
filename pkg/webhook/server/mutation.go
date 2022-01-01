@@ -16,6 +16,8 @@ import (
 )
 
 func Mutation(clients *clients.Clients, options *config.Options) (http.Handler, []types.Resource, error) {
+	__traceStack()
+
 	resources := []types.Resource{}
 	mutators := []types.Mutator{
 		pod.NewMutator(clients.HarvesterFactory.Harvesterhci().V1beta1().Setting().Cache()),
@@ -33,6 +35,8 @@ func Mutation(clients *clients.Clients, options *config.Options) (http.Handler, 
 }
 
 func addHandler(router *webhook.Router, admissionType string, admitter types.Admitter, options *config.Options) {
+	__traceStack()
+
 	rsc := admitter.Resource()
 	kind := reflect.Indirect(reflect.ValueOf(rsc.ObjectType)).Type().Name()
 	router.Kind(kind).Group(rsc.APIGroup).Type(rsc.ObjectType).Handle(types.NewAdmissionHandler(admitter, admissionType, options))

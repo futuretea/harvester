@@ -15,20 +15,21 @@ import (
 	"github.com/harvester/harvester/pkg/settings"
 )
 
-// Handler generates support bundles for the cluster
 type Handler struct {
-	supportBundles          v1beta1.SupportBundleClient
-	supportBundleController v1beta1.SupportBundleController
-	nodeCache               ctlcorev1.NodeCache
-	podCache                ctlcorev1.PodCache
-	deployments             ctlappsv1.DeploymentClient
-	daemonSets              ctlappsv1.DaemonSetClient
-	services                ctlcorev1.ServiceClient
+	supportBundles		v1beta1.SupportBundleClient
+	supportBundleController	v1beta1.SupportBundleController
+	nodeCache		ctlcorev1.NodeCache
+	podCache		ctlcorev1.PodCache
+	deployments		ctlappsv1.DeploymentClient
+	daemonSets		ctlappsv1.DaemonSetClient
+	services		ctlcorev1.ServiceClient
 
-	manager *Manager
+	manager	*Manager
 }
 
 func (h *Handler) OnSupportBundleChanged(key string, sb *harvesterv1.SupportBundle) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	if sb == nil || sb.DeletionTimestamp != nil {
 		return sb, nil
 	}
@@ -51,6 +52,8 @@ func (h *Handler) OnSupportBundleChanged(key string, sb *harvesterv1.SupportBund
 }
 
 func (h *Handler) checkManagerStatus(sb *harvesterv1.SupportBundle) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	var timeout int
 	var err error
 	if timeoutStr := settings.SupportBundleTimeout.Get(); timeoutStr != "" {
@@ -87,6 +90,8 @@ func (h *Handler) checkManagerStatus(sb *harvesterv1.SupportBundle) (*harvesterv
 }
 
 func (h *Handler) setError(sb *harvesterv1.SupportBundle, reason string) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	logrus.Errorf("[%s] set state to error: %s", sb.Name, reason)
 	toUpdate := sb.DeepCopy()
 	harvesterv1.SupportBundleInitialized.False(toUpdate)
@@ -96,6 +101,8 @@ func (h *Handler) setError(sb *harvesterv1.SupportBundle, reason string) (*harve
 }
 
 func (h *Handler) setState(sb *harvesterv1.SupportBundle, state string) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	logrus.Debugf("[%s] set state to %s", sb.Name, state)
 	toUpdate := sb.DeepCopy()
 	toUpdate.Status.State = state
@@ -103,6 +110,8 @@ func (h *Handler) setState(sb *harvesterv1.SupportBundle, state string) (*harves
 }
 
 func (h *Handler) setReady(sb *harvesterv1.SupportBundle, filename string, filesize int64) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	logrus.Debugf("[%s] set state to %s", sb.Name, types.StateReady)
 	toUpdate := sb.DeepCopy()
 	harvesterv1.SupportBundleInitialized.True(toUpdate)
@@ -114,6 +123,8 @@ func (h *Handler) setReady(sb *harvesterv1.SupportBundle, filename string, files
 }
 
 func (h *Handler) setProgress(sb *harvesterv1.SupportBundle, progress int) (*harvesterv1.SupportBundle, error) {
+	__traceStack()
+
 	logrus.Debugf("[%s] set progress to %d", sb.Name, progress)
 	toUpdate := sb.DeepCopy()
 	toUpdate.Status.Progress = progress

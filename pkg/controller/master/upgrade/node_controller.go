@@ -16,21 +16,19 @@ import (
 	ctlharvesterv1 "github.com/harvester/harvester/pkg/generated/controllers/harvesterhci.io/v1beta1"
 )
 
-// nodeHandler syncs node OS upgrade
-// We label `harvesterhci.io/pendingOSImage` to new OS version before rebooting a node.
-// If `harvesterhci.io/pendingOSImage` is equals to the value of `harvesterhci.io/pendingOSImage`, we know the
-// the reboot is done.
 type nodeHandler struct {
-	namespace     string
-	nodeClient    ctlcorev1.NodeClient
-	nodeCache     ctlcorev1.NodeCache
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
-	machineClient clusterv1ctl.MachineClient
-	machineCache  clusterv1ctl.MachineCache
+	namespace	string
+	nodeClient	ctlcorev1.NodeClient
+	nodeCache	ctlcorev1.NodeCache
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
+	machineClient	clusterv1ctl.MachineClient
+	machineCache	clusterv1ctl.MachineCache
 }
 
 func (h *nodeHandler) OnChanged(key string, node *corev1.Node) (*corev1.Node, error) {
+	__traceStack()
+
 	if node == nil || node.DeletionTimestamp != nil || node.Annotations == nil {
 		return node, nil
 	}
@@ -102,6 +100,8 @@ func (h *nodeHandler) OnChanged(key string, node *corev1.Node) (*corev1.Node, er
 type NodeUpdateFunc func(node *corev1.Node)
 
 func (h *nodeHandler) retryUpdateNodeOnConflict(nodeName string, updateFunc NodeUpdateFunc) error {
+	__traceStack()
+
 	for i := 1; i < 3; i++ {
 		current, err := h.nodeCache.Get(nodeName)
 		if err != nil {

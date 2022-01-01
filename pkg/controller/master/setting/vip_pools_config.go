@@ -17,6 +17,8 @@ import (
 const KubevipConfigmapName = "kubevip"
 
 func (h *Handler) syncVipPoolsConfig(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	pools := map[string]string{}
 	err := json.Unmarshal([]byte(setting.Value), &pools)
 	if err != nil {
@@ -37,10 +39,10 @@ func (h *Handler) syncVipPoolsConfig(setting *harvesterv1.Setting) error {
 	if vipConfigmap == nil {
 		cf := &v1.ConfigMap{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      KubevipConfigmapName,
-				Namespace: util.KubeSystemNamespace,
+				Name:		KubevipConfigmapName,
+				Namespace:	util.KubeSystemNamespace,
 			},
-			Data: poolsData,
+			Data:	poolsData,
 		}
 		if _, err := h.configmaps.Create(cf); err != nil {
 			return err
@@ -58,6 +60,8 @@ func (h *Handler) syncVipPoolsConfig(setting *harvesterv1.Setting) error {
 }
 
 func ValidateCIDRs(pools map[string]string) error {
+	__traceStack()
+
 	for ns, v := range pools {
 		cidrs := strings.Split(v, ",")
 		for _, cidr := range cidrs {

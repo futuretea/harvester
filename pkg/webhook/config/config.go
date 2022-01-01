@@ -1,10 +1,10 @@
 package config
 
 type Options struct {
-	Namespace       string
-	Threadiness     int
-	HTTPSListenPort int
+	Namespace	string
+	Threadiness	int
+	HTTPSListenPort	int
 
-	HarvesterControllerUsername string
-	GarbageCollectionUsername   string
+	HarvesterControllerUsername	string
+	GarbageCollectionUsername	string
 }

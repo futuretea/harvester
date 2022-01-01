@@ -19,6 +19,8 @@ import (
 )
 
 func (h *Handler) updateConditions(vmBackup *harvesterv1.VirtualMachineBackup) error {
+	__traceStack()
+
 	var vmBackupCpy = vmBackup.DeepCopy()
 	if isBackupProgressing(vmBackupCpy) {
 		updateBackupCondition(vmBackupCpy, newProgressingCondition(corev1.ConditionTrue, "Operation in progress"))
@@ -45,11 +47,10 @@ func (h *Handler) updateConditions(vmBackup *harvesterv1.VirtualMachineBackup) e
 		updateBackupCondition(vmBackupCpy, newReadyCondition(corev1.ConditionTrue, "Operation complete"))
 	}
 
-	// check if the status need to update the error status
 	if errorMessage != "" && (vmBackupCpy.Status.Error == nil || vmBackupCpy.Status.Error.Message == nil || *vmBackupCpy.Status.Error.Message != errorMessage) {
 		vmBackupCpy.Status.Error = &harvesterv1.Error{
-			Time:    currentTime(),
-			Message: pointer.StringPtr(errorMessage),
+			Time:		currentTime(),
+			Message:	pointer.StringPtr(errorMessage),
 		}
 	}
 
@@ -64,13 +65,14 @@ func (h *Handler) updateConditions(vmBackup *harvesterv1.VirtualMachineBackup) e
 }
 
 func (h *Handler) updateVolumeSnapshotChanged(key string, snapshot *snapshotv1.VolumeSnapshot) (*snapshotv1.VolumeSnapshot, error) {
+	__traceStack()
+
 	if snapshot == nil || snapshot.DeletionTimestamp != nil {
 		return nil, nil
 	}
 
 	controllerRef := metav1.GetControllerOf(snapshot)
 
-	// If it has a ControllerRef, that's all that matters.
 	if controllerRef != nil {
 		ref := h.resolveVolSnapshotRef(snapshot.Namespace, controllerRef)
 		if ref == nil {
@@ -81,12 +83,9 @@ func (h *Handler) updateVolumeSnapshotChanged(key string, snapshot *snapshotv1.V
 	return nil, nil
 }
 
-// resolveVolSnapshotRef returns the controller referenced by a ControllerRef,
-// or nil if the ControllerRef could not be resolved to a matching controller
-// of the correct Kind.
 func (h *Handler) resolveVolSnapshotRef(namespace string, controllerRef *metav1.OwnerReference) *harvesterv1.VirtualMachineBackup {
-	// We can't look up by UID, so look up by Name and then verify UID.
-	// Don't even try to look up by Name if it's the wrong Kind.
+	__traceStack()
+
 	if controllerRef.Kind != vmBackupKind.Kind {
 		return nil
 	}
@@ -95,15 +94,15 @@ func (h *Handler) resolveVolSnapshotRef(namespace string, controllerRef *metav1.
 		return nil
 	}
 	if backup.UID != controllerRef.UID {
-		// The controller we found with this Name is not the same one that the
-		// ControllerRef points to.
+
 		return nil
 	}
 	return backup
 }
 
-// mountLonghornVolumes helps to mount the volumes to host if it is detached
 func (h *Handler) mountLonghornVolumes(vm *kubevirtv1.VirtualMachine) error {
+	__traceStack()
+
 	for _, vol := range vm.Spec.Template.Spec.Volumes {
 		if vol.PersistentVolumeClaim == nil {
 			continue
@@ -136,10 +135,14 @@ func (h *Handler) mountLonghornVolumes(vm *kubevirtv1.VirtualMachine) error {
 }
 
 func getVolumeSnapshotContentName(volumeBackup harvesterv1.VolumeBackup) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s-vsc", *volumeBackup.Name)
 }
 
 func (h *Handler) OnLHBackupChanged(key string, lhBackup *lhv1beta1.Backup) (*lhv1beta1.Backup, error) {
+	__traceStack()
+
 	if lhBackup == nil || lhBackup.DeletionTimestamp != nil || lhBackup.Status.SnapshotName == "" {
 		return nil, nil
 	}

@@ -3,8 +3,8 @@ package vm
 import "github.com/rancher/wrangler/pkg/condition"
 
 var (
-	vmReady   condition.Cond = "Ready"
-	vmiPaused condition.Cond = "Paused"
+	vmReady		condition.Cond	= "Ready"
+	vmiPaused	condition.Cond	= "Paused"
 )
 
 type EjectCdRomActionInput struct {
@@ -16,8 +16,8 @@ type BackupInput struct {
 }
 
 type RestoreInput struct {
-	Name       string `json:"name"`
-	BackupName string `json:"backupName"`
+	Name		string	`json:"name"`
+	BackupName	string	`json:"backupName"`
 }
 
 type MigrateInput struct {
@@ -25,13 +25,13 @@ type MigrateInput struct {
 }
 
 type CreateTemplateInput struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Name		string	`json:"name"`
+	Description	string	`json:"description,omitempty"`
 }
 
 type AddVolumeInput struct {
-	DiskName         string `json:"diskName"`
-	VolumeSourceName string `json:"volumeSourceName"`
+	DiskName		string	`json:"diskName"`
+	VolumeSourceName	string	`json:"volumeSourceName"`
 }
 
 type RemoveVolumeInput struct {
@@ -39,6 +39,6 @@ type RemoveVolumeInput struct {
 }
 
 type ExportVolumeInput struct {
-	DisplayName string `json:"displayName"`
-	Namespace   string `json:"namespace"`
+	DisplayName	string	`json:"displayName"`
+	Namespace	string	`json:"namespace"`
 }

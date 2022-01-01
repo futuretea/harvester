@@ -14,11 +14,13 @@ import (
 )
 
 var (
-	templateTmpl        = template.Must(template.New("template").Parse(initBaseTemplates))
-	templateVersionTmpl = template.Must(template.New("templateVersion").Parse(initBaseTemplateVersions))
+	templateTmpl		= template.Must(template.New("template").Parse(initBaseTemplates))
+	templateVersionTmpl	= template.Must(template.New("templateVersion").Parse(initBaseTemplateVersions))
 )
 
 func createTemplates(mgmt *config.Management, namespace string) error {
+	__traceStack()
+
 	templates := mgmt.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineTemplate()
 	templateVersions := mgmt.HarvesterFactory.Harvesterhci().V1beta1().VirtualMachineTemplateVersion()
 	if err := initBaseTemplate(templates, namespace); err != nil {
@@ -29,6 +31,8 @@ func createTemplates(mgmt *config.Management, namespace string) error {
 }
 
 func generateYmls(tmpl *template.Template, namespace string) ([][]byte, error) {
+	__traceStack()
+
 	data := map[string]string{
 		"Namespace": namespace,
 	}
@@ -42,6 +46,8 @@ func generateYmls(tmpl *template.Template, namespace string) ([][]byte, error) {
 }
 
 func initBaseTemplate(vmTemplates ctlharvesterv1.VirtualMachineTemplateClient, namespace string) error {
+	__traceStack()
+
 	ymls, err := generateYmls(templateTmpl, namespace)
 	if err != nil {
 		return err
@@ -61,6 +67,8 @@ func initBaseTemplate(vmTemplates ctlharvesterv1.VirtualMachineTemplateClient, n
 }
 
 func initBaseTemplateVersion(vmTemplateVersions ctlharvesterv1.VirtualMachineTemplateVersionClient, namespace string) error {
+	__traceStack()
+
 	ymls, err := generateYmls(templateVersionTmpl, namespace)
 	if err != nil {
 		return err
@@ -80,7 +88,7 @@ func initBaseTemplateVersion(vmTemplateVersions ctlharvesterv1.VirtualMachineTem
 }
 
 var (
-	initBaseTemplates = `
+	initBaseTemplates	= `
 apiVersion: harvesterhci.io/v1beta1
 kind: VirtualMachineTemplate
 metadata:
@@ -106,8 +114,7 @@ spec:
   description: Template for booting the Windows virtual machine from an ISO image
 `
 
-	// windows default resource request refer to windows server docs https://docs.microsoft.com/en-us/windows-server/get-started-19/sys-reqs-19
-	initBaseTemplateVersions = `
+	initBaseTemplateVersions	= `
 apiVersion: harvesterhci.io/v1beta1
 kind: VirtualMachineTemplateVersion
 metadata:

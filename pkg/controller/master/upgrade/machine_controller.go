@@ -16,16 +16,17 @@ const (
 	rancherMachineNamespace = "fleet-local"
 )
 
-// machineHandler watches pre-drain and pos-drain annotations set by Rancher and create corresponding node jobs
 type machineHandler struct {
-	namespace     string
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
-	jobClient     v1.JobClient
-	jobCache      v1.JobCache
+	namespace	string
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
+	jobClient	v1.JobClient
+	jobCache	v1.JobCache
 }
 
 func (h *machineHandler) OnChanged(key string, machine *clusterv1.Machine) (*clusterv1.Machine, error) {
+	__traceStack()
+
 	if machine == nil || machine.DeletionTimestamp != nil || machine.Namespace != rancherMachineNamespace || machine.Annotations == nil {
 		return machine, nil
 	}
@@ -83,6 +84,8 @@ func (h *machineHandler) OnChanged(key string, machine *clusterv1.Machine) (*clu
 }
 
 func (h *machineHandler) createHookJob(upgrade *harvesterv1.Upgrade, nodeName string, jobType string, nextState string) error {
+	__traceStack()
+
 	err := h.checkPendingHookJobs(upgrade.Name)
 	if err != nil {
 		return err
@@ -108,6 +111,8 @@ func (h *machineHandler) createHookJob(upgrade *harvesterv1.Upgrade, nodeName st
 }
 
 func (h *machineHandler) checkPendingHookJobs(upgrade string) error {
+	__traceStack()
+
 	sets := labels.Set{
 		harvesterUpgradeLabel: upgrade,
 	}

@@ -12,30 +12,29 @@ import (
 )
 
 const (
-	maintainNodeControllerName = "maintain-node-controller"
-	labelNodeNameKey           = "kubevirt.io/nodeName"
+	maintainNodeControllerName	= "maintain-node-controller"
+	labelNodeNameKey		= "kubevirt.io/nodeName"
 
-	MaintainStatusAnnotationKey = "harvesterhci.io/maintain-status"
-	MaintainStatusComplete      = "completed"
-	MaintainStatusRunning       = "running"
+	MaintainStatusAnnotationKey	= "harvesterhci.io/maintain-status"
+	MaintainStatusComplete		= "completed"
+	MaintainStatusRunning		= "running"
 )
 
-// maintainNodeHandler updates maintenance status of a node in its annotations, so that we can tell whether the node is
-// entering maintenance mode(migrating VMs on it) or in maintenance mode(VMs migrated).
 type maintainNodeHandler struct {
-	nodes                       ctlcorev1.NodeClient
-	nodeCache                   ctlcorev1.NodeCache
-	virtualMachineInstanceCache v1.VirtualMachineInstanceCache
+	nodes				ctlcorev1.NodeClient
+	nodeCache			ctlcorev1.NodeCache
+	virtualMachineInstanceCache	v1.VirtualMachineInstanceCache
 }
 
-// MaintainRegister registers the node controller
 func MaintainRegister(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	nodes := management.CoreFactory.Core().V1().Node()
 	vmis := management.VirtFactory.Kubevirt().V1().VirtualMachineInstance()
 	maintainNodeHandler := &maintainNodeHandler{
-		nodes:                       nodes,
-		nodeCache:                   nodes.Cache(),
-		virtualMachineInstanceCache: vmis.Cache(),
+		nodes:				nodes,
+		nodeCache:			nodes.Cache(),
+		virtualMachineInstanceCache:	vmis.Cache(),
 	}
 
 	nodes.OnChange(ctx, maintainNodeControllerName, maintainNodeHandler.OnNodeChanged)
@@ -43,8 +42,9 @@ func MaintainRegister(ctx context.Context, management *config.Management, option
 	return nil
 }
 
-// OnNodeChanged updates node maintenance status when all VMs are migrated
 func (h *maintainNodeHandler) OnNodeChanged(key string, node *corev1.Node) (*corev1.Node, error) {
+	__traceStack()
+
 	if node == nil || node.DeletionTimestamp != nil {
 		return node, nil
 	}

@@ -12,25 +12,27 @@ import (
 )
 
 func RegisterSchema(scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	nodeHandler := ActionHandler{
-		nodeClient: scaled.Management.CoreFactory.Core().V1().Node(),
-		nodeCache:  scaled.Management.CoreFactory.Core().V1().Node().Cache(),
+		nodeClient:	scaled.Management.CoreFactory.Core().V1().Node(),
+		nodeCache:	scaled.Management.CoreFactory.Core().V1().Node().Cache(),
 	}
 	t := schema.Template{
-		ID: "node",
+		ID:	"node",
 		Customize: func(s *types.APISchema) {
 			s.Formatter = Formatter
 			s.ResourceActions = map[string]schemas.Action{
-				enableMaintenanceModeAction:  {},
-				disableMaintenanceModeAction: {},
-				cordonAction:                 {},
-				uncordonAction:               {},
+				enableMaintenanceModeAction:	{},
+				disableMaintenanceModeAction:	{},
+				cordonAction:			{},
+				uncordonAction:			{},
 			}
 			s.ActionHandlers = map[string]http.Handler{
-				enableMaintenanceModeAction:  nodeHandler,
-				disableMaintenanceModeAction: nodeHandler,
-				cordonAction:                 nodeHandler,
-				uncordonAction:               nodeHandler,
+				enableMaintenanceModeAction:	nodeHandler,
+				disableMaintenanceModeAction:	nodeHandler,
+				cordonAction:			nodeHandler,
+				uncordonAction:			nodeHandler,
 			}
 		},
 	}

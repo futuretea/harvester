@@ -28,16 +28,16 @@ import (
 var _ = Describe("verify vm backup & restore APIs", func() {
 	if env.IsE2ETestsEnabled() {
 		var (
-			scaled            *config.Scaled
-			backupController  ctlharvesterv1.VirtualMachineBackupController
-			restoreController ctlharvesterv1.VirtualMachineRestoreController
-			vmController      ctlkubevirtv1.VirtualMachineController
-			vmiController     ctlkubevirtv1.VirtualMachineInstanceController
-			settingController ctllonghornv1.SettingController
-			podController     ctlcorev1.PodController
-			svcController     ctlcorev1.ServiceController
-			backupNamespace   string
-			vmBackupTarget    string
+			scaled			*config.Scaled
+			backupController	ctlharvesterv1.VirtualMachineBackupController
+			restoreController	ctlharvesterv1.VirtualMachineRestoreController
+			vmController		ctlkubevirtv1.VirtualMachineController
+			vmiController		ctlkubevirtv1.VirtualMachineInstanceController
+			settingController	ctllonghornv1.SettingController
+			podController		ctlcorev1.PodController
+			svcController		ctlcorev1.ServiceController
+			backupNamespace		string
+			vmBackupTarget		string
 		)
 
 		BeforeEach(func() {
@@ -54,7 +54,7 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 		})
 
 		Cleanup(func() {
-			// cleanup backup vms
+
 			vmList, err := vmController.List(backupNamespace, metav1.ListOptions{
 				LabelSelector: labels.FormatLabels(testVMBackupLabels)})
 			if err != nil {
@@ -67,7 +67,6 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 				}
 			}
 
-			// cleanup vm backup & restore
 			backups, err := backupController.List(backupNamespace, metav1.ListOptions{})
 			if err != nil {
 				GinkgoT().Logf("failed to list vm backups, %v", err)
@@ -142,7 +141,6 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 				vm, err = vmController.Get(backupNamespace, vmName, metav1.GetOptions{})
 				MustNotError(err)
 
-				// backup
 				vmURL := helper.BuildResourceURL(vmsAPI, backupNamespace, vmName)
 				backupName := "backup" + fuzz.String(5)
 				By("call vm backup action")
@@ -168,8 +166,8 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 				restoreName := "restore-" + fuzz.String(3)
 				By("then create a vm restore", func() {
 					respCode, respBody, err := helper.PostObjectAction(vmURL, apivm.RestoreInput{
-						Name:       restoreName,
-						BackupName: backupName,
+						Name:		restoreName,
+						BackupName:	backupName,
 					}, "restore")
 
 					MustRespCodeIs(http.StatusNoContent, "restore vm action done", err, respCode, respBody)
@@ -189,19 +187,19 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 					vmName := "new-vm" + fuzz.String(3)
 					newVM := harvesterv1.VirtualMachineRestore{
 						ObjectMeta: metav1.ObjectMeta{
-							Name:      restoreName,
-							Namespace: backupNamespace,
-							Labels:    testVMBackupLabels,
+							Name:		restoreName,
+							Namespace:	backupNamespace,
+							Labels:		testVMBackupLabels,
 						},
 						Spec: harvesterv1.VirtualMachineRestoreSpec{
 							Target: corev1.TypedLocalObjectReference{
-								APIGroup: &harvesterv1.SchemeGroupVersion.Group,
-								Kind:     "VirtualMachine",
-								Name:     vmName,
+								APIGroup:	&harvesterv1.SchemeGroupVersion.Group,
+								Kind:		"VirtualMachine",
+								Name:		vmName,
 							},
-							VirtualMachineBackupName:      backupName,
-							VirtualMachineBackupNamespace: backupName,
-							NewVM:                         true,
+							VirtualMachineBackupName:	backupName,
+							VirtualMachineBackupNamespace:	backupName,
+							NewVM:				true,
 						},
 					}
 					respCode, respBody, err := helper.PostObject(restoresAPI, newVM)
@@ -223,6 +221,8 @@ var _ = Describe("verify vm backup & restore APIs", func() {
 })
 
 func createLonghornTestingNFS(svcController ctlcorev1.ServiceController, podController ctlcorev1.PodController, namespace string) (string, error) {
+	__traceStack()
+
 	testNFSServerLabels := map[string]string{
 		"harvester.test.io/name": "harvester-nfs",
 	}
@@ -231,26 +231,26 @@ func createLonghornTestingNFS(svcController ctlcorev1.ServiceController, podCont
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			Labels:    testNFSServerLabels,
+			Name:		name,
+			Namespace:	namespace,
+			Labels:		testNFSServerLabels,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
-					Name:            "nfs",
-					Image:           "janeczku/nfs-ganesha:latest",
-					ImagePullPolicy: corev1.PullIfNotPresent,
+					Name:			"nfs",
+					Image:			"janeczku/nfs-ganesha:latest",
+					ImagePullPolicy:	corev1.PullIfNotPresent,
 					Env: []corev1.EnvVar{
 						{
-							Name:  "EXPORT_ID",
-							Value: "14",
+							Name:	"EXPORT_ID",
+							Value:	"14",
 						}, {
-							Name:  "EXPORT_PATH",
-							Value: "/opt/backupstore",
+							Name:	"EXPORT_PATH",
+							Value:	"/opt/backupstore",
 						}, {
-							Name:  "PSEUDO_PATH",
-							Value: "/opt/backupstore",
+							Name:	"PSEUDO_PATH",
+							Value:	"/opt/backupstore",
 						},
 					},
 					Command: []string{
@@ -259,7 +259,7 @@ func createLonghornTestingNFS(svcController ctlcorev1.ServiceController, podCont
 						"chmod 700 /opt/backupstore && /opt/start_nfs.sh | tee /var/log/ganesha.log",
 					},
 					SecurityContext: &corev1.SecurityContext{
-						Privileged: &privileged,
+						Privileged:	&privileged,
 						Capabilities: &corev1.Capabilities{
 							Add: []corev1.Capability{
 								"SYS_ADMIN",
@@ -269,13 +269,13 @@ func createLonghornTestingNFS(svcController ctlcorev1.ServiceController, podCont
 					},
 					VolumeMounts: []corev1.VolumeMount{
 						{
-							Name:      "nfs-volume",
-							MountPath: "/opt/backupstore",
+							Name:		"nfs-volume",
+							MountPath:	"/opt/backupstore",
 						},
 					},
 					LivenessProbe: &corev1.Probe{
-						InitialDelaySeconds: 5,
-						PeriodSeconds:       5,
+						InitialDelaySeconds:	5,
+						PeriodSeconds:		5,
 						Handler: corev1.Handler{
 							Exec: &corev1.ExecAction{
 								Command: []string{
@@ -302,12 +302,12 @@ func createLonghornTestingNFS(svcController ctlcorev1.ServiceController, podCont
 
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "harvester-nfs-svc",
-			Namespace: namespace,
+			Name:		"harvester-nfs-svc",
+			Namespace:	namespace,
 		},
 		Spec: corev1.ServiceSpec{
-			Selector:  testNFSServerLabels,
-			ClusterIP: "None",
+			Selector:	testNFSServerLabels,
+			ClusterIP:	"None",
 		},
 	}
 	_, err = svcController.Create(svc)

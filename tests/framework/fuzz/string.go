@@ -4,7 +4,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-// String returns a random string with given size.
 func String(size int) string {
+	__traceStack()
+
 	return rand.String(size)
 }

@@ -10,8 +10,9 @@ import (
 	restclient "k8s.io/client-go/rest"
 )
 
-// CreateNamespace create namespace by kubeConfig
 func CreateNamespace(kubeConfig *restclient.Config, namespace string) error {
+	__traceStack()
+
 	coreFactory, err := core.NewFactoryFromConfig(kubeConfig)
 	if err != nil {
 		return fmt.Errorf("faield to create core factory from kubernetes config, %v", err)
@@ -26,6 +27,8 @@ func CreateNamespace(kubeConfig *restclient.Config, namespace string) error {
 }
 
 func GetPodNodeIP(coreFactory *core.Factory, namespace, labelAppValue string) (string, error) {
+	__traceStack()
+
 	podController := coreFactory.Core().V1().Pod()
 	nodeController := coreFactory.Core().V1().Node()
 
@@ -53,6 +56,8 @@ func GetPodNodeIP(coreFactory *core.Factory, namespace, labelAppValue string) (s
 }
 
 func GetNodePortEndPoint(kubeConfig *restclient.Config, namespace, deploymentName, serviceName string) (string, error) {
+	__traceStack()
+
 	coreFactory, err := core.NewFactoryFromConfig(kubeConfig)
 	if err != nil {
 		return "", fmt.Errorf("faield to create core factory from kubernetes config, %v", err)

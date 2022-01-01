@@ -13,15 +13,16 @@ import (
 	"github.com/harvester/harvester/pkg/util"
 )
 
-// backingImageHandler syncs upload progress from backing image to vm image status
 type backingImageHandler struct {
-	vmImages          ctlharvesterv1beta1.VirtualMachineImageClient
-	vmImageCache      ctlharvesterv1beta1.VirtualMachineImageCache
-	backingImages     ctllhv1beta1.BackingImageClient
-	backingImageCache ctllhv1beta1.BackingImageCache
+	vmImages		ctlharvesterv1beta1.VirtualMachineImageClient
+	vmImageCache		ctlharvesterv1beta1.VirtualMachineImageCache
+	backingImages		ctllhv1beta1.BackingImageClient
+	backingImageCache	ctllhv1beta1.BackingImageCache
 }
 
 func (h *backingImageHandler) OnChanged(_ string, backingImage *lhv1beta1.BackingImage) (*lhv1beta1.BackingImage, error) {
+	__traceStack()
+
 	if backingImage == nil || backingImage.DeletionTimestamp != nil {
 		return nil, nil
 	}
@@ -55,8 +56,7 @@ func (h *backingImageHandler) OnChanged(_ string, backingImage *lhv1beta1.Backin
 			harvesterv1beta1.ImageImported.Unknown(toUpdate)
 			harvesterv1beta1.ImageImported.Reason(toUpdate, "Importing")
 			harvesterv1beta1.ImageImported.Message(toUpdate, status.Message)
-			// backing image file upload progress can be 100 before it is ready
-			// Set VM image progress to be 99 for better UX in this case
+
 			if status.Progress == 100 {
 				toUpdate.Status.Progress = 99
 			} else {

@@ -16,12 +16,14 @@ import (
 type Clients struct {
 	clients.Clients
 
-	HarvesterFactory *ctlharvesterv1.Factory
-	KubevirtFactory  *ctlkubevirtv1.Factory
-	CNIFactory       *ctlcniv1.Factory
+	HarvesterFactory	*ctlharvesterv1.Factory
+	KubevirtFactory		*ctlkubevirtv1.Factory
+	CNIFactory		*ctlcniv1.Factory
 }
 
 func New(ctx context.Context, rest *rest.Config, threadiness int) (*Clients, error) {
+	__traceStack()
+
 	clients, err := clients.NewFromConfig(rest, nil)
 	if err != nil {
 		return nil, err
@@ -59,9 +61,9 @@ func New(ctx context.Context, rest *rest.Config, threadiness int) (*Clients, err
 	}
 
 	return &Clients{
-		Clients:          *clients,
-		HarvesterFactory: harvesterFactory,
-		KubevirtFactory:  kubevirtFactory,
-		CNIFactory:       cniFactory,
+		Clients:		*clients,
+		HarvesterFactory:	harvesterFactory,
+		KubevirtFactory:	kubevirtFactory,
+		CNIFactory:		cniFactory,
 	}, nil
 }

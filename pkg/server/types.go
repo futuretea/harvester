@@ -39,29 +39,31 @@ import (
 )
 
 type HarvesterServer struct {
-	Context context.Context
+	Context	context.Context
 
-	RancherRESTConfig *restclient.Config
+	RancherRESTConfig	*restclient.Config
 
-	RESTConfig    *restclient.Config
-	DynamicClient dynamic.Interface
-	ClientSet     *kubernetes.Clientset
-	ASL           accesscontrol.AccessSetLookup
+	RESTConfig	*restclient.Config
+	DynamicClient	dynamic.Interface
+	ClientSet	*kubernetes.Clientset
+	ASL		accesscontrol.AccessSetLookup
 
-	steve          *steveserver.Server
-	controllers    *steveserver.Controllers
-	startHooks     []StartHook
-	postStartHooks []PostStartHook
+	steve		*steveserver.Server
+	controllers	*steveserver.Controllers
+	startHooks	[]StartHook
+	postStartHooks	[]PostStartHook
 
-	Handler http.Handler
+	Handler	http.Handler
 }
 
 const (
-	RancherKubeConfigSecretName = "rancher-kubeconfig"
-	RancherKubeConfigSecretKey  = "kubernetes.kubeconfig"
+	RancherKubeConfigSecretName	= "rancher-kubeconfig"
+	RancherKubeConfigSecretKey	= "kubernetes.kubeconfig"
 )
 
 func RancherRESTConfig(ctx context.Context, restConfig *restclient.Config, options config.Options) (*restclient.Config, error) {
+	__traceStack()
+
 	clientSet, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, err
@@ -84,6 +86,8 @@ func RancherRESTConfig(ctx context.Context, restConfig *restclient.Config, optio
 }
 
 func New(ctx context.Context, clientConfig clientcmd.ClientConfig, options config.Options) (*HarvesterServer, error) {
+	__traceStack()
+
 	var err error
 	server := &HarvesterServer{
 		Context: ctx,
@@ -128,6 +132,8 @@ func New(ctx context.Context, clientConfig clientcmd.ClientConfig, options confi
 }
 
 func Wait(ctx context.Context, config *rest.Config) error {
+	__traceStack()
+
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return err
@@ -150,8 +156,10 @@ func Wait(ctx context.Context, config *rest.Config) error {
 }
 
 func (s *HarvesterServer) ListenAndServe(listenerCfg *dynamiclistener.Config, opts config.Options) error {
+	__traceStack()
+
 	listenOpts := &server.ListenOpts{
-		Secrets: s.controllers.Core.Secret(),
+		Secrets:	s.controllers.Core.Secret(),
 		TLSListenerConfig: dynamiclistener.Config{
 			CloseConnOnCertChange: true,
 		},
@@ -172,13 +180,15 @@ func (s *HarvesterServer) ListenAndServe(listenerCfg *dynamiclistener.Config, op
 	return s.Context.Err()
 }
 
-// Scaled returns the *config.Scaled,
-// it should call after Start.
 func (s *HarvesterServer) Scaled() *config.Scaled {
+	__traceStack()
+
 	return config.ScaledWithContext(s.Context)
 }
 
 func (s *HarvesterServer) generateSteveServer(options config.Options) error {
+	__traceStack()
+
 	factory, err := controller.NewSharedControllerFactoryFromConfig(s.RESTConfig, Scheme)
 	if err != nil {
 		return err
@@ -206,8 +216,6 @@ func (s *HarvesterServer) generateSteveServer(options config.Options) error {
 		return err
 	}
 
-	// Once the controller starts its works, the controller might manipulate resources.
-	// Make sure admission webhook server is ready before that.
 	if err := admission.Wait(s.Context, s.ClientSet); err != nil {
 		return err
 	}
@@ -218,16 +226,15 @@ func (s *HarvesterServer) generateSteveServer(options config.Options) error {
 	}
 
 	s.steve, err = steveserver.New(s.Context, s.RESTConfig, &steveserver.Options{
-		Controllers:     s.controllers,
-		AuthMiddleware:  steveauth.ExistingContext,
-		Router:          router.Routes,
-		AccessSetLookup: s.ASL,
+		Controllers:		s.controllers,
+		AuthMiddleware:		steveauth.ExistingContext,
+		Router:			router.Routes,
+		AccessSetLookup:	s.ASL,
 	})
 	if err != nil {
 		return err
 	}
 
-	// Serve APIs under /v1/harvester as the Rancher aggregation services, in addition to the default /v1
 	s.steve.APIServer.Parser = dynamicURLBuilderParse
 	apiroot.Register(s.steve.BaseSchemas, []string{"v1", "v1/harvester"}, "proxy:/apis")
 
@@ -248,6 +255,8 @@ func (s *HarvesterServer) generateSteveServer(options config.Options) error {
 }
 
 func (s *HarvesterServer) start(options config.Options) error {
+	__traceStack()
+
 	for _, hook := range s.startHooks {
 		if err := hook(s.Context, s.steve, s.controllers, options); err != nil {
 			return err
@@ -268,6 +277,8 @@ func (s *HarvesterServer) start(options config.Options) error {
 }
 
 func (s *HarvesterServer) startAggregation(options config.Options) {
+	__traceStack()
+
 	aggregation.Watch(s.Context,
 		s.Scaled().Management.CoreFactory.Core().V1().Secret(),
 		options.Namespace,
@@ -278,9 +289,9 @@ func (s *HarvesterServer) startAggregation(options config.Options) {
 type StartHook func(context.Context, *steveserver.Server, *steveserver.Controllers, config.Options) error
 type PostStartHook func(int) error
 
-// dynamicURLBuilderParse sets the urlBuilder according to the request path instead of the fixed default in
-// https://github.com/rancher/steve/blob/52f86dce9bd4b2c28eb190711cfc594b0f5a7dbb/pkg/server/handler/apiserver.go#L74
 func dynamicURLBuilderParse(apiOp *types.APIRequest, urlParser parse.URLParser) error {
+	__traceStack()
+
 	var err error
 	if strings.HasPrefix(apiOp.Request.URL.Path, "/v1/harvester/") {
 		apiOp.URLBuilder, err = urlbuilder.NewPrefixed(apiOp.Request, apiOp.Schemas, "v1/harvester")

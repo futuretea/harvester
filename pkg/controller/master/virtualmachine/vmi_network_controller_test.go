@@ -17,76 +17,78 @@ import (
 )
 
 func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key string
-		vmi *kv1.VirtualMachineInstance
-		vm  *kv1.VirtualMachine
+		key	string
+		vmi	*kv1.VirtualMachineInstance
+		vm	*kv1.VirtualMachine
 	}
 	type output struct {
-		vmi *kv1.VirtualMachineInstance
-		vm  *kv1.VirtualMachine
-		err error
+		vmi	*kv1.VirtualMachineInstance
+		vm	*kv1.VirtualMachine
+		err	error
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "ignore nil resource",
+			name:	"ignore nil resource",
 			given: input{
-				key: "",
-				vmi: nil,
+				key:	"",
+				vmi:	nil,
 			},
 			expected: output{
-				vmi: nil,
-				err: nil,
+				vmi:	nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "ignore deleted resource",
+			name:	"ignore deleted resource",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kv1.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						DeletionTimestamp:	&metav1.Time{},
 					},
-					Spec: kv1.VirtualMachineInstanceSpec{},
+					Spec:	kv1.VirtualMachineInstanceSpec{},
 				},
 			},
 			expected: output{
 				vmi: &kv1.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						DeletionTimestamp:	&metav1.Time{},
 					},
-					Spec: kv1.VirtualMachineInstanceSpec{},
+					Spec:	kv1.VirtualMachineInstanceSpec{},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "set mac address",
+			name:	"set mac address",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vm: &kv1.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kv1.VirtualMachineSpec{
 						Template: &kv1.VirtualMachineInstanceTemplateSpec{
 							Spec: kv1.VirtualMachineInstanceSpec{
 								Networks: []kv1.Network{
 									{
-										Name: "default",
+										Name:	"default",
 										NetworkSource: kv1.NetworkSource{
 											Pod: &kv1.PodNetwork{},
 										},
@@ -107,64 +109,64 @@ func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
 				},
 				vmi: &kv1.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vmi-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vmi-uid",
 					},
-					Spec: kv1.VirtualMachineInstanceSpec{},
+					Spec:	kv1.VirtualMachineInstanceSpec{},
 					Status: kv1.VirtualMachineInstanceStatus{
 						Interfaces: []kv1.VirtualMachineInstanceNetworkInterface{
 							{
-								IP:   "172.16.0.100",
-								MAC:  "00:00:00:00:00",
-								Name: "default",
+								IP:	"172.16.0.100",
+								MAC:	"00:00:00:00:00",
+								Name:	"default",
 							},
 							{
-								IP:   "172.16.0.101",
-								MAC:  "00:01:02:03:04",
-								Name: "nic-1",
+								IP:	"172.16.0.101",
+								MAC:	"00:01:02:03:04",
+								Name:	"nic-1",
 							},
 						},
-						Phase: kv1.Running,
+						Phase:	kv1.Running,
 					},
 				},
 			},
 			expected: output{
 				vmi: &kv1.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vmi-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vmi-uid",
 					},
-					Spec: kv1.VirtualMachineInstanceSpec{},
+					Spec:	kv1.VirtualMachineInstanceSpec{},
 					Status: kv1.VirtualMachineInstanceStatus{
 						Interfaces: []kv1.VirtualMachineInstanceNetworkInterface{
 							{
-								IP:   "172.16.0.100",
-								MAC:  "00:00:00:00:00",
-								Name: "default",
+								IP:	"172.16.0.100",
+								MAC:	"00:00:00:00:00",
+								Name:	"default",
 							},
 							{
-								IP:   "172.16.0.101",
-								MAC:  "00:01:02:03:04",
-								Name: "nic-1",
+								IP:	"172.16.0.101",
+								MAC:	"00:01:02:03:04",
+								Name:	"nic-1",
 							},
 						},
-						Phase: kv1.Running,
+						Phase:	kv1.Running,
 					},
 				},
 				vm: &kv1.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kv1.VirtualMachineSpec{
 						Template: &kv1.VirtualMachineInstanceTemplateSpec{
 							Spec: kv1.VirtualMachineInstanceSpec{
 								Networks: []kv1.Network{
 									{
-										Name: "default",
+										Name:	"default",
 										NetworkSource: kv1.NetworkSource{
 											Pod: &kv1.PodNetwork{},
 										},
@@ -174,12 +176,12 @@ func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
 									Devices: kv1.Devices{
 										Interfaces: []kv1.Interface{
 											{
-												Name:       "default",
-												MacAddress: "00:00:00:00:00",
+												Name:		"default",
+												MacAddress:	"00:00:00:00:00",
 											},
 											{
-												Name:       "nic-1",
-												MacAddress: "00:01:02:03:04",
+												Name:		"nic-1",
+												MacAddress:	"00:01:02:03:04",
 											},
 										},
 									},
@@ -188,7 +190,7 @@ func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
 						},
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 	}
@@ -205,9 +207,9 @@ func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
 		}
 
 		var ctrl = &VMNetworkController{
-			vmClient:  fakeVMClient(clientset.KubevirtV1().VirtualMachines),
-			vmCache:   fakeVMCache(clientset.KubevirtV1().VirtualMachines),
-			vmiClient: fakeVMIClient(clientset.KubevirtV1().VirtualMachineInstances),
+			vmClient:	fakeVMClient(clientset.KubevirtV1().VirtualMachines),
+			vmCache:	fakeVMCache(clientset.KubevirtV1().VirtualMachines),
+			vmiClient:	fakeVMIClient(clientset.KubevirtV1().VirtualMachineInstances),
 		}
 
 		var actual output
@@ -231,85 +233,125 @@ func TestSetDefaultManagementNetworkMacAddress(t *testing.T) {
 type fakeVMClient func(string) virtualmachinetype.VirtualMachineInterface
 
 func (c fakeVMClient) Create(vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	return c(vm.Namespace).Create(context.TODO(), vm, metav1.CreateOptions{})
 }
 
 func (c fakeVMClient) Update(vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	return c(vm.Namespace).Update(context.TODO(), vm, metav1.UpdateOptions{})
 }
 
 func (c fakeVMClient) UpdateStatus(vm *kv1.VirtualMachine) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVMClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *options)
 }
 
 func (c fakeVMClient) Get(namespace, name string, options metav1.GetOptions) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, options)
 }
 
 func (c fakeVMClient) List(namespace string, opts metav1.ListOptions) (*kv1.VirtualMachineList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c fakeVMClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c fakeVMClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *kv1.VirtualMachine, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }
 
 type fakeVMCache func(string) virtualmachinetype.VirtualMachineInterface
 
 func (c fakeVMCache) Get(namespace, name string) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c fakeVMCache) List(namespace string, selector labels.Selector) ([]*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVMCache) AddIndexer(indexName string, indexer kv1ctl.VirtualMachineIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVMCache) GetByIndex(indexName, key string) ([]*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 type fakeVMIClient func(string) virtualmachinetype.VirtualMachineInstanceInterface
 
 func (c fakeVMIClient) Create(vm *kv1.VirtualMachineInstance) (*kv1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(vm.Namespace).Create(context.TODO(), vm, metav1.CreateOptions{})
 }
 
 func (c fakeVMIClient) Update(vm *kv1.VirtualMachineInstance) (*kv1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(vm.Namespace).Update(context.TODO(), vm, metav1.UpdateOptions{})
 }
 
 func (c fakeVMIClient) UpdateStatus(vm *kv1.VirtualMachineInstance) (*kv1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVMIClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c(namespace).Delete(context.TODO(), name, *options)
 }
 
 func (c fakeVMIClient) Get(namespace, name string, options metav1.GetOptions) (*kv1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, options)
 }
 
 func (c fakeVMIClient) List(namespace string, opts metav1.ListOptions) (*kv1.VirtualMachineInstanceList, error) {
+	__traceStack()
+
 	return c(namespace).List(context.TODO(), opts)
 }
 
 func (c fakeVMIClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c(namespace).Watch(context.TODO(), opts)
 }
 
 func (c fakeVMIClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *kv1.VirtualMachineInstance, err error) {
+	__traceStack()
+
 	return c(namespace).Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }

@@ -11,37 +11,39 @@ import (
 )
 
 func TestAnnotationSchemaReferences_MarshalJSON(t *testing.T) {
+	__traceStack()
+
 	type input struct {
 		refs AnnotationSchemaReferences
 	}
 	type output struct {
-		bytes []byte
-		err   error
+		bytes	[]byte
+		err	error
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "include elements",
+			name:	"include elements",
 			given: input{
 				refs: NewAnnotationSchemaOwnerReferences("a", "b", "c"),
 			},
 			expected: output{
-				bytes: []byte(`["a","b","c"]`),
-				err:   nil,
+				bytes:	[]byte(`["a","b","c"]`),
+				err:	nil,
 			},
 		},
 		{
-			name: "none elements",
+			name:	"none elements",
 			given: input{
 				refs: NewAnnotationSchemaOwnerReferences(),
 			},
 			expected: output{
-				bytes: []byte(`[]`),
-				err:   nil,
+				bytes:	[]byte(`[]`),
+				err:	nil,
 			},
 		},
 	}
@@ -54,37 +56,39 @@ func TestAnnotationSchemaReferences_MarshalJSON(t *testing.T) {
 }
 
 func TestAnnotationSchemaReferences_UnmarshalJSON(t *testing.T) {
+	__traceStack()
+
 	type input struct {
 		bytes []byte
 	}
 	type output struct {
-		refs AnnotationSchemaReferences
-		err  error
+		refs	AnnotationSchemaReferences
+		err	error
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "include elements",
+			name:	"include elements",
 			given: input{
 				bytes: []byte(`["a","b","c"]`),
 			},
 			expected: output{
-				refs: NewAnnotationSchemaOwnerReferences("a", "b", "c"),
-				err:  nil,
+				refs:	NewAnnotationSchemaOwnerReferences("a", "b", "c"),
+				err:	nil,
 			},
 		},
 		{
-			name: "none elements",
+			name:	"none elements",
 			given: input{
 				bytes: []byte(`[]`),
 			},
 			expected: output{
-				refs: NewAnnotationSchemaOwnerReferences(),
-				err:  nil,
+				refs:	NewAnnotationSchemaOwnerReferences(),
+				err:	nil,
 			},
 		},
 	}
@@ -97,46 +101,48 @@ func TestAnnotationSchemaReferences_UnmarshalJSON(t *testing.T) {
 }
 
 func TestAnnotationSchemaOwners_MarshalJSON(t *testing.T) {
+	__traceStack()
+
 	type input struct {
 		owners AnnotationSchemaOwners
 	}
 	type output struct {
-		bytes []byte
-		err   error
+		bytes	[]byte
+		err	error
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "include elements",
+			name:	"include elements",
 			given: input{
 				owners: AnnotationSchemaOwners{
 					"b": AnnotationSchemaReference{
-						SchemaID:   "b",
-						References: NewAnnotationSchemaOwnerReferences("b-d", "b-a", "b-c"),
+						SchemaID:	"b",
+						References:	NewAnnotationSchemaOwnerReferences("b-d", "b-a", "b-c"),
 					},
 					"a": AnnotationSchemaReference{
-						SchemaID:   "a",
-						References: NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b"),
+						SchemaID:	"a",
+						References:	NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b"),
 					},
 				},
 			},
 			expected: output{
-				bytes: []byte(`[{"schema":"a","refs":["a-a","a-b","a-c"]},{"schema":"b","refs":["b-a","b-c","b-d"]}]`),
-				err:   nil,
+				bytes:	[]byte(`[{"schema":"a","refs":["a-a","a-b","a-c"]},{"schema":"b","refs":["b-a","b-c","b-d"]}]`),
+				err:	nil,
 			},
 		},
 		{
-			name: "none elements",
+			name:	"none elements",
 			given: input{
 				owners: AnnotationSchemaOwners{},
 			},
 			expected: output{
-				bytes: []byte(`[]`),
-				err:   nil,
+				bytes:	[]byte(`[]`),
+				err:	nil,
 			},
 		},
 	}
@@ -149,65 +155,67 @@ func TestAnnotationSchemaOwners_MarshalJSON(t *testing.T) {
 }
 
 func TestAnnotationSchemaOwners_UnmarshalJSON(t *testing.T) {
+	__traceStack()
+
 	type input struct {
 		bytes []byte
 	}
 	type output struct {
-		owners AnnotationSchemaOwners
-		err    error
+		owners	AnnotationSchemaOwners
+		err	error
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "include elements",
+			name:	"include elements",
 			given: input{
 				bytes: []byte(`[{"schema":"b","refs":["b-a","b-c","b-d"]},{"schema":"a","refs":["a-a","a-c","a-b"]}]`),
 			},
 			expected: output{
 				owners: AnnotationSchemaOwners{
 					"a": AnnotationSchemaReference{
-						SchemaID:   "a",
-						References: NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b"),
+						SchemaID:	"a",
+						References:	NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b"),
 					},
 					"b": AnnotationSchemaReference{
-						SchemaID:   "b",
-						References: NewAnnotationSchemaOwnerReferences("b-a", "b-c", "b-d"),
+						SchemaID:	"b",
+						References:	NewAnnotationSchemaOwnerReferences("b-a", "b-c", "b-d"),
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "merge the duplicated schemaID elements",
+			name:	"merge the duplicated schemaID elements",
 			given: input{
 				bytes: []byte(`[{"schema":"b","refs":["b-a","b-c","b-d"]},{"schema":"a","refs":["a-a","a-c","a-b"]},{"schema":"a","refs":["a-d"]}]`),
 			},
 			expected: output{
 				owners: AnnotationSchemaOwners{
 					"a": AnnotationSchemaReference{
-						SchemaID:   "a",
-						References: NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b", "a-d"),
+						SchemaID:	"a",
+						References:	NewAnnotationSchemaOwnerReferences("a-a", "a-c", "a-b", "a-d"),
 					},
 					"b": AnnotationSchemaReference{
-						SchemaID:   "b",
-						References: NewAnnotationSchemaOwnerReferences("b-a", "b-c", "b-d"),
+						SchemaID:	"b",
+						References:	NewAnnotationSchemaOwnerReferences("b-a", "b-c", "b-d"),
 					},
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "none elements",
+			name:	"none elements",
 			given: input{
 				bytes: []byte(`[]`),
 			},
 			expected: output{
-				owners: AnnotationSchemaOwners{},
-				err:    nil,
+				owners:	AnnotationSchemaOwners{},
+				err:	nil,
 			},
 		},
 	}
@@ -220,81 +228,83 @@ func TestAnnotationSchemaOwners_UnmarshalJSON(t *testing.T) {
 }
 
 func TestAnnotationSchemaOwners_Add(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		schemaOwners AnnotationSchemaOwners
-		ownerGK      schema.GroupKind
-		owner        metav1.Object
+		schemaOwners	AnnotationSchemaOwners
+		ownerGK		schema.GroupKind
+		owner		metav1.Object
 	}
 	type output struct {
-		schemaOwners AnnotationSchemaOwners
-		ret          bool
+		schemaOwners	AnnotationSchemaOwners
+		ret		bool
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "ignore if owned",
+			name:	"ignore if owned",
 			given: input{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
 					},
 				},
-				ownerGK: kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
+				ownerGK:	kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
 				owner: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 				},
 			},
 			expected: output{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
 					},
 				},
-				ret: false,
+				ret:	false,
 			},
 		},
 		{
-			name: "add if ownless",
+			name:	"add if ownless",
 			given: input{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz"),
 					},
 					"kubevirt.io.virtualmachineinstance": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachineinstance",
-						References: NewAnnotationSchemaOwnerReferences("default/yyy"),
+						SchemaID:	"kubevirt.io.virtualmachineinstance",
+						References:	NewAnnotationSchemaOwnerReferences("default/yyy"),
 					},
 				},
-				ownerGK: kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
+				ownerGK:	kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
 				owner: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 				},
 			},
 			expected: output{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
 					},
 					"kubevirt.io.virtualmachineinstance": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachineinstance",
-						References: NewAnnotationSchemaOwnerReferences("default/yyy"),
+						SchemaID:	"kubevirt.io.virtualmachineinstance",
+						References:	NewAnnotationSchemaOwnerReferences("default/yyy"),
 					},
 				},
-				ret: true,
+				ret:	true,
 			},
 		},
 	}
@@ -309,81 +319,83 @@ func TestAnnotationSchemaOwners_Add(t *testing.T) {
 }
 
 func TestAnnotationSchemaOwners_Delete(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		schemaOwners AnnotationSchemaOwners
-		ownerGK      schema.GroupKind
-		owner        metav1.Object
+		schemaOwners	AnnotationSchemaOwners
+		ownerGK		schema.GroupKind
+		owner		metav1.Object
 	}
 	type output struct {
-		schemaOwners AnnotationSchemaOwners
-		ret          bool
+		schemaOwners	AnnotationSchemaOwners
+		ret		bool
 	}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "ignore if ownless",
+			name:	"ignore if ownless",
 			given: input{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz"),
 					},
 				},
-				ownerGK: kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
+				ownerGK:	kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
 				owner: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 				},
 			},
 			expected: output{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz"),
 					},
 				},
-				ret: false,
+				ret:	false,
 			},
 		},
 		{
-			name: "remove if owned",
+			name:	"remove if owned",
 			given: input{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz", "default/test"),
 					},
 					"kubevirt.io.virtualmachineinstance": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachineinstance",
-						References: NewAnnotationSchemaOwnerReferences("default/yyy"),
+						SchemaID:	"kubevirt.io.virtualmachineinstance",
+						References:	NewAnnotationSchemaOwnerReferences("default/yyy"),
 					},
 				},
-				ownerGK: kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
+				ownerGK:	kubevirtapis.VirtualMachineGroupVersionKind.GroupKind(),
 				owner: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
+						Namespace:	"default",
+						Name:		"test",
 					},
 				},
 			},
 			expected: output{
 				schemaOwners: AnnotationSchemaOwners{
 					"kubevirt.io.virtualmachine": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachine",
-						References: NewAnnotationSchemaOwnerReferences("default/zzz"),
+						SchemaID:	"kubevirt.io.virtualmachine",
+						References:	NewAnnotationSchemaOwnerReferences("default/zzz"),
 					},
 					"kubevirt.io.virtualmachineinstance": AnnotationSchemaReference{
-						SchemaID:   "kubevirt.io.virtualmachineinstance",
-						References: NewAnnotationSchemaOwnerReferences("default/yyy"),
+						SchemaID:	"kubevirt.io.virtualmachineinstance",
+						References:	NewAnnotationSchemaOwnerReferences("default/yyy"),
 					},
 				},
-				ret: true,
+				ret:	true,
 			},
 		},
 	}

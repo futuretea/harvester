@@ -1,9 +1,3 @@
-//go:generate go run pkg/codegen/cleanup/main.go
-//go:generate /bin/rm -rf pkg/generated
-//go:generate go run pkg/codegen/main.go
-//go:generate /bin/bash scripts/generate-manifest
-//go:generate /bin/bash scripts/generate-openapi
-
 package main
 
 import (
@@ -20,55 +14,57 @@ import (
 )
 
 func main() {
+	__traceStack()
+
 	var options config.Options
 
 	flags := []cli.Flag{
 		cli.IntFlag{
-			Name:        "threadiness",
-			EnvVar:      "THREADINESS",
-			Usage:       "Specify controller threads",
-			Value:       10,
-			Destination: &options.Threadiness,
+			Name:		"threadiness",
+			EnvVar:		"THREADINESS",
+			Usage:		"Specify controller threads",
+			Value:		10,
+			Destination:	&options.Threadiness,
 		},
 		cli.IntFlag{
-			Name:        "http-port",
-			EnvVar:      "HARVESTER_SERVER_HTTP_PORT",
-			Usage:       "HTTP listen port",
-			Value:       8080,
-			Destination: &options.HTTPListenPort,
+			Name:		"http-port",
+			EnvVar:		"HARVESTER_SERVER_HTTP_PORT",
+			Usage:		"HTTP listen port",
+			Value:		8080,
+			Destination:	&options.HTTPListenPort,
 		},
 		cli.IntFlag{
-			Name:        "https-port",
-			EnvVar:      "HARVESTER_SERVER_HTTPS_PORT",
-			Usage:       "HTTPS listen port",
-			Value:       8443,
-			Destination: &options.HTTPSListenPort,
+			Name:		"https-port",
+			EnvVar:		"HARVESTER_SERVER_HTTPS_PORT",
+			Usage:		"HTTPS listen port",
+			Value:		8443,
+			Destination:	&options.HTTPSListenPort,
 		},
 		cli.StringFlag{
-			Name:        "namespace",
-			EnvVar:      "NAMESPACE",
-			Destination: &options.Namespace,
-			Usage:       "The default namespace to store management resources",
-			Required:    true,
+			Name:		"namespace",
+			EnvVar:		"NAMESPACE",
+			Destination:	&options.Namespace,
+			Usage:		"The default namespace to store management resources",
+			Required:	true,
 		},
 		cli.BoolFlag{
-			Name:        "hci-mode",
-			EnvVar:      "HCI_MODE",
-			Usage:       "Enable HCI mode. Additional controllers are registered in HCI mode",
-			Destination: &options.HCIMode,
+			Name:		"hci-mode",
+			EnvVar:		"HCI_MODE",
+			Usage:		"Enable HCI mode. Additional controllers are registered in HCI mode",
+			Destination:	&options.HCIMode,
 		},
 		cli.BoolFlag{
-			Name:        "rancher-embedded",
-			EnvVar:      "RANCHER_EMBEDDED",
-			Usage:       "Specify whether the Harvester is running with embedded Rancher mode, default to false",
-			Destination: &options.RancherEmbedded,
+			Name:		"rancher-embedded",
+			EnvVar:		"RANCHER_EMBEDDED",
+			Usage:		"Specify whether the Harvester is running with embedded Rancher mode, default to false",
+			Destination:	&options.RancherEmbedded,
 		},
 		cli.StringFlag{
-			Name:        "rancher-server-url",
-			EnvVar:      "RANCHER_SERVER_URL",
-			Usage:       "Specify the URL to connect to the Rancher server",
-			Destination: &options.RancherURL,
-			Hidden:      true,
+			Name:		"rancher-server-url",
+			EnvVar:		"RANCHER_SERVER_URL",
+			Usage:		"Specify the URL to connect to the Rancher server",
+			Destination:	&options.RancherURL,
+			Hidden:		true,
 		},
 	}
 
@@ -79,6 +75,8 @@ func main() {
 }
 
 func run(commonOptions *config.CommonOptions, options config.Options) error {
+	__traceStack()
+
 	logrus.Info("Starting controller")
 	ctx := signals.SetupSignalContext()
 

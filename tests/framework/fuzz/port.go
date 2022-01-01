@@ -8,8 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-// FreePorts tries to find the free ports and returns them or error.
 func FreePorts(amount int) ([]int, error) {
+	__traceStack()
+
 	set := sets.NewInt()
 
 	for {

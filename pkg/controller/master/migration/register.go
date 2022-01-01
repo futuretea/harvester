@@ -10,11 +10,13 @@ import (
 )
 
 const (
-	vmiControllerName  = "migrationTargetController"
-	vmimControllerName = "migrationAnnotationController"
+	vmiControllerName	= "migrationTargetController"
+	vmimControllerName	= "migrationAnnotationController"
 )
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	copyConfig := rest.CopyConfig(management.RestConfig)
 	virtv1Client, err := virtv1.NewForConfig(copyConfig)
 	if err != nil {
@@ -25,13 +27,13 @@ func Register(ctx context.Context, management *config.Management, options config
 	vmis := management.VirtFactory.Kubevirt().V1().VirtualMachineInstance()
 	vmims := management.VirtFactory.Kubevirt().V1().VirtualMachineInstanceMigration()
 	handler := &Handler{
-		namespace:  options.Namespace,
-		vmiCache:   vmis.Cache(),
-		vms:        vms,
-		vmCache:    vms.Cache(),
-		pods:       pods,
-		podCache:   pods.Cache(),
-		restClient: virtv1Client.RESTClient(),
+		namespace:	options.Namespace,
+		vmiCache:	vmis.Cache(),
+		vms:		vms,
+		vmCache:	vms.Cache(),
+		pods:		pods,
+		podCache:	pods.Cache(),
+		restClient:	virtv1Client.RESTClient(),
 	}
 
 	vmis.OnChange(ctx, vmiControllerName, handler.OnVmiChanged)

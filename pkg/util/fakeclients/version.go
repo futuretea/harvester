@@ -14,14 +14,22 @@ import (
 type VersionCache func(string) harv1type.VersionInterface
 
 func (c VersionCache) Get(namespace, name string) (*harvesterv1.Version, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 func (c VersionCache) List(namespace string, selector labels.Selector) ([]*harvesterv1.Version, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VersionCache) AddIndexer(indexName string, indexer ctlharvesterv1.VersionIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c VersionCache) GetByIndex(indexName, key string) ([]*harvesterv1.Version, error) {
+	__traceStack()
+
 	panic("implement me")
 }

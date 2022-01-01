@@ -23,23 +23,23 @@ import (
 )
 
 const (
-	repoVMNamePrefix = "upgrade-repo-"
-	repoVMUserData   = `name: "enable repo mode"
+	repoVMNamePrefix	= "upgrade-repo-"
+	repoVMUserData		= `name: "enable repo mode"
 stages:
   rootfs:
   - commands:
     - echo > /sysroot/harvester-serve-iso
 `
-	repoServiceNamePrefix = "upgrade-repo-"
+	repoServiceNamePrefix	= "upgrade-repo-"
 )
 
 type HarvesterRelease struct {
-	Harvester       string `yaml:"harvester,omitempty"`
-	HarvesterChart  string `yaml:"harvesterChart,omitempty"`
-	OS              string `yaml:"os,omitempty"`
-	Kubernetes      string `yaml:"kubernetes,omitempty"`
-	Rancher         string `yaml:"rancher,omitempty"`
-	MonitoringChart string `yaml:"monitoringChart,omitempty"`
+	Harvester	string	`yaml:"harvester,omitempty"`
+	HarvesterChart	string	`yaml:"harvesterChart,omitempty"`
+	OS		string	`yaml:"os,omitempty"`
+	Kubernetes	string	`yaml:"kubernetes,omitempty"`
+	Rancher		string	`yaml:"rancher,omitempty"`
+	MonitoringChart	string	`yaml:"monitoringChart,omitempty"`
 }
 
 type UpgradeRepoInfo struct {
@@ -47,6 +47,8 @@ type UpgradeRepoInfo struct {
 }
 
 func (info *UpgradeRepoInfo) Marshall() (string, error) {
+	__traceStack()
+
 	out, err := yaml.Marshal(info)
 	if err != nil {
 		return "", err
@@ -55,22 +57,26 @@ func (info *UpgradeRepoInfo) Marshall() (string, error) {
 }
 
 func (info *UpgradeRepoInfo) Load(data string) error {
+	__traceStack()
+
 	return yaml.Unmarshal([]byte(data), info)
 }
 
 type UpgradeRepo struct {
-	ctx     context.Context
-	upgrade *harvesterv1.Upgrade
-	h       *upgradeHandler
+	ctx	context.Context
+	upgrade	*harvesterv1.Upgrade
+	h	*upgradeHandler
 
-	httpClient *http.Client
+	httpClient	*http.Client
 }
 
 func NewUpgradeRepo(ctx context.Context, upgrade *harvesterv1.Upgrade, upgradeHandler *upgradeHandler) *UpgradeRepo {
+	__traceStack()
+
 	return &UpgradeRepo{
-		ctx:     ctx,
-		upgrade: upgrade,
-		h:       upgradeHandler,
+		ctx:		ctx,
+		upgrade:	upgrade,
+		h:		upgradeHandler,
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -78,6 +84,8 @@ func NewUpgradeRepo(ctx context.Context, upgrade *harvesterv1.Upgrade, upgradeHa
 }
 
 func (r *UpgradeRepo) Bootstrap() error {
+	__traceStack()
+
 	image := r.upgrade.Status.ImageID
 	if image == "" {
 		return errors.New("Upgrade repo image is not provided")
@@ -97,14 +105,18 @@ func (r *UpgradeRepo) Bootstrap() error {
 }
 
 func getISODisplayNameImageName(upgradeName string, version string) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s-%s", upgradeName, version)
 }
 
 func (r *UpgradeRepo) CreateImageFromISO(isoURL string, checksum string) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	imageSpec := &harvesterv1.VirtualMachineImage{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    harvesterSystemNamespace,
-			GenerateName: "harvester-iso-",
+			Namespace:	harvesterSystemNamespace,
+			GenerateName:	"harvester-iso-",
 			Labels: map[string]string{
 				harvesterUpgradeLabel: r.upgrade.Name,
 			},
@@ -113,10 +125,10 @@ func (r *UpgradeRepo) CreateImageFromISO(isoURL string, checksum string) (*harve
 			},
 		},
 		Spec: harvesterv1.VirtualMachineImageSpec{
-			DisplayName: getISODisplayNameImageName(r.upgrade.Name, r.upgrade.Spec.Version),
-			SourceType:  v1beta1.VirtualMachineImageSourceTypeDownload,
-			URL:         isoURL,
-			Checksum:    checksum,
+			DisplayName:	getISODisplayNameImageName(r.upgrade.Name, r.upgrade.Spec.Version),
+			SourceType:	v1beta1.VirtualMachineImageSourceTypeDownload,
+			URL:		isoURL,
+			Checksum:	checksum,
 		},
 	}
 
@@ -124,6 +136,8 @@ func (r *UpgradeRepo) CreateImageFromISO(isoURL string, checksum string) (*harve
 }
 
 func (r *UpgradeRepo) GetImage(imageName string) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	tokens := strings.Split(imageName, "/")
 	if len(tokens) != 2 {
 		return nil, fmt.Errorf("Invalid image format %s", imageName)
@@ -137,6 +151,8 @@ func (r *UpgradeRepo) GetImage(imageName string) (*harvesterv1.VirtualMachineIma
 }
 
 func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.VirtualMachine, error) {
+	__traceStack()
+
 	vmName := fmt.Sprintf("%s%s", repoVMNamePrefix, r.upgrade.Name)
 	vmRun := true
 	var bootOrder uint = 1
@@ -147,20 +163,20 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 	storageClassName := image.Status.StorageClassName
 	pvcSpec := corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: disk0Claim,
+			Name:	disk0Claim,
 			Annotations: map[string]string{
 				"harvesterhci.io/imageId": fmt.Sprintf("%s/%s", image.Namespace, image.Name),
 			},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
+			AccessModes:	[]corev1.PersistentVolumeAccessMode{corev1.ReadWriteMany},
 			Resources: corev1.ResourceRequirements{
 				Requests: corev1.ResourceList{
 					"storage": resource.MustParse("10Gi"),
 				},
 			},
-			VolumeMode:       &volumeMode,
-			StorageClassName: &storageClassName,
+			VolumeMode:		&volumeMode,
+			StorageClassName:	&storageClassName,
 		},
 	}
 	pvc, err := json.Marshal([]corev1.PersistentVolumeClaim{pvcSpec})
@@ -170,50 +186,50 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 
 	vm := kv1.VirtualMachine{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      vmName,
-			Namespace: upgradeNamespace,
+			Name:		vmName,
+			Namespace:	upgradeNamespace,
 			Labels: map[string]string{
-				"harvesterhci.io/creator":      "harvester",
-				harvesterUpgradeLabel:          r.upgrade.Name,
-				harvesterUpgradeComponentLabel: upgradeComponentRepo,
+				"harvesterhci.io/creator":	"harvester",
+				harvesterUpgradeLabel:		r.upgrade.Name,
+				harvesterUpgradeComponentLabel:	upgradeComponentRepo,
 			},
 			Annotations: map[string]string{
-				"harvesterhci.io/volumeClaimTemplates": string(pvc),
-				"networks.harvesterhci.io/ips":         "[]",
-				util.RemovedPVCsAnnotationKey:          disk0Claim,
+				"harvesterhci.io/volumeClaimTemplates":	string(pvc),
+				"networks.harvesterhci.io/ips":		"[]",
+				util.RemovedPVCsAnnotationKey:		disk0Claim,
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				upgradeReference(r.upgrade),
 			},
 		},
 		Spec: kv1.VirtualMachineSpec{
-			Running: &vmRun,
+			Running:	&vmRun,
 			Template: &kv1.VirtualMachineInstanceTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"harvesterhci.io/creator":      "harvester",
-						"harvesterhci.io/vmName":       vmName,
-						harvesterUpgradeLabel:          r.upgrade.Name,
-						harvesterUpgradeComponentLabel: upgradeComponentRepo,
+						"harvesterhci.io/creator":	"harvester",
+						"harvesterhci.io/vmName":	vmName,
+						harvesterUpgradeLabel:		r.upgrade.Name,
+						harvesterUpgradeComponentLabel:	upgradeComponentRepo,
 					},
 				},
 				Spec: kv1.VirtualMachineInstanceSpec{
 					Domain: kv1.DomainSpec{
 						CPU: &kv1.CPU{
-							Cores:   1,
-							Sockets: 1,
-							Threads: 1,
+							Cores:		1,
+							Sockets:	1,
+							Threads:	1,
 						},
 						Devices: kv1.Devices{
 							Disks: []kv1.Disk{
 								{
-									BootOrder: &bootOrder,
+									BootOrder:	&bootOrder,
 									DiskDevice: kv1.DiskDevice{
 										CDRom: &kv1.CDRomTarget{
 											Bus: "sata",
 										},
 									},
-									Name: "disk-0",
+									Name:	"disk-0",
 								},
 								{
 									DiskDevice: kv1.DiskDevice{
@@ -221,14 +237,14 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 											Bus: "sata",
 										},
 									},
-									Name: "cloudinitdisk",
+									Name:	"cloudinitdisk",
 								},
 							},
 							Inputs: []kv1.Input{
 								{
-									Bus:  "usb",
-									Name: "tablet",
-									Type: "tablet",
+									Bus:	"usb",
+									Name:	"tablet",
+									Type:	"tablet",
 								},
 							},
 							Interfaces: []kv1.Interface{
@@ -236,8 +252,8 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 									InterfaceBindingMethod: kv1.InterfaceBindingMethod{
 										Masquerade: &kv1.InterfaceMasquerade{},
 									},
-									Model: "virtio",
-									Name:  "default",
+									Model:	"virtio",
+									Name:	"default",
 								},
 							},
 						},
@@ -246,20 +262,20 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 						},
 						Resources: kv1.ResourceRequirements{
 							Limits: corev1.ResourceList{
-								"cpu":    resource.MustParse("1"),
-								"memory": resource.MustParse("1G"),
+								"cpu":		resource.MustParse("1"),
+								"memory":	resource.MustParse("1G"),
 							},
 							Requests: corev1.ResourceList{
-								"cpu":    resource.MustParse("1"),
-								"memory": resource.MustParse("1G"),
+								"cpu":		resource.MustParse("1"),
+								"memory":	resource.MustParse("1G"),
 							},
 						},
 					},
-					EvictionStrategy: &evictionStrategy,
-					Hostname:         vmName,
+					EvictionStrategy:	&evictionStrategy,
+					Hostname:		vmName,
 					Networks: []kv1.Network{
 						{
-							Name: "default",
+							Name:	"default",
 							NetworkSource: kv1.NetworkSource{
 								Pod: &kv1.PodNetwork{},
 							},
@@ -267,7 +283,7 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 					},
 					Volumes: []kv1.Volume{
 						{
-							Name: "disk-0",
+							Name:	"disk-0",
 							VolumeSource: kv1.VolumeSource{
 								PersistentVolumeClaim: &kv1.PersistentVolumeClaimVolumeSource{
 									PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
@@ -277,7 +293,7 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 							},
 						},
 						{
-							Name: "cloudinitdisk",
+							Name:	"cloudinitdisk",
 							VolumeSource: kv1.VolumeSource{
 								CloudInitNoCloud: &kv1.CloudInitNoCloudSource{
 									UserData: repoVMUserData,
@@ -288,12 +304,12 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 					ReadinessProbe: &kv1.Probe{
 						Handler: kv1.Handler{
 							HTTPGet: &corev1.HTTPGetAction{
-								Path: "/harvester-iso/harvester-release.yaml",
-								Port: intstr.FromInt(80),
+								Path:	"/harvester-iso/harvester-release.yaml",
+								Port:	intstr.FromInt(80),
 							},
 						},
-						TimeoutSeconds:   30,
-						FailureThreshold: 5,
+						TimeoutSeconds:		30,
+						FailureThreshold:	5,
 					},
 				},
 			},
@@ -304,33 +320,37 @@ func (r *UpgradeRepo) createVM(image *harvesterv1.VirtualMachineImage) (*kv1.Vir
 }
 
 func (r *UpgradeRepo) getRepoServiceName() string {
+	__traceStack()
+
 	return fmt.Sprintf("%s%s", repoServiceNamePrefix, r.upgrade.Name)
 }
 
 func (r *UpgradeRepo) createService() (*corev1.Service, error) {
+	__traceStack()
+
 	service := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: upgradeNamespace,
-			Name:      r.getRepoServiceName(),
+			Namespace:	upgradeNamespace,
+			Name:		r.getRepoServiceName(),
 			OwnerReferences: []metav1.OwnerReference{
 				upgradeReference(r.upgrade),
 			},
 			Labels: map[string]string{
-				"harvesterhci.io/creator":      "harvester",
-				harvesterUpgradeLabel:          r.upgrade.Name,
-				harvesterUpgradeComponentLabel: upgradeComponentRepo,
+				"harvesterhci.io/creator":	"harvester",
+				harvesterUpgradeLabel:		r.upgrade.Name,
+				harvesterUpgradeComponentLabel:	upgradeComponentRepo,
 			},
 		},
 		Spec: corev1.ServiceSpec{
 			Selector: map[string]string{
-				harvesterUpgradeLabel:          r.upgrade.Name,
-				harvesterUpgradeComponentLabel: upgradeComponentRepo,
+				harvesterUpgradeLabel:		r.upgrade.Name,
+				harvesterUpgradeComponentLabel:	upgradeComponentRepo,
 			},
 			Ports: []corev1.ServicePort{
 				{
-					Protocol:   corev1.ProtocolTCP,
-					Port:       80,
-					TargetPort: intstr.FromInt(80),
+					Protocol:	corev1.ProtocolTCP,
+					Port:		80,
+					TargetPort:	intstr.FromInt(80),
 				},
 			},
 		},
@@ -340,6 +360,8 @@ func (r *UpgradeRepo) createService() (*corev1.Service, error) {
 }
 
 func (r *UpgradeRepo) getInfo() (*UpgradeRepoInfo, error) {
+	__traceStack()
+
 	releaseURL := fmt.Sprintf("http://%s.%s/harvester-iso/harvester-release.yaml", r.getRepoServiceName(), upgradeNamespace)
 
 	req, err := http.NewRequestWithContext(r.ctx, http.MethodGet, releaseURL, nil)
@@ -371,6 +393,8 @@ func (r *UpgradeRepo) getInfo() (*UpgradeRepoInfo, error) {
 }
 
 func (r *UpgradeRepo) getInfoStr() (string, error) {
+	__traceStack()
+
 	info, err := r.getInfo()
 	if err != nil {
 		return "", err

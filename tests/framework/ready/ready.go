@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	defaultInterval = 3 * time.Second
-	defaultTimeout  = 10 * time.Minute
+	defaultInterval	= 3 * time.Second
+	defaultTimeout	= 10 * time.Minute
 )
 
 var (
@@ -22,12 +22,14 @@ var (
 )
 
 type Condition struct {
-	name              string
-	wc                wait.ConditionFunc
-	interval, timeout time.Duration
+	name			string
+	wc			wait.ConditionFunc
+	interval, timeout	time.Duration
 }
 
 func (c *Condition) Wait(ctx context.Context) error {
+	__traceStack()
+
 	return wait.PollImmediate(c.interval, c.timeout, func() (bool, error) {
 		select {
 		case <-ctx.Done():
@@ -39,21 +41,27 @@ func (c *Condition) Wait(ctx context.Context) error {
 }
 
 func NewCondition(name string, wc wait.ConditionFunc, interval, timeout time.Duration) *Condition {
+	__traceStack()
+
 	return &Condition{
-		name:     name,
-		wc:       wc,
-		interval: interval,
-		timeout:  timeout,
+		name:		name,
+		wc:		wc,
+		interval:	interval,
+		timeout:	timeout,
 	}
 }
 
 func NewDefaultCondition(name string, wc wait.ConditionFunc) *Condition {
+	__traceStack()
+
 	return NewCondition(name, wc, defaultInterval, defaultTimeout)
 }
 
 type ConditionList []*Condition
 
 func (cl ConditionList) Wait(ctx context.Context) error {
+	__traceStack()
+
 	g, ctx := errgroup.WithContext(ctx)
 	for _, condition := range cl {
 		condition := condition
@@ -71,25 +79,29 @@ func (cl ConditionList) Wait(ctx context.Context) error {
 type AppsConditionFunc func(appsFactory *apps.Factory, namespace, name string) (string, wait.ConditionFunc)
 
 type NamespaceCondition struct {
-	namespace     string
-	kubeConfig    *restclient.Config
-	appsFactory   *apps.Factory
-	conditionList ConditionList
+	namespace	string
+	kubeConfig	*restclient.Config
+	appsFactory	*apps.Factory
+	conditionList	ConditionList
 }
 
 func NewNamespaceCondition(kubeConfig *restclient.Config, namespace string) (*NamespaceCondition, error) {
+	__traceStack()
+
 	appsFactory, err := apps.NewFactoryFromConfig(kubeConfig)
 	if err != nil {
 		return nil, err
 	}
 	return &NamespaceCondition{
-		namespace:   namespace,
-		kubeConfig:  kubeConfig,
-		appsFactory: appsFactory,
+		namespace:	namespace,
+		kubeConfig:	kubeConfig,
+		appsFactory:	appsFactory,
 	}, nil
 }
 
 func (n *NamespaceCondition) AddAppsCondition(appsConditionFunc AppsConditionFunc, names ...string) {
+	__traceStack()
+
 	for _, name := range names {
 		kind, wc := appsConditionFunc(n.appsFactory, n.namespace, name)
 		condition := NewDefaultCondition(fmt.Sprintf("%s %s", name, kind), wc)
@@ -98,21 +110,31 @@ func (n *NamespaceCondition) AddAppsCondition(appsConditionFunc AppsConditionFun
 }
 
 func (n *NamespaceCondition) AddDeploymentsReady(names ...string) {
+	__traceStack()
+
 	n.AddAppsCondition(isDeploymentReady, names...)
 }
 
 func (n *NamespaceCondition) AddDaemonSetsReady(names ...string) {
+	__traceStack()
+
 	n.AddAppsCondition(isDaemenSetReady, names...)
 }
 
 func (n *NamespaceCondition) AddDeploymentsClean(names ...string) {
+	__traceStack()
+
 	n.AddAppsCondition(isDeploymentClean, names...)
 }
 
 func (n *NamespaceCondition) AddDaemonSetsClean(names ...string) {
+	__traceStack()
+
 	n.AddAppsCondition(isDaemenSetClean, names...)
 }
 
 func (n *NamespaceCondition) Wait(ctx context.Context) error {
+	__traceStack()
+
 	return n.conditionList.Wait(ctx)
 }

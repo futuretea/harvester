@@ -11,20 +11,21 @@ import (
 )
 
 const (
-	fleetLocalNamespace = "fleet-local"
-	localClusterName    = "local"
+	fleetLocalNamespace	= "fleet-local"
+	localClusterName	= "local"
 )
 
 func (h *Handler) syncHTTPProxy(setting *harvesterv1.Setting) error {
-	// Add envs to the backup secret used by Longhorn backups
+	__traceStack()
+
 	var httpProxyConfig util.HTTPProxyConfig
 	if err := json.Unmarshal([]byte(setting.Value), &httpProxyConfig); err != nil {
 		return err
 	}
 	backupConfig := map[string]string{
-		util.HTTPProxyEnv:  httpProxyConfig.HTTPProxy,
-		util.HTTPSProxyEnv: httpProxyConfig.HTTPSProxy,
-		util.NoProxyEnv:    util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
+		util.HTTPProxyEnv:	httpProxyConfig.HTTPProxy,
+		util.HTTPSProxyEnv:	httpProxyConfig.HTTPSProxy,
+		util.NoProxyEnv:	util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
 	}
 	if err := h.updateBackupSecret(backupConfig); err != nil {
 		return err
@@ -33,7 +34,6 @@ func (h *Handler) syncHTTPProxy(setting *harvesterv1.Setting) error {
 		return err
 	}
 
-	//redeploy system services. The proxy envs will be injected by the mutation webhook.
 	if err := h.redeployDeployment(util.CattleSystemNamespaceName, "rancher"); err != nil {
 		return err
 	}
@@ -41,6 +41,8 @@ func (h *Handler) syncHTTPProxy(setting *harvesterv1.Setting) error {
 }
 
 func (h *Handler) syncRke2HTTPProxy(httpProxyConfig util.HTTPProxyConfig) error {
+	__traceStack()
+
 	localCluster, err := h.clusterCache.Get(fleetLocalNamespace, localClusterName)
 	if err != nil {
 		return err
@@ -53,14 +55,14 @@ func (h *Handler) syncRke2HTTPProxy(httpProxyConfig util.HTTPProxyConfig) error 
 		}
 	}
 	newEnvVars = append(newEnvVars, rkev1.EnvVar{
-		Name:  util.HTTPProxyEnv,
-		Value: httpProxyConfig.HTTPProxy,
+		Name:	util.HTTPProxyEnv,
+		Value:	httpProxyConfig.HTTPProxy,
 	}, rkev1.EnvVar{
-		Name:  util.HTTPSProxyEnv,
-		Value: httpProxyConfig.HTTPSProxy,
+		Name:	util.HTTPSProxyEnv,
+		Value:	httpProxyConfig.HTTPSProxy,
 	}, rkev1.EnvVar{
-		Name:  util.NoProxyEnv,
-		Value: util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
+		Name:	util.NoProxyEnv,
+		Value:	util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
 	})
 	toUpdate.Spec.AgentEnvVars = newEnvVars
 	_, err = h.clusters.Update(toUpdate)

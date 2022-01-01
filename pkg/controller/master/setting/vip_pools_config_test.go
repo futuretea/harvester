@@ -22,68 +22,70 @@ import (
 )
 
 func TestSyncVipPoolsConfig(t *testing.T) {
+	__traceStack()
+
 	const vipPools = "vip-pools"
 	type input struct {
-		key     string
-		setting *harvesterv1.Setting
+		key	string
+		setting	*harvesterv1.Setting
 	}
 	type output struct {
-		pools map[string]string
-		err   error
+		pools	map[string]string
+		err	error
 	}
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "correct ip pools input, should pass",
+			name:	"correct ip pools input, should pass",
 			given: input{
-				key: vipPools,
+				key:	vipPools,
 				setting: &harvesterv1.Setting{
 					ObjectMeta: v1.ObjectMeta{
 						Name: vipPools,
 					},
-					Value: `{"default":"172.16.1.0/24","test":"172.16.2.0/24"}`,
+					Value:	`{"default":"172.16.1.0/24","test":"172.16.2.0/24"}`,
 				},
 			},
 			expected: output{
 				pools: map[string]string{
-					"cidr-default": "172.16.1.0/24",
-					"cidr-test":    "172.16.2.0/24",
+					"cidr-default":	"172.16.1.0/24",
+					"cidr-test":	"172.16.2.0/24",
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "multiple CIDRs per ns pools, should pass",
+			name:	"multiple CIDRs per ns pools, should pass",
 			given: input{
-				key: vipPools,
+				key:	vipPools,
 				setting: &harvesterv1.Setting{
 					ObjectMeta: v1.ObjectMeta{
 						Name: vipPools,
 					},
-					Value: `{"default":"172.16.1.0/24,192.168.10.0/24","test":"172.16.2.0/24,192.168.20.0/24"}`,
+					Value:	`{"default":"172.16.1.0/24,192.168.10.0/24","test":"172.16.2.0/24,192.168.20.0/24"}`,
 				},
 			},
 			expected: output{
 				pools: map[string]string{
-					"cidr-default": "172.16.1.0/24,192.168.10.0/24",
-					"cidr-test":    "172.16.2.0/24,192.168.20.0/24",
+					"cidr-default":	"172.16.1.0/24,192.168.10.0/24",
+					"cidr-test":	"172.16.2.0/24,192.168.20.0/24",
 				},
-				err: nil,
+				err:	nil,
 			},
 		},
 		{
-			name: "incorrect ip pools input, should fail",
+			name:	"incorrect ip pools input, should fail",
 			given: input{
 				setting: &harvesterv1.Setting{
 					Value: `{"default": "172.16.1.0/242", "test": "1000.16.2.0/24"}`,
 				},
 			},
 			expected: output{
-				pools: nil,
-				err:   errors.New("invalid CIDR value"),
+				pools:	nil,
+				err:	errors.New("invalid CIDR value"),
 			},
 		},
 	}
@@ -109,12 +111,11 @@ func TestSyncVipPoolsConfig(t *testing.T) {
 			assert.Nil(t, err, "mock resource should add into fake controller tracker")
 		}
 
-		// validate syncVipPoolsConfig func
 		var coreclientset = corefake.NewSimpleClientset()
 		var handler = &Handler{
-			settings:       fakeSettingClient(clientset.HarvesterhciV1beta1().Settings),
-			configmaps:     fakeclients.ConfigmapClient(coreclientset.CoreV1().ConfigMaps),
-			configmapCache: fakeclients.ConfigmapCache(coreclientset.CoreV1().ConfigMaps),
+			settings:	fakeSettingClient(clientset.HarvesterhciV1beta1().Settings),
+			configmaps:	fakeclients.ConfigmapClient(coreclientset.CoreV1().ConfigMaps),
+			configmapCache:	fakeclients.ConfigmapCache(coreclientset.CoreV1().ConfigMaps),
 		}
 		syncers = map[string]syncerFunc{
 			"vip-pools": handler.syncVipPoolsConfig,
@@ -124,7 +125,6 @@ func TestSyncVipPoolsConfig(t *testing.T) {
 		_, syncActual.err = handler.settingOnChanged(tc.given.key, tc.given.setting)
 		assert.Nil(t, syncActual.err)
 
-		// check if the kube-vip configmap is configured properly
 		cnf, err := handler.configmaps.Get(util.KubeSystemNamespace, KubevipConfigmapName, v1.GetOptions{})
 		assert.NoError(t, err)
 		assert.Equal(t, tc.expected.pools, cnf.Data)
@@ -134,33 +134,49 @@ func TestSyncVipPoolsConfig(t *testing.T) {
 type fakeSettingClient func() typeharv1.SettingInterface
 
 func (c fakeSettingClient) Create(setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	return c().Create(context.TODO(), setting, metav1.CreateOptions{})
 }
 
 func (c fakeSettingClient) Update(setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	return c().Update(context.TODO(), setting, metav1.UpdateOptions{})
 }
 
 func (c fakeSettingClient) UpdateStatus(setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	return c().UpdateStatus(context.TODO(), setting, metav1.UpdateOptions{})
 }
 
 func (c fakeSettingClient) Delete(name string, opts *metav1.DeleteOptions) error {
+	__traceStack()
+
 	return c().Delete(context.TODO(), name, *opts)
 }
 
 func (c fakeSettingClient) Get(name string, opts metav1.GetOptions) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	return c().Get(context.TODO(), name, opts)
 }
 
 func (c fakeSettingClient) List(opts metav1.ListOptions) (*harvesterv1.SettingList, error) {
+	__traceStack()
+
 	return c().List(context.TODO(), opts)
 }
 
 func (c fakeSettingClient) Watch(opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	return c().Watch(context.TODO(), opts)
 }
 
 func (c fakeSettingClient) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *harvesterv1.Setting, err error) {
+	__traceStack()
+
 	return c().Patch(context.TODO(), name, pt, data, metav1.PatchOptions{}, subresources...)
 }

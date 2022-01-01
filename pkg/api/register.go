@@ -17,6 +17,8 @@ import (
 type registerSchema func(scaled *config.Scaled, server *server.Server, options config.Options) error
 
 func registerSchemas(scaled *config.Scaled, server *server.Server, options config.Options, registers ...registerSchema) error {
+	__traceStack()
+
 	for _, register := range registers {
 		if err := register(scaled, server, options); err != nil {
 			return err
@@ -26,6 +28,8 @@ func registerSchemas(scaled *config.Scaled, server *server.Server, options confi
 }
 
 func Setup(ctx context.Context, server *server.Server, controllers *server.Controllers, options config.Options) error {
+	__traceStack()
+
 	scaled := config.ScaledWithContext(ctx)
 	return registerSchemas(scaled, server, options,
 		image.RegisterSchema,

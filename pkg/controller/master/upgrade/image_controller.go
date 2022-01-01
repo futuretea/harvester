@@ -10,14 +10,15 @@ import (
 	ctlharvesterv1 "github.com/harvester/harvester/pkg/generated/controllers/harvesterhci.io/v1beta1"
 )
 
-// vmImageHandler syncs upgrade repo image creation
 type vmImageHandler struct {
-	namespace     string
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
+	namespace	string
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
 }
 
 func (h *vmImageHandler) OnChanged(key string, image *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	if image == nil || image.DeletionTimestamp != nil || image.Labels == nil || image.Namespace != upgradeNamespace || image.Labels[harvesterUpgradeLabel] == "" {
 		return image, nil
 	}

@@ -15,18 +15,19 @@ import (
 	"github.com/harvester/harvester/pkg/util"
 )
 
-// Handler resets vmi annotations and nodeSelector when a migration completes
 type Handler struct {
-	namespace  string
-	vmiCache   ctlv1.VirtualMachineInstanceCache
-	vms        ctlv1.VirtualMachineClient
-	vmCache    ctlv1.VirtualMachineCache
-	podCache   ctlcorev1.PodCache
-	pods       ctlcorev1.PodClient
-	restClient rest.Interface
+	namespace	string
+	vmiCache	ctlv1.VirtualMachineInstanceCache
+	vms		ctlv1.VirtualMachineClient
+	vmCache		ctlv1.VirtualMachineCache
+	podCache	ctlcorev1.PodCache
+	pods		ctlcorev1.PodClient
+	restClient	rest.Interface
 }
 
 func (h *Handler) OnVmiChanged(_ string, vmi *v1.VirtualMachineInstance) (*v1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	if vmi == nil || vmi.DeletionTimestamp != nil ||
 		vmi.Annotations == nil || vmi.Status.MigrationState == nil {
 		return vmi, nil
@@ -43,8 +44,7 @@ func (h *Handler) OnVmiChanged(_ string, vmi *v1.VirtualMachineInstance) (*v1.Vi
 	}
 
 	if vmi.Status.MigrationState.Completed && vmi.Status.MigrationState.AbortStatus == v1.MigrationAbortSucceeded {
-		// clean up leftover pod on abortion success
-		// https://github.com/kubevirt/kubevirt/issues/5373
+
 		sets := labels.Set{
 			v1.MigrationJobLabel: string(vmi.Status.MigrationState.MigrationUID),
 		}
@@ -63,6 +63,8 @@ func (h *Handler) OnVmiChanged(_ string, vmi *v1.VirtualMachineInstance) (*v1.Vi
 }
 
 func (h *Handler) resetHarvesterMigrationStateInVMI(vmi *v1.VirtualMachineInstance) error {
+	__traceStack()
+
 	toUpdate := vmi.DeepCopy()
 	delete(toUpdate.Annotations, util.AnnotationMigrationUID)
 	delete(toUpdate.Annotations, util.AnnotationMigrationState)

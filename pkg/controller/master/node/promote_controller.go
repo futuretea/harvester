@@ -23,61 +23,61 @@ import (
 )
 
 const (
-	promoteControllerName = "promote-node-controller"
+	promoteControllerName	= "promote-node-controller"
 
-	KubeNodeRoleLabelPrefix      = "node-role.kubernetes.io/"
-	KubeMasterNodeLabelKey       = KubeNodeRoleLabelPrefix + "master"
-	KubeControlPlaneNodeLabelKey = KubeNodeRoleLabelPrefix + "control-plane"
+	KubeNodeRoleLabelPrefix		= "node-role.kubernetes.io/"
+	KubeMasterNodeLabelKey		= KubeNodeRoleLabelPrefix + "master"
+	KubeControlPlaneNodeLabelKey	= KubeNodeRoleLabelPrefix + "control-plane"
 
-	HarvesterLabelAnnotationPrefix      = "harvesterhci.io/"
-	HarvesterManagedNodeLabelKey        = HarvesterLabelAnnotationPrefix + "managed"
-	HarvesterPromoteNodeLabelKey        = HarvesterLabelAnnotationPrefix + "promote-node"
-	HarvesterPromoteStatusAnnotationKey = HarvesterLabelAnnotationPrefix + "promote-status"
+	HarvesterLabelAnnotationPrefix		= "harvesterhci.io/"
+	HarvesterManagedNodeLabelKey		= HarvesterLabelAnnotationPrefix + "managed"
+	HarvesterPromoteNodeLabelKey		= HarvesterLabelAnnotationPrefix + "promote-node"
+	HarvesterPromoteStatusAnnotationKey	= HarvesterLabelAnnotationPrefix + "promote-status"
 
-	PromoteStatusComplete = "complete"
-	PromoteStatusRunning  = "running"
-	PromoteStatusUnknown  = "unknown"
-	PromoteStatusFailed   = "failed"
+	PromoteStatusComplete	= "complete"
+	PromoteStatusRunning	= "running"
+	PromoteStatusUnknown	= "unknown"
+	PromoteStatusFailed	= "failed"
 
-	defaultSpecManagementNumber = 3
+	defaultSpecManagementNumber	= 3
 
-	promoteImage         = "busybox:1.32.0"
-	promoteRootMountPath = "/host"
+	promoteImage		= "busybox:1.32.0"
+	promoteRootMountPath	= "/host"
 
-	promoteScriptsMountPath = "/harvester-helpers"
-	promoteScript           = "/harvester-helpers/promote.sh"
-	helperConfigMapName     = "harvester-helpers"
+	promoteScriptsMountPath	= "/harvester-helpers"
+	promoteScript		= "/harvester-helpers/promote.sh"
+	helperConfigMapName	= "harvester-helpers"
 )
 
 var (
-	promoteBackoffLimit = int32(2)
+	promoteBackoffLimit	= int32(2)
 
-	ConditionJobComplete = condition.Cond(batchv1.JobComplete)
-	ConditionJobFailed   = condition.Cond(batchv1.JobFailed)
+	ConditionJobComplete	= condition.Cond(batchv1.JobComplete)
+	ConditionJobFailed	= condition.Cond(batchv1.JobFailed)
 )
 
-// PromoteHandler
 type PromoteHandler struct {
-	nodes     ctlcorev1.NodeController
-	nodeCache ctlcorev1.NodeCache
-	jobs      ctlbatchv1.JobClient
-	jobCache  ctlbatchv1.JobCache
-	recorder  record.EventRecorder
-	namespace string
+	nodes		ctlcorev1.NodeController
+	nodeCache	ctlcorev1.NodeCache
+	jobs		ctlbatchv1.JobClient
+	jobCache	ctlbatchv1.JobCache
+	recorder	record.EventRecorder
+	namespace	string
 }
 
-// PromoteRegister registers the node controller
 func PromoteRegister(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	nodes := management.CoreFactory.Core().V1().Node()
 	jobs := management.BatchFactory.Batch().V1().Job()
 
 	promoteController := &PromoteHandler{
-		nodes:     nodes,
-		nodeCache: nodes.Cache(),
-		jobs:      jobs,
-		jobCache:  jobs.Cache(),
-		recorder:  management.NewRecorder("harvester-"+promoteControllerName, "", ""),
-		namespace: options.Namespace,
+		nodes:		nodes,
+		nodeCache:	nodes.Cache(),
+		jobs:		jobs,
+		jobCache:	jobs.Cache(),
+		recorder:	management.NewRecorder("harvester-"+promoteControllerName, "", ""),
+		namespace:	options.Namespace,
 	}
 
 	nodes.OnChange(ctx, promoteControllerName, promoteController.OnNodeChanged)
@@ -87,10 +87,9 @@ func PromoteRegister(ctx context.Context, management *config.Management, options
 	return nil
 }
 
-// OnNodeChanged automate the upgrade of node roles
-// If the number of managements in the cluster is less than spec number,
-// the harvester oldest node will be automatically promoted to be management.
 func (h *PromoteHandler) OnNodeChanged(key string, node *corev1.Node) (*corev1.Node, error) {
+	__traceStack()
+
 	if node == nil || node.DeletionTimestamp != nil {
 		return node, nil
 	}
@@ -105,9 +104,6 @@ func (h *PromoteHandler) OnNodeChanged(key string, node *corev1.Node) (*corev1.N
 		return node, nil
 	}
 
-	// wait until node metadata show up. Sometimes the metadata are empty
-	// during the starting of nodes. If the metadata are empty, promotion
-	// jobs creation call will fail.
 	if promoteNode.Kind == "" || promoteNode.APIVersion == "" {
 		h.nodes.EnqueueAfter(node.Name, time.Second*10)
 		return node, nil
@@ -120,11 +116,9 @@ func (h *PromoteHandler) OnNodeChanged(key string, node *corev1.Node) (*corev1.N
 	return node, nil
 }
 
-// OnJobChanged
-// If the node corresponding to the promote job has been removed, delete the job.
-// If the promote job executes successfully, the node's promote status will be marked as complete and schedulable
-// If the promote job fails, the node's promote status will be marked as failed.
 func (h *PromoteHandler) OnJobChanged(key string, job *batchv1.Job) (*batchv1.Job, error) {
+	__traceStack()
+
 	if job == nil || job.DeletionTimestamp != nil {
 		return job, nil
 	}
@@ -153,9 +147,9 @@ func (h *PromoteHandler) OnJobChanged(key string, job *batchv1.Job) (*batchv1.Jo
 	return job, nil
 }
 
-// OnJobRemove
-// If the running promote job is deleted, the node's promote status will be marked as unknown
 func (h *PromoteHandler) OnJobRemove(key string, job *batchv1.Job) (*batchv1.Job, error) {
+	__traceStack()
+
 	if job == nil {
 		return job, nil
 	}
@@ -184,13 +178,13 @@ func (h *PromoteHandler) OnJobRemove(key string, job *batchv1.Job) (*batchv1.Job
 }
 
 func (h *PromoteHandler) promote(node *corev1.Node) (*corev1.Node, error) {
-	// first, mark node into promote status
+	__traceStack()
+
 	startedNode, err := h.setPromoteStart(node)
 	if err != nil {
 		return nil, err
 	}
 
-	// then, create a promote job on the node
 	if _, err := h.createPromoteJob(node); err != nil {
 		return nil, err
 	}
@@ -199,6 +193,8 @@ func (h *PromoteHandler) promote(node *corev1.Node) (*corev1.Node, error) {
 }
 
 func (h *PromoteHandler) logPromoteEvent(node *corev1.Node, status string) {
+	__traceStack()
+
 	preStatus := node.Annotations[HarvesterPromoteStatusAnnotationKey]
 	eventType := corev1.EventTypeNormal
 	switch status {
@@ -206,17 +202,18 @@ func (h *PromoteHandler) logPromoteEvent(node *corev1.Node, status string) {
 		eventType = corev1.EventTypeWarning
 	}
 	nodeReference := &corev1.ObjectReference{
-		Name: node.Name,
-		UID:  types.UID(node.Name),
-		Kind: "Node",
+		Name:	node.Name,
+		UID:	types.UID(node.Name),
+		Kind:	"Node",
 	}
 	h.recorder.Event(nodeReference, eventType,
 		fmt.Sprintf("NodePromote%s", strings.Title(status)),
 		fmt.Sprintf("Node %s promote status change: %s => %s", node.Name, preStatus, status))
 }
 
-// setPromoteStart set node unschedulable and set promote status running.
 func (h *PromoteHandler) setPromoteStart(node *corev1.Node) (*corev1.Node, error) {
+	__traceStack()
+
 	if node.Annotations[HarvesterPromoteStatusAnnotationKey] == PromoteStatusRunning {
 		return node, nil
 	}
@@ -227,8 +224,9 @@ func (h *PromoteHandler) setPromoteStart(node *corev1.Node) (*corev1.Node, error
 	return h.nodes.Update(toUpdate)
 }
 
-// setPromoteResult set node schedulable and update promote status if the promote is successful
 func (h *PromoteHandler) setPromoteResult(job *batchv1.Job, node *corev1.Node, status string) (*batchv1.Job, error) {
+	__traceStack()
+
 	if node.Annotations[HarvesterPromoteStatusAnnotationKey] == status {
 		return job, nil
 	}
@@ -242,14 +240,14 @@ func (h *PromoteHandler) setPromoteResult(job *batchv1.Job, node *corev1.Node, s
 	return job, err
 }
 
-// selectPromoteNode select the oldest ready worker node to promote
-// If the cluster doesn't need to be promoted, return nil
 func selectPromoteNode(nodeList []*corev1.Node) *corev1.Node {
+	__traceStack()
+
 	var (
-		managementNumber     int
-		managementRoleNumber int
-		canPromoteNumber     int
-		promoteNode          *corev1.Node
+		managementNumber	int
+		managementRoleNumber	int
+		canPromoteNumber	int
+		promoteNode		*corev1.Node
 	)
 
 	promoteNode = nil
@@ -267,19 +265,16 @@ func selectPromoteNode(nodeList []*corev1.Node) *corev1.Node {
 		}
 	}
 
-	// waiting for the other node completed
 	if managementRoleNumber != managementNumber {
 		return nil
 	}
 
-	// there is no need to promote if the spec number has been reached
 	specManagementNumber := getSpecManagementNumber(len(nodeList))
 	promoteNodeNumber := specManagementNumber - managementNumber
 	if promoteNodeNumber <= 0 {
 		return nil
 	}
 
-	// make sure have enough nodes can be promote
 	if canPromoteNumber < promoteNodeNumber {
 		return nil
 	}
@@ -287,44 +282,46 @@ func selectPromoteNode(nodeList []*corev1.Node) *corev1.Node {
 	return promoteNode
 }
 
-// getSpecMasterNumber get spec management number by all node number
 func getSpecManagementNumber(nodeNumber int) int {
+	__traceStack()
+
 	if nodeNumber < 3 {
 		return 1
 	}
 	return defaultSpecManagementNumber
 }
 
-// isHealthyNode determine whether it's an healthy node
 func isHealthyNode(node *corev1.Node) bool {
+	__traceStack()
+
 	for _, c := range node.Status.Conditions {
 		if c.Type == corev1.NodeReady && c.Status != corev1.ConditionTrue {
-			// skip unready nodes
+
 			return false
 		}
 
 		if c.Type != corev1.NodeReady && c.Status == corev1.ConditionTrue {
-			// skip node with conditions like nodeMemoryPressure, nodeDiskPressure, nodePIDPressure
-			// and nodeNetworkUnavailable equal to true
+
 			return false
 		}
 	}
 	return true
 }
 
-// isHarvesterNode determine whether it's an Harvester node based on the node's label
 func isHarvesterNode(node *corev1.Node) bool {
+	__traceStack()
+
 	_, ok := node.Labels[HarvesterManagedNodeLabelKey]
 	return ok
 }
 
-// isManagementRole determine whether it's an management node based on the node's label
 func isManagementRole(node *corev1.Node) bool {
+	__traceStack()
+
 	if value, ok := node.Labels[KubeMasterNodeLabelKey]; ok {
 		return value == "true"
 	}
 
-	// Related to https://github.com/kubernetes/kubernetes/pull/95382
 	if value, ok := node.Labels[KubeControlPlaneNodeLabelKey]; ok {
 		return value == "true"
 	}
@@ -333,11 +330,15 @@ func isManagementRole(node *corev1.Node) bool {
 }
 
 func hasPromoteStatus(node *corev1.Node) bool {
+	__traceStack()
+
 	_, ok := node.Annotations[HarvesterPromoteStatusAnnotationKey]
 	return ok
 }
 
 func isPromoteStatusIn(node *corev1.Node, statuses ...string) bool {
+	__traceStack()
+
 	status, ok := node.Annotations[HarvesterPromoteStatusAnnotationKey]
 	if !ok {
 		return false
@@ -353,35 +354,41 @@ func isPromoteStatusIn(node *corev1.Node, statuses ...string) bool {
 }
 
 func (h *PromoteHandler) createPromoteJob(node *corev1.Node) (*batchv1.Job, error) {
+	__traceStack()
+
 	job := buildPromoteJob(h.namespace, node)
 	return h.jobs.Create(job)
 }
 
 func (h *PromoteHandler) deleteJob(job *batchv1.Job, deletionPropagation metav1.DeletionPropagation) error {
+	__traceStack()
+
 	return h.jobs.Delete(job.Namespace, job.Name, &metav1.DeleteOptions{PropagationPolicy: &deletionPropagation})
 }
 
 func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
+	__traceStack()
+
 	nodeName := node.Name
 	hostPathDirectory := corev1.HostPathDirectory
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      buildPromoteJobName(nodeName),
-			Namespace: namespace,
+			Name:		buildPromoteJobName(nodeName),
+			Namespace:	namespace,
 			Labels: labels.Set{
 				HarvesterPromoteNodeLabelKey: nodeName,
 			},
 			OwnerReferences: []metav1.OwnerReference{
 				{
-					APIVersion: node.APIVersion,
-					Kind:       node.Kind,
-					Name:       nodeName,
-					UID:        node.UID,
+					APIVersion:	node.APIVersion,
+					Kind:		node.Kind,
+					Name:		nodeName,
+					UID:		node.UID,
 				},
 			},
 		},
 		Spec: batchv1.JobSpec{
-			BackoffLimit: &promoteBackoffLimit,
+			BackoffLimit:	&promoteBackoffLimit,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: labels.Set{
@@ -389,17 +396,17 @@ func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
 					},
 				},
 				Spec: corev1.PodSpec{
-					HostIPC:     true,
-					HostPID:     true,
-					HostNetwork: true,
-					DNSPolicy:   corev1.DNSClusterFirstWithHostNet,
+					HostIPC:	true,
+					HostPID:	true,
+					HostNetwork:	true,
+					DNSPolicy:	corev1.DNSClusterFirstWithHostNet,
 					Affinity: &corev1.Affinity{
 						NodeAffinity: &corev1.NodeAffinity{
 							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 								NodeSelectorTerms: []corev1.NodeSelectorTerm{{
 									MatchExpressions: []corev1.NodeSelectorRequirement{{
-										Key:      corev1.LabelHostname,
-										Operator: corev1.NodeSelectorOpIn,
+										Key:		corev1.LabelHostname,
+										Operator:	corev1.NodeSelectorOpIn,
 										Values: []string{
 											nodeName,
 										},
@@ -413,36 +420,36 @@ func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
 									LabelSelector: &metav1.LabelSelector{
 										MatchExpressions: []metav1.LabelSelectorRequirement{
 											{
-												Key:      HarvesterPromoteNodeLabelKey,
-												Operator: metav1.LabelSelectorOpIn,
+												Key:		HarvesterPromoteNodeLabelKey,
+												Operator:	metav1.LabelSelectorOpIn,
 												Values: []string{
 													nodeName,
 												},
 											},
 										},
 									},
-									TopologyKey: corev1.LabelHostname,
+									TopologyKey:	corev1.LabelHostname,
 								},
 							},
 						},
 					},
 					Tolerations: []corev1.Toleration{
 						{
-							Key:      corev1.TaintNodeUnschedulable,
-							Operator: corev1.TolerationOpExists,
-							Effect:   corev1.TaintEffectNoSchedule,
+							Key:		corev1.TaintNodeUnschedulable,
+							Operator:	corev1.TolerationOpExists,
+							Effect:		corev1.TaintEffectNoSchedule,
 						},
 					},
-					RestartPolicy: corev1.RestartPolicyNever,
+					RestartPolicy:	corev1.RestartPolicyNever,
 					Volumes: []corev1.Volume{{
-						Name: `host-root`,
+						Name:	`host-root`,
 						VolumeSource: corev1.VolumeSource{
 							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/", Type: &hostPathDirectory,
+								Path:	"/", Type: &hostPathDirectory,
 							},
 						},
 					}, {
-						Name: "helpers",
+						Name:	"helpers",
 						VolumeSource: corev1.VolumeSource{
 							ConfigMap: &corev1.ConfigMapVolumeSource{
 								LocalObjectReference: corev1.LocalObjectReference{
@@ -451,7 +458,7 @@ func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
 							},
 						},
 					}},
-					ServiceAccountName: "harvester",
+					ServiceAccountName:	"harvester",
 				},
 			},
 		},
@@ -460,16 +467,16 @@ func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
 
 	podTemplate.Spec.Containers = []corev1.Container{
 		{
-			Name:      "promote",
-			Image:     promoteImage,
-			Command:   []string{"sh"},
-			Args:      []string{"-e", promoteScript},
-			Resources: corev1.ResourceRequirements{},
+			Name:		"promote",
+			Image:		promoteImage,
+			Command:	[]string{"sh"},
+			Args:		[]string{"-e", promoteScript},
+			Resources:	corev1.ResourceRequirements{},
 			VolumeMounts: []corev1.VolumeMount{
 				{Name: "host-root", MountPath: promoteRootMountPath},
 				{Name: "helpers", MountPath: promoteScriptsMountPath},
 			},
-			ImagePullPolicy: corev1.PullIfNotPresent,
+			ImagePullPolicy:	corev1.PullIfNotPresent,
 			SecurityContext: &corev1.SecurityContext{
 				Privileged: pointer.BoolPtr(true),
 			},
@@ -480,5 +487,7 @@ func buildPromoteJob(namespace string, node *corev1.Node) *batchv1.Job {
 }
 
 func buildPromoteJobName(nodeName string) string {
+	__traceStack()
+
 	return name.SafeConcatName("harvester", "promote", nodeName)
 }

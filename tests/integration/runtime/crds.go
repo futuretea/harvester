@@ -12,8 +12,9 @@ import (
 	"github.com/harvester/harvester/pkg/util/crd"
 )
 
-// createCRDs creates CRDs needed in integration tests
 func createCRDs(ctx context.Context, restConfig *rest.Config) error {
+	__traceStack()
+
 	factory, err := crd.NewFactoryFromClient(ctx, restConfig)
 	if err != nil {
 		return err
@@ -28,6 +29,8 @@ func createCRDs(ctx context.Context, restConfig *rest.Config) error {
 }
 
 func createNetworkAttachmentDefinitionCRD() wcrd.CRD {
+	__traceStack()
+
 	nad := crd.FromGV(cniv1.SchemeGroupVersion, "NetworkAttachmentDefinition", cniv1.NetworkAttachmentDefinition{})
 	nad.PluralName = "network-attachment-definitions"
 	nad.SingularName = "network-attachment-definition"
@@ -35,6 +38,8 @@ func createNetworkAttachmentDefinitionCRD() wcrd.CRD {
 }
 
 func createManagedChartCRD() wcrd.CRD {
+	__traceStack()
+
 	mChart := crd.FromGV(mgmtv3.SchemeGroupVersion, "ManagedChart", mgmtv3.ManagedChart{})
 	mChart.PluralName = "managedcharts"
 	mChart.SingularName = "managedchart"
@@ -42,6 +47,8 @@ func createManagedChartCRD() wcrd.CRD {
 }
 
 func createHelmChartConfigCRD() wcrd.CRD {
+	__traceStack()
+
 	mChart := crd.FromGV(helmv1.SchemeGroupVersion, "HelmChartConfig", helmv1.HelmChartConfig{})
 	mChart.PluralName = "helmchartconfigs"
 	mChart.SingularName = "helmchartconfig"

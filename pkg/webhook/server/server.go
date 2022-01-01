@@ -22,32 +22,36 @@ import (
 )
 
 var (
-	certName = "harvester-webhook-tls"
-	caName   = "harvester-webhook-ca"
-	port     = int32(443)
+	certName	= "harvester-webhook-tls"
+	caName		= "harvester-webhook-ca"
+	port		= int32(443)
 
-	validationPath      = "/v1/webhook/validation"
-	mutationPath        = "/v1/webhook/mutation"
-	failPolicyFail      = v1.Fail
-	failPolicyIgnore    = v1.Ignore
-	sideEffectClassNone = v1.SideEffectClassNone
+	validationPath		= "/v1/webhook/validation"
+	mutationPath		= "/v1/webhook/mutation"
+	failPolicyFail		= v1.Fail
+	failPolicyIgnore	= v1.Ignore
+	sideEffectClassNone	= v1.SideEffectClassNone
 )
 
 type AdmissionWebhookServer struct {
-	context    context.Context
-	restConfig *rest.Config
-	options    *config.Options
+	context		context.Context
+	restConfig	*rest.Config
+	options		*config.Options
 }
 
 func New(ctx context.Context, restConfig *rest.Config, options *config.Options) *AdmissionWebhookServer {
+	__traceStack()
+
 	return &AdmissionWebhookServer{
-		context:    ctx,
-		restConfig: restConfig,
-		options:    options,
+		context:	ctx,
+		restConfig:	restConfig,
+		options:	options,
 	}
 }
 
 func (s *AdmissionWebhookServer) ListenAndServe() error {
+	__traceStack()
+
 	clients, err := clients.New(s.context, s.restConfig, s.options.Threadiness)
 	if err != nil {
 		return err
@@ -76,13 +80,15 @@ func (s *AdmissionWebhookServer) ListenAndServe() error {
 }
 
 func (s *AdmissionWebhookServer) listenAndServe(clients *clients.Clients, handler http.Handler, validationResources []types.Resource, mutationResources []types.Resource) error {
+	__traceStack()
+
 	apply := clients.Apply.WithDynamicLookup()
 	clients.Core.Secret().OnChange(s.context, "secrets", func(key string, secret *corev1.Secret) (*corev1.Secret, error) {
 		if secret == nil || secret.Name != caName || secret.Namespace != s.options.Namespace || len(secret.Data[corev1.TLSCertKey]) == 0 {
 			return nil, nil
 		}
 		logrus.Info("Sleeping for 15 seconds then applying webhook config")
-		// Sleep here to make sure server is listening and all caches are primed
+
 		time.Sleep(15 * time.Second)
 
 		logrus.Debugf("Building validation rules...")
@@ -96,20 +102,20 @@ func (s *AdmissionWebhookServer) listenAndServe(clients *clients.Clients, handle
 			},
 			Webhooks: []v1.ValidatingWebhook{
 				{
-					Name: "validator.harvesterhci.io",
+					Name:	"validator.harvesterhci.io",
 					ClientConfig: v1.WebhookClientConfig{
 						Service: &v1.ServiceReference{
-							Namespace: s.options.Namespace,
-							Name:      "harvester-webhook",
-							Path:      &validationPath,
-							Port:      &port,
+							Namespace:	s.options.Namespace,
+							Name:		"harvester-webhook",
+							Path:		&validationPath,
+							Port:		&port,
 						},
-						CABundle: secret.Data[corev1.TLSCertKey],
+						CABundle:	secret.Data[corev1.TLSCertKey],
 					},
-					Rules:                   validationRules,
-					FailurePolicy:           &failPolicyFail,
-					SideEffects:             &sideEffectClassNone,
-					AdmissionReviewVersions: []string{"v1", "v1beta1"},
+					Rules:				validationRules,
+					FailurePolicy:			&failPolicyFail,
+					SideEffects:			&sideEffectClassNone,
+					AdmissionReviewVersions:	[]string{"v1", "v1beta1"},
 				},
 			},
 		}
@@ -120,20 +126,20 @@ func (s *AdmissionWebhookServer) listenAndServe(clients *clients.Clients, handle
 			},
 			Webhooks: []v1.MutatingWebhook{
 				{
-					Name: "mutator.harvesterhci.io",
+					Name:	"mutator.harvesterhci.io",
 					ClientConfig: v1.WebhookClientConfig{
 						Service: &v1.ServiceReference{
-							Namespace: s.options.Namespace,
-							Name:      "harvester-webhook",
-							Path:      &mutationPath,
-							Port:      &port,
+							Namespace:	s.options.Namespace,
+							Name:		"harvester-webhook",
+							Path:		&mutationPath,
+							Port:		&port,
 						},
-						CABundle: secret.Data[corev1.TLSCertKey],
+						CABundle:	secret.Data[corev1.TLSCertKey],
 					},
-					Rules:                   mutationRules,
-					FailurePolicy:           &failPolicyIgnore,
-					SideEffects:             &sideEffectClassNone,
-					AdmissionReviewVersions: []string{"v1", "v1beta1"},
+					Rules:				mutationRules,
+					FailurePolicy:			&failPolicyIgnore,
+					SideEffects:			&sideEffectClassNone,
+					AdmissionReviewVersions:	[]string{"v1", "v1beta1"},
 				},
 			},
 		}
@@ -144,31 +150,33 @@ func (s *AdmissionWebhookServer) listenAndServe(clients *clients.Clients, handle
 	tlsName := fmt.Sprintf("harvester-webhook.%s.svc", s.options.Namespace)
 
 	return server.ListenAndServe(s.context, s.options.HTTPSListenPort, 0, handler, &server.ListenOpts{
-		Secrets:       clients.Core.Secret(),
-		CertNamespace: s.options.Namespace,
-		CertName:      certName,
-		CAName:        caName,
+		Secrets:	clients.Core.Secret(),
+		CertNamespace:	s.options.Namespace,
+		CertName:	certName,
+		CAName:		caName,
 		TLSListenerConfig: dynamiclistener.Config{
 			SANs: []string{
 				tlsName,
 			},
-			FilterCN: dynamiclistener.OnlyAllow(tlsName),
+			FilterCN:	dynamiclistener.OnlyAllow(tlsName),
 		},
 	})
 }
 
 func (s *AdmissionWebhookServer) buildRules(resources []types.Resource) []v1.RuleWithOperations {
+	__traceStack()
+
 	rules := []v1.RuleWithOperations{}
 	for _, rsc := range resources {
 		logrus.Debugf("Add rule for %+v", rsc)
 		scope := rsc.Scope
 		rules = append(rules, v1.RuleWithOperations{
-			Operations: rsc.OperationTypes,
+			Operations:	rsc.OperationTypes,
 			Rule: v1.Rule{
-				APIGroups:   []string{rsc.APIGroup},
-				APIVersions: []string{rsc.APIVersion},
-				Resources:   []string{rsc.Name},
-				Scope:       &scope,
+				APIGroups:	[]string{rsc.APIGroup},
+				APIVersions:	[]string{rsc.APIVersion},
+				Resources:	[]string{rsc.Name},
+				Scope:		&scope,
 			},
 		})
 	}

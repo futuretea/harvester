@@ -23,28 +23,32 @@ const (
 )
 
 func NewValidator(vmimages ctlharvesterv1.VirtualMachineImageCache, pvcCache ctlcorev1.PersistentVolumeClaimCache, ssar authorizationv1client.SelfSubjectAccessReviewInterface) types.Validator {
+	__traceStack()
+
 	return &virtualMachineImageValidator{
-		vmimages: vmimages,
-		pvcCache: pvcCache,
-		ssar:     ssar,
+		vmimages:	vmimages,
+		pvcCache:	pvcCache,
+		ssar:		ssar,
 	}
 }
 
 type virtualMachineImageValidator struct {
 	types.DefaultValidator
 
-	vmimages ctlharvesterv1.VirtualMachineImageCache
-	pvcCache ctlcorev1.PersistentVolumeClaimCache
-	ssar     authorizationv1client.SelfSubjectAccessReviewInterface
+	vmimages	ctlharvesterv1.VirtualMachineImageCache
+	pvcCache	ctlcorev1.PersistentVolumeClaimCache
+	ssar		authorizationv1client.SelfSubjectAccessReviewInterface
 }
 
 func (v *virtualMachineImageValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       v1beta1.VirtualMachineImageResourceName,
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   v1beta1.SchemeGroupVersion.Group,
-		APIVersion: v1beta1.SchemeGroupVersion.Version,
-		ObjectType: &v1beta1.VirtualMachineImage{},
+		Name:		v1beta1.VirtualMachineImageResourceName,
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.VirtualMachineImage{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Update,
@@ -54,6 +58,8 @@ func (v *virtualMachineImageValidator) Resource() types.Resource {
 }
 
 func (v *virtualMachineImageValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	newImage := newObj.(*v1beta1.VirtualMachineImage)
 	if err := v.CheckImageDisplayNameAndURL(newImage); err != nil {
 		return err
@@ -63,6 +69,8 @@ func (v *virtualMachineImageValidator) Create(request *types.Request, newObj run
 }
 
 func (v *virtualMachineImageValidator) CheckImageDisplayNameAndURL(newImage *v1beta1.VirtualMachineImage) error {
+	__traceStack()
+
 	if newImage.Spec.DisplayName == "" {
 		return werror.NewInvalidError("displayName is required", fieldDisplayName)
 	}
@@ -92,6 +100,8 @@ func (v *virtualMachineImageValidator) CheckImageDisplayNameAndURL(newImage *v1b
 }
 
 func (v *virtualMachineImageValidator) CheckImagePVC(request *types.Request, newImage *v1beta1.VirtualMachineImage) error {
+	__traceStack()
+
 	if newImage.Spec.SourceType != v1beta1.VirtualMachineImageSourceTypeExportVolume {
 		return nil
 	}
@@ -106,12 +116,12 @@ func (v *virtualMachineImageValidator) CheckImagePVC(request *types.Request, new
 	ssar, err := v.ssar.Create(request.Context, &authorizationv1.SelfSubjectAccessReview{
 		Spec: authorizationv1.SelfSubjectAccessReviewSpec{
 			ResourceAttributes: &authorizationv1.ResourceAttributes{
-				Namespace: newImage.Spec.PVCNamespace,
-				Verb:      "get",
-				Group:     "",
-				Version:   "*",
-				Resource:  "persistentvolumeclaims",
-				Name:      newImage.Spec.PVCName,
+				Namespace:	newImage.Spec.PVCNamespace,
+				Verb:		"get",
+				Group:		"",
+				Version:	"*",
+				Resource:	"persistentvolumeclaims",
+				Name:		newImage.Spec.PVCName,
 			},
 		},
 	}, metav1.CreateOptions{})
@@ -135,6 +145,8 @@ func (v *virtualMachineImageValidator) CheckImagePVC(request *types.Request, new
 }
 
 func (v *virtualMachineImageValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	newImage := newObj.(*v1beta1.VirtualMachineImage)
 	oldImage := oldObj.(*v1beta1.VirtualMachineImage)
 
@@ -159,6 +171,8 @@ func (v *virtualMachineImageValidator) Update(request *types.Request, oldObj run
 }
 
 func (v *virtualMachineImageValidator) Delete(request *types.Request, oldObj runtime.Object) error {
+	__traceStack()
+
 	image := oldObj.(*v1beta1.VirtualMachineImage)
 
 	if image.Status.StorageClassName == "" {

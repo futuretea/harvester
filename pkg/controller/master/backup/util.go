@@ -15,23 +15,33 @@ import (
 )
 
 func isBackupReady(backup *harvesterv1.VirtualMachineBackup) bool {
+	__traceStack()
+
 	return backup.Status != nil && backup.Status.ReadyToUse != nil && *backup.Status.ReadyToUse
 }
 
 func isBackupProgressing(backup *harvesterv1.VirtualMachineBackup) bool {
+	__traceStack()
+
 	return getVMBackupError(backup) == nil &&
 		(backup.Status == nil || backup.Status.ReadyToUse == nil || !*backup.Status.ReadyToUse)
 }
 
 func isBackupMissingStatus(backup *harvesterv1.VirtualMachineBackup) bool {
+	__traceStack()
+
 	return backup.Status == nil || backup.Status.SourceSpec == nil || backup.Status.VolumeBackups == nil || backup.Status.BackupTarget == nil
 }
 
 func IsBackupTargetSame(vmBackupTarget *harvesterv1.BackupTarget, target *settings.BackupTarget) bool {
+	__traceStack()
+
 	return vmBackupTarget.Endpoint == target.Endpoint && vmBackupTarget.BucketName == target.BucketName && vmBackupTarget.BucketRegion == target.BucketRegion
 }
 
 func isBackupTargetOnAnnotation(backup *harvesterv1.VirtualMachineBackup) bool {
+	__traceStack()
+
 	return backup.Annotations != nil &&
 		(backup.Annotations[backupTargetAnnotation] != "" ||
 			backup.Annotations[backupBucketNameAnnotation] != "" ||
@@ -39,19 +49,27 @@ func isBackupTargetOnAnnotation(backup *harvesterv1.VirtualMachineBackup) bool {
 }
 
 func isVMRestoreProgressing(vmRestore *harvesterv1.VirtualMachineRestore) bool {
+	__traceStack()
+
 	return vmRestore.Status == nil || vmRestore.Status.Complete == nil || !*vmRestore.Status.Complete
 }
 
 func isVMRestoreMissingVolumes(vmRestore *harvesterv1.VirtualMachineRestore) bool {
+	__traceStack()
+
 	return len(vmRestore.Status.VolumeRestores) == 0 ||
 		(!isNewVMOrHasRetainPolicy(vmRestore) && len(vmRestore.Status.DeletedVolumes) == 0)
 }
 
 func isNewVMOrHasRetainPolicy(vmRestore *harvesterv1.VirtualMachineRestore) bool {
+	__traceStack()
+
 	return vmRestore.Spec.NewVM || vmRestore.Spec.DeletionPolicy == harvesterv1.VirtualMachineRestoreRetain
 }
 
 func getVMBackupError(vmBackup *harvesterv1.VirtualMachineBackup) *harvesterv1.Error {
+	__traceStack()
+
 	if vmBackup.Status != nil && vmBackup.Status.Error != nil {
 		return vmBackup.Status.Error
 	}
@@ -59,28 +77,36 @@ func getVMBackupError(vmBackup *harvesterv1.VirtualMachineBackup) *harvesterv1.E
 }
 
 func newReadyCondition(status corev1.ConditionStatus, message string) harvesterv1.Condition {
+	__traceStack()
+
 	return harvesterv1.Condition{
-		Type:               harvesterv1.BackupConditionReady,
-		Status:             status,
-		Message:            message,
-		LastTransitionTime: currentTime().Format(time.RFC3339),
+		Type:			harvesterv1.BackupConditionReady,
+		Status:			status,
+		Message:		message,
+		LastTransitionTime:	currentTime().Format(time.RFC3339),
 	}
 }
 
 func newProgressingCondition(status corev1.ConditionStatus, message string) harvesterv1.Condition {
+	__traceStack()
+
 	return harvesterv1.Condition{
-		Type:               harvesterv1.BackupConditionProgressing,
-		Status:             status,
-		Message:            message,
-		LastTransitionTime: currentTime().Format(time.RFC3339),
+		Type:			harvesterv1.BackupConditionProgressing,
+		Status:			status,
+		Message:		message,
+		LastTransitionTime:	currentTime().Format(time.RFC3339),
 	}
 }
 
 func updateBackupCondition(ss *harvesterv1.VirtualMachineBackup, c harvesterv1.Condition) {
+	__traceStack()
+
 	ss.Status.Conditions = updateCondition(ss.Status.Conditions, c, false)
 }
 
 func updateCondition(conditions []harvesterv1.Condition, c harvesterv1.Condition, includeReason bool) []harvesterv1.Condition {
+	__traceStack()
+
 	found := false
 	for i := range conditions {
 		if conditions[i].Type == c.Type {
@@ -100,31 +126,38 @@ func updateCondition(conditions []harvesterv1.Condition, c harvesterv1.Condition
 }
 
 func translateError(e *snapshotv1.VolumeSnapshotError) *harvesterv1.Error {
+	__traceStack()
+
 	if e == nil {
 		return nil
 	}
 
 	return &harvesterv1.Error{
-		Message: e.Message,
-		Time:    e.Time,
+		Message:	e.Message,
+		Time:		e.Time,
 	}
 }
 
-// variable so can be overridden in tests
 var currentTime = func() *metav1.Time {
 	t := metav1.Now()
 	return &t
 }
 
 func getRestoreID(vmRestore *harvesterv1.VirtualMachineRestore) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s-%s", vmRestore.Name, vmRestore.UID)
 }
 
 func updateRestoreCondition(r *harvesterv1.VirtualMachineRestore, c harvesterv1.Condition) {
+	__traceStack()
+
 	r.Status.Conditions = updateCondition(r.Status.Conditions, c, true)
 }
 
 func getNewVolumes(vm *kv1.VirtualMachineSpec, vmRestore *harvesterv1.VirtualMachineRestore) ([]kv1.Volume, error) {
+	__traceStack()
+
 	var newVolumes = make([]kv1.Volume, len(vm.Template.Spec.Volumes))
 	copy(newVolumes, vm.Template.Spec.Volumes)
 
@@ -145,24 +178,30 @@ func getNewVolumes(vm *kv1.VirtualMachineSpec, vmRestore *harvesterv1.VirtualMac
 }
 
 func getRestorePVCName(vmRestore *harvesterv1.VirtualMachineRestore, name string) string {
+	__traceStack()
+
 	s := fmt.Sprintf("restore-%s-%s-%s", vmRestore.Spec.VirtualMachineBackupName, vmRestore.UID, name)
 	return s
 }
 
 func configVMOwner(vm *kv1.VirtualMachine) []metav1.OwnerReference {
+	__traceStack()
+
 	return []metav1.OwnerReference{
 		{
-			APIVersion:         kv1.SchemeGroupVersion.String(),
-			Kind:               kv1.VirtualMachineGroupVersionKind.Kind,
-			Name:               vm.Name,
-			UID:                vm.UID,
-			Controller:         pointer.BoolPtr(true),
-			BlockOwnerDeletion: pointer.BoolPtr(true),
+			APIVersion:		kv1.SchemeGroupVersion.String(),
+			Kind:			kv1.VirtualMachineGroupVersionKind.Kind,
+			Name:			vm.Name,
+			UID:			vm.UID,
+			Controller:		pointer.BoolPtr(true),
+			BlockOwnerDeletion:	pointer.BoolPtr(true),
 		},
 	}
 }
 
 func sanitizeVirtualMachineForRestore(restore *harvesterv1.VirtualMachineRestore, spec kv1.VirtualMachineInstanceSpec) kv1.VirtualMachineInstanceSpec {
+	__traceStack()
+
 	for index, volume := range spec.Volumes {
 		if volume.CloudInitNoCloud != nil && volume.CloudInitNoCloud.UserDataSecretRef != nil {
 			spec.Volumes[index].CloudInitNoCloud.UserDataSecretRef.Name = getCloudInitSecretRefVolumeName(restore.Spec.Target.Name, volume.CloudInitNoCloud.UserDataSecretRef.Name)
@@ -175,9 +214,13 @@ func sanitizeVirtualMachineForRestore(restore *harvesterv1.VirtualMachineRestore
 }
 
 func getCloudInitSecretRefVolumeName(vmName string, secretName string) string {
+	__traceStack()
+
 	return fmt.Sprintf("vm-%s-%s-volumeref", vmName, secretName)
 }
 
 func getVMBackupMetadataFileName(vmBackupNamespace, vmBackupName string) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s-%s.cfg", vmBackupNamespace, vmBackupName)
 }

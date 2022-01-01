@@ -24,57 +24,57 @@ import (
 )
 
 var (
-	upgradeControllerLock sync.Mutex
-	rke2DrainNodes        bool = true
+	upgradeControllerLock	sync.Mutex
+	rke2DrainNodes		bool	= true
 )
 
 const (
-	//system upgrade controller is deployed in cattle-system namespace
-	upgradeNamespace               = "harvester-system"
-	sucNamespace                   = "cattle-system"
-	upgradeServiceAccount          = "system-upgrade-controller"
-	harvesterSystemNamespace       = "harvester-system"
-	harvesterUpgradeLabel          = "harvesterhci.io/upgrade"
-	harvesterManagedLabel          = "harvesterhci.io/managed"
-	harvesterLatestUpgradeLabel    = "harvesterhci.io/latestUpgrade"
-	harvesterUpgradeComponentLabel = "harvesterhci.io/upgradeComponent"
-	harvesterNodeLabel             = "harvesterhci.io/node"
-	upgradeImageRepository         = "rancher/harvester-upgrade"
+	upgradeNamespace		= "harvester-system"
+	sucNamespace			= "cattle-system"
+	upgradeServiceAccount		= "system-upgrade-controller"
+	harvesterSystemNamespace	= "harvester-system"
+	harvesterUpgradeLabel		= "harvesterhci.io/upgrade"
+	harvesterManagedLabel		= "harvesterhci.io/managed"
+	harvesterLatestUpgradeLabel	= "harvesterhci.io/latestUpgrade"
+	harvesterUpgradeComponentLabel	= "harvesterhci.io/upgradeComponent"
+	harvesterNodeLabel		= "harvesterhci.io/node"
+	upgradeImageRepository		= "rancher/harvester-upgrade"
 
-	harvesterNodePendingOSImage = "harvesterhci.io/pendingOSImage"
+	harvesterNodePendingOSImage	= "harvesterhci.io/pendingOSImage"
 
-	preDrainAnnotation  = "harvesterhci.io/pre-hook"
-	postDrainAnnotation = "harvesterhci.io/post-hook"
+	preDrainAnnotation	= "harvesterhci.io/pre-hook"
+	postDrainAnnotation	= "harvesterhci.io/post-hook"
 
-	rke2PreDrainAnnotation  = "rke.cattle.io/pre-drain"
-	rke2PostDrainAnnotation = "rke.cattle.io/post-drain"
+	rke2PreDrainAnnotation	= "rke.cattle.io/pre-drain"
+	rke2PostDrainAnnotation	= "rke.cattle.io/post-drain"
 
-	upgradeComponentRepo = "repo"
+	upgradeComponentRepo	= "repo"
 )
 
-// upgradeHandler Creates Plan CRDs to trigger upgrades
 type upgradeHandler struct {
-	ctx           context.Context
-	namespace     string
-	nodeCache     ctlcorev1.NodeCache
-	jobClient     v1.JobClient
-	jobCache      v1.JobCache
-	upgradeClient ctlharvesterv1.UpgradeClient
-	upgradeCache  ctlharvesterv1.UpgradeCache
-	versionCache  ctlharvesterv1.VersionCache
-	planClient    upgradectlv1.PlanClient
-	planCache     upgradectlv1.PlanCache
+	ctx		context.Context
+	namespace	string
+	nodeCache	ctlcorev1.NodeCache
+	jobClient	v1.JobClient
+	jobCache	v1.JobCache
+	upgradeClient	ctlharvesterv1.UpgradeClient
+	upgradeCache	ctlharvesterv1.UpgradeCache
+	versionCache	ctlharvesterv1.VersionCache
+	planClient	upgradectlv1.PlanClient
+	planCache	upgradectlv1.PlanCache
 
-	vmImageClient ctlharvesterv1.VirtualMachineImageClient
-	vmImageCache  ctlharvesterv1.VirtualMachineImageCache
-	vmClient      kubevirtctrl.VirtualMachineClient
-	serviceClient ctlcorev1.ServiceClient
+	vmImageClient	ctlharvesterv1.VirtualMachineImageClient
+	vmImageCache	ctlharvesterv1.VirtualMachineImageCache
+	vmClient	kubevirtctrl.VirtualMachineClient
+	serviceClient	ctlcorev1.ServiceClient
 
-	clusterClient provisioningctrl.ClusterClient
-	clusterCache  provisioningctrl.ClusterCache
+	clusterClient	provisioningctrl.ClusterClient
+	clusterCache	provisioningctrl.ClusterCache
 }
 
 func (h *upgradeHandler) OnChanged(key string, upgrade *harvesterv1.Upgrade) (*harvesterv1.Upgrade, error) {
+	__traceStack()
+
 	if upgrade == nil || upgrade.DeletionTimestamp != nil {
 		return upgrade, nil
 	}
@@ -113,8 +113,6 @@ func (h *upgradeHandler) OnChanged(key string, upgrade *harvesterv1.Upgrade) (*h
 			}
 			toUpdate.Status.ImageID = fmt.Sprintf("%s/%s", image.Namespace, image.Name)
 
-			// The image might not be imported yet. Set upgrade label and let
-			// vmImageHandler deal with it.
 			imageUpdate := image.DeepCopy()
 			if imageUpdate.Labels == nil {
 				imageUpdate.Labels = map[string]string{}
@@ -198,7 +196,7 @@ func (h *upgradeHandler) OnChanged(key string, upgrade *harvesterv1.Upgrade) (*h
 				return h.upgradeClient.Update(toUpdate)
 			}
 		} else {
-			// go with RKE2 pre-drain/post-drain hooks
+
 			logrus.Infof("Start upgrading Kubernetes runtime to %s", info.Release.Kubernetes)
 			if err := h.upgradeKubernetes(info.Release.Kubernetes); err != nil {
 				setUpgradeCompletedCondition(toUpdate, StateFailed, corev1.ConditionFalse, err.Error(), "")
@@ -215,12 +213,14 @@ func (h *upgradeHandler) OnChanged(key string, upgrade *harvesterv1.Upgrade) (*h
 }
 
 func (h *upgradeHandler) OnRemove(_ string, upgrade *harvesterv1.Upgrade) (*harvesterv1.Upgrade, error) {
+	__traceStack()
+
 	if upgrade == nil {
 		return nil, nil
 	}
 
 	logrus.Debugf("Deleting upgrade %s", upgrade.Name)
-	// SUC plans are in other namespaces, we need to delete them manually.
+
 	sets := labels.Set{
 		harvesterUpgradeLabel: upgrade.Name,
 	}
@@ -229,7 +229,6 @@ func (h *upgradeHandler) OnRemove(_ string, upgrade *harvesterv1.Upgrade) (*harv
 		return nil, err
 	}
 
-	// clean jobs and plans
 	for _, plan := range plans {
 		set := labels.Set{
 			upgradePlanLabel: plan.Name,
@@ -255,6 +254,8 @@ func (h *upgradeHandler) OnRemove(_ string, upgrade *harvesterv1.Upgrade) (*harv
 }
 
 func (h *upgradeHandler) isSingleNodeCluster() (string, error) {
+	__traceStack()
+
 	nodes, err := h.nodeCache.List(labels.Everything())
 	if err != nil {
 		return "", err
@@ -267,6 +268,8 @@ func (h *upgradeHandler) isSingleNodeCluster() (string, error) {
 }
 
 func initStatus(upgrade *harvesterv1.Upgrade) {
+	__traceStack()
+
 	harvesterv1.UpgradeCompleted.CreateUnknownIfNotExists(upgrade)
 	if upgrade.Labels == nil {
 		upgrade.Labels = make(map[string]string)
@@ -277,6 +280,8 @@ func initStatus(upgrade *harvesterv1.Upgrade) {
 }
 
 func (h *upgradeHandler) resetLatestUpgradeLabel(latestUpgradeName string) error {
+	__traceStack()
+
 	sets := labels.Set{
 		harvesterLatestUpgradeLabel: "true",
 	}
@@ -298,6 +303,8 @@ func (h *upgradeHandler) resetLatestUpgradeLabel(latestUpgradeName string) error
 }
 
 func (h *upgradeHandler) upgradeKubernetes(kubernetesVersion string) error {
+	__traceStack()
+
 	cluster, err := h.clusterCache.Get("fleet-local", "local")
 	if err != nil {
 		return err
@@ -332,6 +339,8 @@ func (h *upgradeHandler) upgradeKubernetes(kubernetesVersion string) error {
 }
 
 func updateDrainHooks(hooks *[]rkev1.DrainHook, annotation string) {
+	__traceStack()
+
 	for _, hook := range *hooks {
 		if hook.Annotation == annotation {
 			return
@@ -344,6 +353,8 @@ func updateDrainHooks(hooks *[]rkev1.DrainHook, annotation string) {
 }
 
 func ensureSingleUpgrade(namespace string, upgradeCache ctlharvesterv1.UpgradeCache) (*harvesterv1.Upgrade, error) {
+	__traceStack()
+
 	sets := labels.Set{
 		harvesterLatestUpgradeLabel: "true",
 	}
@@ -361,6 +372,8 @@ func ensureSingleUpgrade(namespace string, upgradeCache ctlharvesterv1.UpgradeCa
 }
 
 func getCachedRepoInfo(upgrade *harvesterv1.Upgrade) (*UpgradeRepoInfo, error) {
+	__traceStack()
+
 	repoInfo := &UpgradeRepoInfo{}
 	if err := repoInfo.Load(upgrade.Status.RepoInfo); err != nil {
 		return nil, err

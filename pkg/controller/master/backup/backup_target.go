@@ -25,33 +25,34 @@ import (
 )
 
 const (
-	backupTargetControllerName = "harvester-backup-target-controller"
+	backupTargetControllerName	= "harvester-backup-target-controller"
 
-	longhornBackupTargetSettingName       = "backup-target"
-	longhornBackupTargetSecretSettingName = "backup-target-credential-secret"
+	longhornBackupTargetSettingName		= "backup-target"
+	longhornBackupTargetSecretSettingName	= "backup-target-credential-secret"
 
-	AWSAccessKey       = "AWS_ACCESS_KEY_ID"
-	AWSSecretKey       = "AWS_SECRET_ACCESS_KEY"
-	AWSEndpoints       = "AWS_ENDPOINTS"
-	AWSCERT            = "AWS_CERT"
-	VirtualHostedStyle = "VIRTUAL_HOSTED_STYLE"
+	AWSAccessKey		= "AWS_ACCESS_KEY_ID"
+	AWSSecretKey		= "AWS_SECRET_ACCESS_KEY"
+	AWSEndpoints		= "AWS_ENDPOINTS"
+	AWSCERT			= "AWS_CERT"
+	VirtualHostedStyle	= "VIRTUAL_HOSTED_STYLE"
 )
 
-// RegisterBackupTarget register the setting controller and reconsile longhorn setting when backup target changed
 func RegisterBackupTarget(ctx context.Context, management *config.Management, opts config.Options) error {
+	__traceStack()
+
 	settings := management.HarvesterFactory.Harvesterhci().V1beta1().Setting()
 	secrets := management.CoreFactory.Core().V1().Secret()
 	longhornSettings := management.LonghornFactory.Longhorn().V1beta1().Setting()
 	vms := management.VirtFactory.Kubevirt().V1().VirtualMachine()
 
 	backupTargetController := &TargetHandler{
-		ctx:                  ctx,
-		longhornSettings:     longhornSettings,
-		longhornSettingCache: longhornSettings.Cache(),
-		secrets:              secrets,
-		secretCache:          secrets.Cache(),
-		vms:                  vms,
-		settings:             settings,
+		ctx:			ctx,
+		longhornSettings:	longhornSettings,
+		longhornSettingCache:	longhornSettings.Cache(),
+		secrets:		secrets,
+		secretCache:		secrets.Cache(),
+		vms:			vms,
+		settings:		settings,
 	}
 
 	settings.OnChange(ctx, backupTargetControllerName, backupTargetController.OnBackupTargetChange)
@@ -59,17 +60,18 @@ func RegisterBackupTarget(ctx context.Context, management *config.Management, op
 }
 
 type TargetHandler struct {
-	ctx                  context.Context
-	longhornSettings     ctllonghornv1.SettingClient
-	longhornSettingCache ctllonghornv1.SettingCache
-	secrets              ctlcorev1.SecretClient
-	secretCache          ctlcorev1.SecretCache
-	vms                  ctlkubevirtv1.VirtualMachineController
-	settings             ctlharvesterv1.SettingClient
+	ctx			context.Context
+	longhornSettings	ctllonghornv1.SettingClient
+	longhornSettingCache	ctllonghornv1.SettingCache
+	secrets			ctlcorev1.SecretClient
+	secretCache		ctlcorev1.SecretCache
+	vms			ctlkubevirtv1.VirtualMachineController
+	settings		ctlharvesterv1.SettingClient
 }
 
-// OnBackupTargetChange handles backupTarget setting object on change
 func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Setting) (*harvesterv1.Setting, error) {
+	__traceStack()
+
 	if setting == nil || setting.DeletionTimestamp != nil ||
 		setting.Name != settings.BackupTargetSettingName || setting.Value == "" {
 		return nil, nil
@@ -84,9 +86,7 @@ func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Se
 
 	switch target.Type {
 	case settings.S3BackupType:
-		// Since S3 access key id and secret access key are stripped after S3 backup target has been verified
-		// in reUpdateBackupTargetSettingSecret
-		// stop the controller to reconcile it
+
 		if target.SecretAccessKey == "" && target.AccessKeyID == "" {
 			return nil, nil
 		}
@@ -106,24 +106,21 @@ func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Se
 			return nil, err
 		}
 
-		// delete the may existing previous secret of S3
 		if err = h.deleteBackupTargetSecret(target); err != nil {
 			return nil, err
 		}
 
-		// set configured flag, as s3 does
 		harvesterv1.SettingConfigured.SetError(setting, "", nil)
 
 		return nil, nil
 
 	default:
-		// reset backup target to default, then delete/update related settings
+
 		if target.IsDefaultBackupTarget() {
 			if err = h.updateLonghornTarget(target); err != nil {
 				return nil, err
 			}
 
-			// delete the may existing previous secret of S3
 			if err = h.deleteBackupTargetSecret(target); err != nil {
 				return nil, err
 			}
@@ -136,15 +133,14 @@ func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Se
 }
 
 func (h *TargetHandler) reUpdateBackupTargetSettingSecret(setting *harvesterv1.Setting, target *settings.BackupTarget) (*harvesterv1.Setting, error) {
-	// only do a second update when s3 with credentials
+	__traceStack()
+
 	if target.Type != settings.S3BackupType {
 		return nil, nil
 	}
 
-	// set configured flag
 	harvesterv1.SettingConfigured.SetError(setting, "", nil)
 
-	// reset the s3 credentials to prevent controller reconcile and not to expose secret key
 	target.SecretAccessKey = ""
 	target.AccessKeyID = ""
 	targetBytes, err := json.Marshal(target)
@@ -159,6 +155,8 @@ func (h *TargetHandler) reUpdateBackupTargetSettingSecret(setting *harvesterv1.S
 }
 
 func (h *TargetHandler) updateLonghornTarget(backupTarget *settings.BackupTarget) error {
+	__traceStack()
+
 	target, err := h.longhornSettingCache.Get(util.LonghornSystemNamespaceName, longhornBackupTargetSettingName)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -167,10 +165,10 @@ func (h *TargetHandler) updateLonghornTarget(backupTarget *settings.BackupTarget
 
 		if _, err := h.longhornSettings.Create(&longhornv1.Setting{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      longhornBackupTargetSettingName,
-				Namespace: util.LonghornSystemNamespaceName,
+				Name:		longhornBackupTargetSettingName,
+				Namespace:	util.LonghornSystemNamespaceName,
 			},
-			Value: ConstructEndpoint(backupTarget),
+			Value:	ConstructEndpoint(backupTarget),
 		}); err != nil {
 			return err
 		}
@@ -188,12 +186,14 @@ func (h *TargetHandler) updateLonghornTarget(backupTarget *settings.BackupTarget
 }
 
 func getBackupSecretData(target *settings.BackupTarget) (map[string]string, error) {
+	__traceStack()
+
 	data := map[string]string{
-		AWSAccessKey:       target.AccessKeyID,
-		AWSSecretKey:       target.SecretAccessKey,
-		AWSEndpoints:       target.Endpoint,
-		AWSCERT:            target.Cert,
-		VirtualHostedStyle: strconv.FormatBool(target.VirtualHostedStyle),
+		AWSAccessKey:		target.AccessKeyID,
+		AWSSecretKey:		target.SecretAccessKey,
+		AWSEndpoints:		target.Endpoint,
+		AWSCERT:		target.Cert,
+		VirtualHostedStyle:	strconv.FormatBool(target.VirtualHostedStyle),
 	}
 	if settings.AdditionalCA.Get() != "" {
 		data[AWSCERT] = settings.AdditionalCA.Get()
@@ -211,6 +211,8 @@ func getBackupSecretData(target *settings.BackupTarget) (map[string]string, erro
 }
 
 func (h *TargetHandler) updateBackupTargetSecret(target *settings.BackupTarget) error {
+	__traceStack()
+
 	backupSecretData, err := getBackupSecretData(target)
 	if err != nil {
 		return err
@@ -223,8 +225,8 @@ func (h *TargetHandler) updateBackupTargetSecret(target *settings.BackupTarget) 
 
 		newSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      util.BackupTargetSecretName,
-				Namespace: util.LonghornSystemNamespaceName,
+				Name:		util.BackupTargetSecretName,
+				Namespace:	util.LonghornSystemNamespaceName,
 			},
 		}
 		newSecret.StringData = backupSecretData
@@ -245,6 +247,8 @@ func (h *TargetHandler) updateBackupTargetSecret(target *settings.BackupTarget) 
 }
 
 func (h *TargetHandler) deleteBackupTargetSecret(target *settings.BackupTarget) error {
+	__traceStack()
+
 	if err := h.secrets.Delete(util.LonghornSystemNamespaceName, util.BackupTargetSecretName, nil); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
@@ -257,6 +261,8 @@ func (h *TargetHandler) deleteBackupTargetSecret(target *settings.BackupTarget) 
 }
 
 func (h *TargetHandler) updateLonghornBackupTargetSecretSetting(target *settings.BackupTarget) error {
+	__traceStack()
+
 	targetSecret, err := h.longhornSettingCache.Get(util.LonghornSystemNamespaceName, longhornBackupTargetSecretSettingName)
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -265,10 +271,10 @@ func (h *TargetHandler) updateLonghornBackupTargetSecretSetting(target *settings
 
 		if _, err := h.longhornSettings.Create(&longhornv1.Setting{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      longhornBackupTargetSecretSettingName,
-				Namespace: util.LonghornSystemNamespaceName,
+				Name:		longhornBackupTargetSecretSettingName,
+				Namespace:	util.LonghornSystemNamespaceName,
 			},
-			Value: util.BackupTargetSecretName,
+			Value:	util.BackupTargetSecretName,
 		}); err != nil {
 			return err
 		}
@@ -288,11 +294,13 @@ func (h *TargetHandler) updateLonghornBackupTargetSecretSetting(target *settings
 }
 
 func ConstructEndpoint(target *settings.BackupTarget) string {
+	__traceStack()
+
 	switch target.Type {
 	case settings.S3BackupType:
 		return fmt.Sprintf("s3://%s@%s/", target.BucketName, target.BucketRegion)
 	case settings.NFSBackupType:
-		// we allow users to input nfs:// prefix as optional
+
 		return fmt.Sprintf("nfs://%s", strings.TrimPrefix(target.Endpoint, "nfs://"))
 	default:
 		return target.Endpoint

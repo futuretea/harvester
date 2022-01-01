@@ -16,44 +16,68 @@ import (
 type PlanClient func(string) upgradev1.PlanInterface
 
 func (c PlanClient) Update(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	return c(plan.Namespace).Update(context.TODO(), plan, metav1.UpdateOptions{})
 }
 func (c PlanClient) Get(namespace, name string, options metav1.GetOptions) (*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 func (c PlanClient) Create(plan *upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	return c(plan.Namespace).Create(context.TODO(), plan, metav1.CreateOptions{})
 }
 func (c PlanClient) Delete(namespace, name string, options *metav1.DeleteOptions) error {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c PlanClient) List(namespace string, opts metav1.ListOptions) (*upgradeapiv1.PlanList, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c PlanClient) UpdateStatus(*upgradeapiv1.Plan) (*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c PlanClient) Watch(namespace string, opts metav1.ListOptions) (watch.Interface, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 func (c PlanClient) Patch(namespace, name string, pt types.PatchType, data []byte, subresources ...string) (result *upgradeapiv1.Plan, err error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 type PlanCache func(string) upgradev1.PlanInterface
 
 func (c PlanCache) Get(namespace, name string) (*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c PlanCache) List(namespace string, selector labels.Selector) ([]*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c PlanCache) AddIndexer(indexName string, indexer upgradectlv1.PlanIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c PlanCache) GetByIndex(indexName, key string) ([]*upgradeapiv1.Plan, error) {
+	__traceStack()
+
 	panic("implement me")
 }

@@ -21,8 +21,8 @@ var matchingLabels = []labels.Set{
 		"longhorn.io/component": "backing-image-data-source",
 	},
 	{
-		"app.kubernetes.io/name":      "harvester",
-		"app.kubernetes.io/component": "apiserver",
+		"app.kubernetes.io/name":	"harvester",
+		"app.kubernetes.io/component":	"apiserver",
 	},
 	{
 		"app": "rancher",
@@ -30,36 +30,42 @@ var matchingLabels = []labels.Set{
 }
 
 func NewMutator(settingCache v1beta1.SettingCache) types.Mutator {
+	__traceStack()
+
 	return &podMutator{
 		setttingCache: settingCache,
 	}
 }
 
-// podMutator injects Harvester settings like http proxy envs and trusted CA certs to system pods that may access
-// external services. It includes harvester apiserver and longhorn backing-image-data-source pods.
 type podMutator struct {
 	types.DefaultMutator
-	setttingCache v1beta1.SettingCache
+	setttingCache	v1beta1.SettingCache
 }
 
 func newResource(ops []admissionregv1.OperationType) types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:           string(corev1.ResourcePods),
-		Scope:          admissionregv1.NamespacedScope,
-		APIGroup:       corev1.SchemeGroupVersion.Group,
-		APIVersion:     corev1.SchemeGroupVersion.Version,
-		ObjectType:     &corev1.Pod{},
-		OperationTypes: ops,
+		Name:		string(corev1.ResourcePods),
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	corev1.SchemeGroupVersion.Group,
+		APIVersion:	corev1.SchemeGroupVersion.Version,
+		ObjectType:	&corev1.Pod{},
+		OperationTypes:	ops,
 	}
 }
 
 func (m *podMutator) Resource() types.Resource {
+	__traceStack()
+
 	return newResource([]admissionregv1.OperationType{
 		admissionregv1.Create,
 	})
 }
 
 func (m *podMutator) Create(request *types.Request, newObj runtime.Object) (types.PatchOps, error) {
+	__traceStack()
+
 	pod := newObj.(*corev1.Pod)
 
 	podLabels := labels.Set(pod.Labels)
@@ -90,6 +96,8 @@ func (m *podMutator) Create(request *types.Request, newObj runtime.Object) (type
 }
 
 func (m *podMutator) httpProxyPatches(pod *corev1.Pod) (types.PatchOps, error) {
+	__traceStack()
+
 	proxySetting, err := m.setttingCache.Get("http-proxy")
 	if err != nil || proxySetting.Value == "" {
 		if errors.IsNotFound(err) {
@@ -108,16 +116,16 @@ func (m *podMutator) httpProxyPatches(pod *corev1.Pod) (types.PatchOps, error) {
 
 	var proxyEnvs = []corev1.EnvVar{
 		{
-			Name:  util.HTTPProxyEnv,
-			Value: httpProxyConfig.HTTPProxy,
+			Name:	util.HTTPProxyEnv,
+			Value:	httpProxyConfig.HTTPProxy,
 		},
 		{
-			Name:  util.HTTPSProxyEnv,
-			Value: httpProxyConfig.HTTPSProxy,
+			Name:	util.HTTPSProxyEnv,
+			Value:	httpProxyConfig.HTTPSProxy,
 		},
 		{
-			Name:  util.NoProxyEnv,
-			Value: util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
+			Name:	util.NoProxyEnv,
+			Value:	util.AddBuiltInNoProxy(httpProxyConfig.NoProxy),
 		},
 	}
 	var patchOps types.PatchOps
@@ -132,11 +140,13 @@ func (m *podMutator) httpProxyPatches(pod *corev1.Pod) (types.PatchOps, error) {
 }
 
 func envPatches(target, envVars []corev1.EnvVar, basePath string) (types.PatchOps, error) {
+	__traceStack()
+
 	var (
-		patchOps types.PatchOps
-		value    interface{}
-		path     string
-		first    = len(target) == 0
+		patchOps	types.PatchOps
+		value		interface{}
+		path		string
+		first		= len(target) == 0
 	)
 	for _, envVar := range envVars {
 		if first {
@@ -157,6 +167,8 @@ func envPatches(target, envVars []corev1.EnvVar, basePath string) (types.PatchOp
 }
 
 func (m *podMutator) additionalCAPatches(pod *corev1.Pod) (types.PatchOps, error) {
+	__traceStack()
+
 	additionalCASetting, err := m.setttingCache.Get("additional-ca")
 	if err != nil || additionalCASetting.Value == "" {
 		if errors.IsNotFound(err) {
@@ -166,22 +178,22 @@ func (m *podMutator) additionalCAPatches(pod *corev1.Pod) (types.PatchOps, error
 	}
 
 	var (
-		additionalCAvolume = corev1.Volume{
-			Name: "additional-ca-volume",
+		additionalCAvolume	= corev1.Volume{
+			Name:	"additional-ca-volume",
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
-					DefaultMode: pointer.Int32(400),
-					SecretName:  util.AdditionalCASecretName,
+					DefaultMode:	pointer.Int32(400),
+					SecretName:	util.AdditionalCASecretName,
 				},
 			},
 		}
-		additionalCAVolumeMount = corev1.VolumeMount{
-			Name:      "additional-ca-volume",
-			MountPath: "/etc/ssl/certs/" + util.AdditionalCAFileName,
-			SubPath:   util.AdditionalCAFileName,
-			ReadOnly:  true,
+		additionalCAVolumeMount	= corev1.VolumeMount{
+			Name:		"additional-ca-volume",
+			MountPath:	"/etc/ssl/certs/" + util.AdditionalCAFileName,
+			SubPath:	util.AdditionalCAFileName,
+			ReadOnly:	true,
 		}
-		patchOps types.PatchOps
+		patchOps	types.PatchOps
 	)
 
 	volumePatch, err := volumePatch(pod.Spec.Volumes, additionalCAvolume)
@@ -202,12 +214,14 @@ func (m *podMutator) additionalCAPatches(pod *corev1.Pod) (types.PatchOps, error
 }
 
 func volumePatch(target []corev1.Volume, volume corev1.Volume) (string, error) {
+	__traceStack()
+
 	var (
-		value      interface{} = []corev1.Volume{volume}
-		path                   = "/spec/volumes"
-		first                  = len(target) == 0
-		valueBytes []byte
-		err        error
+		value		interface{}	= []corev1.Volume{volume}
+		path				= "/spec/volumes"
+		first				= len(target) == 0
+		valueBytes	[]byte
+		err		error
 	)
 	if !first {
 		value = volume
@@ -221,9 +235,11 @@ func volumePatch(target []corev1.Volume, volume corev1.Volume) (string, error) {
 }
 
 func volumeMountPatch(target []corev1.VolumeMount, path string, volumeMount corev1.VolumeMount) (string, error) {
+	__traceStack()
+
 	var (
-		value interface{} = []corev1.VolumeMount{volumeMount}
-		first             = len(target) == 0
+		value	interface{}	= []corev1.VolumeMount{volumeMount}
+		first			= len(target) == 0
 	)
 	if !first {
 		path = path + "/-"

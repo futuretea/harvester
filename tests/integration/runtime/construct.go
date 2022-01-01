@@ -12,13 +12,13 @@ import (
 	"github.com/harvester/harvester/tests/framework/ready"
 )
 
-// Construct prepares runtime if "SKIP_HARVESTER_INSTALLATION" is not "true".
 func Construct(ctx context.Context, kubeConfig *restclient.Config) error {
+	__traceStack()
+
 	if env.IsSkipHarvesterInstallation() {
 		return nil
 	}
 
-	// create namespace
 	err := client.CreateNamespace(kubeConfig, testHarvesterNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to create target namespace, %v", err)
@@ -34,7 +34,6 @@ func Construct(ctx context.Context, kubeConfig *restclient.Config) error {
 		return fmt.Errorf("failed to create CRDs, %v", err)
 	}
 
-	// install harvester chart
 	err = installHarvesterChart(ctx, kubeConfig)
 	if err != nil {
 		return fmt.Errorf("failed to install harvester chart, %w", err)
@@ -43,15 +42,14 @@ func Construct(ctx context.Context, kubeConfig *restclient.Config) error {
 	return nil
 }
 
-// installHarvesterChart installs the basic components of harvester.
 func installHarvesterChart(ctx context.Context, kubeConfig *restclient.Config) error {
-	// chart values patches
+	__traceStack()
+
 	patches := map[string]interface{}{
-		"replicas":                             0,
-		"harvester-network-controller.enabled": false,
+		"replicas":				0,
+		"harvester-network-controller.enabled":	false,
 	}
 
-	// webhook
 	patches["webhook.controllerUser"] = "kubernetes-admin"
 	patches["webhook.image.imagePullPolicy"] = "Never"
 	repo, tag := env.GetWebhookImage()
@@ -69,19 +67,16 @@ func installHarvesterChart(ctx context.Context, kubeConfig *restclient.Config) e
 		patches["kubevirt.spec.configuration.developerConfiguration.useEmulation"] = "true"
 	}
 
-	// install crd chart
 	_, err := helm.InstallChart(testCRDChartReleaseName, testHarvesterNamespace, testCRDChartDir, nil)
 	if err != nil {
 		return fmt.Errorf("failed to install harvester-crd chart: %w", err)
 	}
 
-	// install chart
 	_, err = helm.InstallChart(testChartReleaseName, testHarvesterNamespace, testChartDir, patches)
 	if err != nil {
 		return fmt.Errorf("failed to install harvester chart: %w", err)
 	}
 
-	// verifies chart installation
 	harvesterReadyCondition, err := ready.NewNamespaceCondition(kubeConfig, testHarvesterNamespace)
 	if err != nil {
 		return fmt.Errorf("faield to create namespace ready condition from kubernetes config: %w", err)

@@ -15,6 +15,8 @@ type EnvFinder struct {
 }
 
 func (f *EnvFinder) Get(camelEnvName string, defaultVal string) string {
+	__traceStack()
+
 	envName := strcase.ToScreamingSnake(camelEnvName)
 	if f.prefix != "" {
 		envName = f.prefix + "_" + envName
@@ -28,6 +30,8 @@ func (f *EnvFinder) Get(camelEnvName string, defaultVal string) string {
 }
 
 func (f *EnvFinder) GetInt(camelEnvName string, defaultVal int) int {
+	__traceStack()
+
 	val := f.Get(camelEnvName, fmt.Sprint(defaultVal))
 	ret, err := strconv.Atoi(val)
 	if err != nil {
@@ -37,6 +41,8 @@ func (f *EnvFinder) GetInt(camelEnvName string, defaultVal int) int {
 }
 
 func (f *EnvFinder) GetDuration(camelEnvName string, defaultVal time.Duration) time.Duration {
+	__traceStack()
+
 	val := f.Get(camelEnvName, defaultVal.String())
 	ret, err := time.ParseDuration(val)
 	if err != nil {
@@ -46,6 +52,8 @@ func (f *EnvFinder) GetDuration(camelEnvName string, defaultVal time.Duration) t
 }
 
 func NewEnvFinder(prefix string) *EnvFinder {
+	__traceStack()
+
 	return &EnvFinder{
 		prefix: strings.ToUpper(prefix),
 	}

@@ -17,9 +17,11 @@ const (
 )
 
 func RegisterSchema(scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	server.BaseSchemas.MustImportAndCustomize(harvesterv1.KeyGenInput{}, nil)
 	t := schema.Template{
-		ID: "harvesterhci.io.keypair",
+		ID:	"harvesterhci.io.keypair",
 		Customize: func(s *types.APISchema) {
 			s.CollectionFormatter = CollectionFormatter
 			s.CollectionActions = map[string]schemas.Action{
@@ -30,8 +32,8 @@ func RegisterSchema(scaled *config.Scaled, server *server.Server, options config
 			s.Formatter = Formatter
 			s.ActionHandlers = map[string]http.Handler{
 				keygen: KeyGenActionHandler{
-					KeyPairs:     scaled.HarvesterFactory.Harvesterhci().V1beta1().KeyPair(),
-					KeyPairCache: scaled.HarvesterFactory.Harvesterhci().V1beta1().KeyPair().Cache(),
+					KeyPairs:	scaled.HarvesterFactory.Harvesterhci().V1beta1().KeyPair(),
+					KeyPairCache:	scaled.HarvesterFactory.Harvesterhci().V1beta1().KeyPair().Cache(),
 				},
 			}
 		},

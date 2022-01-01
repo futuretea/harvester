@@ -13,9 +13,11 @@ import (
 )
 
 func RegisterSchema(scaled *config.Scaled, server *server.Server, options config.Options) error {
+	__traceStack()
+
 	server.BaseSchemas.MustImportAndCustomize(vm.ExportVolumeInput{}, nil)
 	t := schema.Template{
-		ID: "persistentvolumeclaim",
+		ID:	"persistentvolumeclaim",
 		Customize: func(s *types.APISchema) {
 			s.Formatter = Formatter
 			s.ResourceActions = map[string]schemas.Action{

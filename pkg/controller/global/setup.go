@@ -17,6 +17,8 @@ var registerFuncs = []registerFunc{
 }
 
 func Setup(ctx context.Context, server *server.Server, controllers *server.Controllers, options config.Options) error {
+	__traceStack()
+
 	scaled := config.ScaledWithContext(ctx)
 	indexeres.RegisterScaledIndexers(scaled)
 	for _, f := range registerFuncs {

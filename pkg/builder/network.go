@@ -5,24 +5,28 @@ import (
 )
 
 const (
-	NetworkInterfaceTypeBridge     = "bridge"
-	NetworkInterfaceTypeMasquerade = "masquerade"
+	NetworkInterfaceTypeBridge	= "bridge"
+	NetworkInterfaceTypeMasquerade	= "masquerade"
 
-	LabelKeyNetworkType = "networks.harvesterhci.io/type"
+	LabelKeyNetworkType	= "networks.harvesterhci.io/type"
 
-	NetworkTypeVLAN   = "L2VlanNetwork"
-	NetworkTypeCustom = "Custom"
+	NetworkTypeVLAN		= "L2VlanNetwork"
+	NetworkTypeCustom	= "Custom"
 
-	NetworkVLANConfigTemplate = `{"cniVersion":"0.3.1","name":"%s","type":"bridge","bridge":"harvester-br0","promiscMode":true,"vlan":%d,"ipam":{}}`
+	NetworkVLANConfigTemplate	= `{"cniVersion":"0.3.1","name":"%s","type":"bridge","bridge":"harvester-br0","promiscMode":true,"vlan":%d,"ipam":{}}`
 )
 
 func (v *VMBuilder) NetworkInterface(interfaceName, interfaceModel, interfaceMACAddress, interfaceType, networkName string) *VMBuilder {
+	__traceStack()
+
 	v.Interface(interfaceName, interfaceModel, interfaceMACAddress, interfaceType)
 	v.Network(interfaceName, networkName)
 	return v
 }
 
 func (v *VMBuilder) Network(interfaceName, networkName string) *VMBuilder {
+	__traceStack()
+
 	networks := v.VirtualMachine.Spec.Template.Spec.Networks
 	network := kubevirtv1.Network{
 		Name: interfaceName,
@@ -30,8 +34,8 @@ func (v *VMBuilder) Network(interfaceName, networkName string) *VMBuilder {
 	if networkName != "" {
 		network.NetworkSource = kubevirtv1.NetworkSource{
 			Multus: &kubevirtv1.MultusNetwork{
-				NetworkName: networkName,
-				Default:     false,
+				NetworkName:	networkName,
+				Default:	false,
 			},
 		}
 	} else {
@@ -45,11 +49,13 @@ func (v *VMBuilder) Network(interfaceName, networkName string) *VMBuilder {
 }
 
 func (v *VMBuilder) Interface(interfaceName, interfaceModel, interfaceMACAddress string, interfaceType string) *VMBuilder {
+	__traceStack()
+
 	interfaces := v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Interfaces
 	networkInterface := kubevirtv1.Interface{
-		Name:       interfaceName,
-		Model:      interfaceModel,
-		MacAddress: interfaceMACAddress,
+		Name:		interfaceName,
+		Model:		interfaceModel,
+		MacAddress:	interfaceMACAddress,
 		InterfaceBindingMethod: kubevirtv1.InterfaceBindingMethod{
 			Bridge: &kubevirtv1.InterfaceBridge{},
 		},

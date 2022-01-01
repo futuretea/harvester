@@ -12,41 +12,42 @@ import (
 )
 
 func Test_envPatches(t *testing.T) {
+	__traceStack()
 
 	type input struct {
-		targetEnvs []corev1.EnvVar
-		proxyEnvs  []corev1.EnvVar
-		basePath   string
+		targetEnvs	[]corev1.EnvVar
+		proxyEnvs	[]corev1.EnvVar
+		basePath	string
 	}
 	var testCases = []struct {
-		name   string
-		input  input
-		output types.PatchOps
+		name	string
+		input	input
+		output	types.PatchOps
 	}{
 		{
-			name: "add proxy envs",
+			name:	"add proxy envs",
 			input: input{
 				targetEnvs: []corev1.EnvVar{
 					{
-						Name:  "foo",
-						Value: "bar",
+						Name:	"foo",
+						Value:	"bar",
 					},
 				},
 				proxyEnvs: []corev1.EnvVar{
 					{
-						Name:  util.HTTPProxyEnv,
-						Value: "http://192.168.0.1:3128",
+						Name:	util.HTTPProxyEnv,
+						Value:	"http://192.168.0.1:3128",
 					},
 					{
-						Name:  util.HTTPSProxyEnv,
-						Value: "http://192.168.0.1:3128",
+						Name:	util.HTTPSProxyEnv,
+						Value:	"http://192.168.0.1:3128",
 					},
 					{
-						Name:  util.NoProxyEnv,
-						Value: "127.0.0.1,0.0.0.0,10.0.0.0/8",
+						Name:	util.NoProxyEnv,
+						Value:	"127.0.0.1,0.0.0.0,10.0.0.0/8",
 					},
 				},
-				basePath: "/spec/containers/0/env",
+				basePath:	"/spec/containers/0/env",
 			},
 			output: []string{
 				`{"op": "add", "path": "/spec/containers/0/env/-", "value": {"name":"HTTP_PROXY","value":"http://192.168.0.1:3128"}}`,
@@ -55,24 +56,24 @@ func Test_envPatches(t *testing.T) {
 			},
 		},
 		{
-			name: "add proxy envs to empty envs",
+			name:	"add proxy envs to empty envs",
 			input: input{
-				targetEnvs: []corev1.EnvVar{},
+				targetEnvs:	[]corev1.EnvVar{},
 				proxyEnvs: []corev1.EnvVar{
 					{
-						Name:  util.HTTPProxyEnv,
-						Value: "http://192.168.0.1:3128",
+						Name:	util.HTTPProxyEnv,
+						Value:	"http://192.168.0.1:3128",
 					},
 					{
-						Name:  util.HTTPSProxyEnv,
-						Value: "http://192.168.0.1:3128",
+						Name:	util.HTTPSProxyEnv,
+						Value:	"http://192.168.0.1:3128",
 					},
 					{
-						Name:  util.NoProxyEnv,
-						Value: "127.0.0.1,0.0.0.0,10.0.0.0/8",
+						Name:	util.NoProxyEnv,
+						Value:	"127.0.0.1,0.0.0.0,10.0.0.0/8",
 					},
 				},
-				basePath: "/spec/containers/0/env",
+				basePath:	"/spec/containers/0/env",
 			},
 			output: []string{
 				`{"op": "add", "path": "/spec/containers/0/env", "value": [{"name":"HTTP_PROXY","value":"http://192.168.0.1:3128"}]}`,
@@ -89,54 +90,55 @@ func Test_envPatches(t *testing.T) {
 }
 
 func Test_volumePatch(t *testing.T) {
+	__traceStack()
 
 	type input struct {
-		target []corev1.Volume
-		volume corev1.Volume
+		target	[]corev1.Volume
+		volume	corev1.Volume
 	}
 	var testCases = []struct {
-		name   string
-		input  input
-		output string
+		name	string
+		input	input
+		output	string
 	}{
 		{
-			name: "add additional ca volume",
+			name:	"add additional ca volume",
 			input: input{
 				target: []corev1.Volume{
 					{
-						Name: "foo",
+						Name:	"foo",
 						VolumeSource: corev1.VolumeSource{
 							EmptyDir: &corev1.EmptyDirVolumeSource{},
 						},
 					},
 				},
 				volume: corev1.Volume{
-					Name: "additional-ca-volume",
+					Name:	"additional-ca-volume",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							DefaultMode: pointer.Int32(400),
-							SecretName:  util.AdditionalCASecretName,
+							DefaultMode:	pointer.Int32(400),
+							SecretName:	util.AdditionalCASecretName,
 						},
 					},
 				},
 			},
-			output: `{"op": "add", "path": "/spec/volumes/-", "value": {"name":"additional-ca-volume","secret":{"secretName":"harvester-additional-ca","defaultMode":400}}}`,
+			output:	`{"op": "add", "path": "/spec/volumes/-", "value": {"name":"additional-ca-volume","secret":{"secretName":"harvester-additional-ca","defaultMode":400}}}`,
 		},
 		{
-			name: "add additional ca volume to empty volumes",
+			name:	"add additional ca volume to empty volumes",
 			input: input{
-				target: []corev1.Volume{},
+				target:	[]corev1.Volume{},
 				volume: corev1.Volume{
-					Name: "additional-ca-volume",
+					Name:	"additional-ca-volume",
 					VolumeSource: corev1.VolumeSource{
 						Secret: &corev1.SecretVolumeSource{
-							DefaultMode: pointer.Int32(400),
-							SecretName:  util.AdditionalCASecretName,
+							DefaultMode:	pointer.Int32(400),
+							SecretName:	util.AdditionalCASecretName,
 						},
 					},
 				},
 			},
-			output: `{"op": "add", "path": "/spec/volumes", "value": [{"name":"additional-ca-volume","secret":{"secretName":"harvester-additional-ca","defaultMode":400}}]}`,
+			output:	`{"op": "add", "path": "/spec/volumes", "value": [{"name":"additional-ca-volume","secret":{"secretName":"harvester-additional-ca","defaultMode":400}}]}`,
 		},
 	}
 	for _, testCase := range testCases {
@@ -147,49 +149,50 @@ func Test_volumePatch(t *testing.T) {
 }
 
 func Test_volumeMountPatch(t *testing.T) {
+	__traceStack()
 
 	type input struct {
-		target      []corev1.VolumeMount
-		volumeMount corev1.VolumeMount
-		path        string
+		target		[]corev1.VolumeMount
+		volumeMount	corev1.VolumeMount
+		path		string
 	}
 	var testCases = []struct {
-		name   string
-		input  input
-		output string
+		name	string
+		input	input
+		output	string
 	}{
 		{
-			name: "add additional ca volume mount",
+			name:	"add additional ca volume mount",
 			input: input{
 				target: []corev1.VolumeMount{
 					{
-						Name:      "foo",
-						MountPath: "/bar",
+						Name:		"foo",
+						MountPath:	"/bar",
 					},
 				},
 				volumeMount: corev1.VolumeMount{
-					Name:      "additional-ca-volume",
-					MountPath: "/etc/ssl/certs/" + util.AdditionalCAFileName,
-					SubPath:   util.AdditionalCAFileName,
-					ReadOnly:  true,
+					Name:		"additional-ca-volume",
+					MountPath:	"/etc/ssl/certs/" + util.AdditionalCAFileName,
+					SubPath:	util.AdditionalCAFileName,
+					ReadOnly:	true,
 				},
-				path: "/spec/containers/0/volumeMounts",
+				path:	"/spec/containers/0/volumeMounts",
 			},
-			output: `{"op": "add", "path": "/spec/containers/0/volumeMounts/-", "value": {"name":"additional-ca-volume","readOnly":true,"mountPath":"/etc/ssl/certs/additional-ca.pem","subPath":"additional-ca.pem"}}`,
+			output:	`{"op": "add", "path": "/spec/containers/0/volumeMounts/-", "value": {"name":"additional-ca-volume","readOnly":true,"mountPath":"/etc/ssl/certs/additional-ca.pem","subPath":"additional-ca.pem"}}`,
 		},
 		{
-			name: "add additional ca volume mount to empty volumeMounts",
+			name:	"add additional ca volume mount to empty volumeMounts",
 			input: input{
-				target: []corev1.VolumeMount{},
+				target:	[]corev1.VolumeMount{},
 				volumeMount: corev1.VolumeMount{
-					Name:      "additional-ca-volume",
-					MountPath: "/etc/ssl/certs/" + util.AdditionalCAFileName,
-					SubPath:   util.AdditionalCAFileName,
-					ReadOnly:  true,
+					Name:		"additional-ca-volume",
+					MountPath:	"/etc/ssl/certs/" + util.AdditionalCAFileName,
+					SubPath:	util.AdditionalCAFileName,
+					ReadOnly:	true,
 				},
-				path: "/spec/containers/0/volumeMounts",
+				path:	"/spec/containers/0/volumeMounts",
 			},
-			output: `{"op": "add", "path": "/spec/containers/0/volumeMounts", "value": [{"name":"additional-ca-volume","readOnly":true,"mountPath":"/etc/ssl/certs/additional-ca.pem","subPath":"additional-ca.pem"}]}`,
+			output:	`{"op": "add", "path": "/spec/containers/0/volumeMounts", "value": [{"name":"additional-ca-volume","readOnly":true,"mountPath":"/etc/ssl/certs/additional-ca.pem","subPath":"additional-ca.pem"}]}`,
 		},
 	}
 	for _, testCase := range testCases {

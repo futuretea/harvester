@@ -39,65 +39,67 @@ type (
 )
 
 type Options struct {
-	Namespace       string
-	Threadiness     int
-	HTTPListenPort  int
-	HTTPSListenPort int
+	Namespace	string
+	Threadiness	int
+	HTTPListenPort	int
+	HTTPSListenPort	int
 
-	RancherEmbedded bool
-	RancherURL      string
-	HCIMode         bool
+	RancherEmbedded	bool
+	RancherURL	string
+	HCIMode		bool
 }
 
 type Scaled struct {
-	Ctx               context.Context
-	ControllerFactory controller.SharedControllerFactory
+	Ctx			context.Context
+	ControllerFactory	controller.SharedControllerFactory
 
-	VirtFactory              *kubevirt.Factory
-	HarvesterFactory         *ctlharvesterv1.Factory
-	CoreFactory              *corev1.Factory
-	AppsFactory              *appsv1.Factory
-	BatchFactory             *batchv1.Factory
-	RbacFactory              *rbacv1.Factory
-	CniFactory               *cniv1.Factory
-	SnapshotFactory          *snapshotv1.Factory
-	LonghornFactory          *longhornv1.Factory
-	RancherManagementFactory *rancherv3.Factory
-	starters                 []start.Starter
+	VirtFactory			*kubevirt.Factory
+	HarvesterFactory		*ctlharvesterv1.Factory
+	CoreFactory			*corev1.Factory
+	AppsFactory			*appsv1.Factory
+	BatchFactory			*batchv1.Factory
+	RbacFactory			*rbacv1.Factory
+	CniFactory			*cniv1.Factory
+	SnapshotFactory			*snapshotv1.Factory
+	LonghornFactory			*longhornv1.Factory
+	RancherManagementFactory	*rancherv3.Factory
+	starters			[]start.Starter
 
-	Management   *Management
-	TokenManager dashboardapi.TokenManager
+	Management	*Management
+	TokenManager	dashboardapi.TokenManager
 }
 
 type Management struct {
-	ctx               context.Context
-	Apply             apply.Apply
-	ControllerFactory controller.SharedControllerFactory
+	ctx			context.Context
+	Apply			apply.Apply
+	ControllerFactory	controller.SharedControllerFactory
 
-	VirtFactory              *kubevirt.Factory
-	HarvesterFactory         *ctlharvesterv1.Factory
-	CoreFactory              *corev1.Factory
-	AppsFactory              *appsv1.Factory
-	BatchFactory             *batchv1.Factory
-	RbacFactory              *rbacv1.Factory
-	StorageFactory           *storagev1.Factory
-	SnapshotFactory          *snapshotv1.Factory
-	LonghornFactory          *longhornv1.Factory
-	ProvisioningFactory      *provisioningv1.Factory
-	RancherManagementFactory *rancherv3.Factory
-	HelmFactory              *helmv1.Factory
+	VirtFactory			*kubevirt.Factory
+	HarvesterFactory		*ctlharvesterv1.Factory
+	CoreFactory			*corev1.Factory
+	AppsFactory			*appsv1.Factory
+	BatchFactory			*batchv1.Factory
+	RbacFactory			*rbacv1.Factory
+	StorageFactory			*storagev1.Factory
+	SnapshotFactory			*snapshotv1.Factory
+	LonghornFactory			*longhornv1.Factory
+	ProvisioningFactory		*provisioningv1.Factory
+	RancherManagementFactory	*rancherv3.Factory
+	HelmFactory			*helmv1.Factory
 
-	NetworkingFactory *networking.Factory
-	UpgradeFactory    *upgrade.Factory
-	ClusterFactory    *cluster.Factory
+	NetworkingFactory	*networking.Factory
+	UpgradeFactory		*upgrade.Factory
+	ClusterFactory		*cluster.Factory
 
-	ClientSet  *kubernetes.Clientset
-	RestConfig *rest.Config
+	ClientSet	*kubernetes.Clientset
+	RestConfig	*rest.Config
 
-	starters []start.Starter
+	starters	[]start.Starter
 }
 
 func SetupScaled(ctx context.Context, restConfig *rest.Config, opts *generic.FactoryOptions, namespace string) (context.Context, *Scaled, error) {
+	__traceStack()
+
 	scaled := &Scaled{
 		Ctx: ctx,
 	}
@@ -181,6 +183,8 @@ func SetupScaled(ctx context.Context, restConfig *rest.Config, opts *generic.Fac
 }
 
 func setupManagement(ctx context.Context, restConfig *rest.Config, opts *generic.FactoryOptions) (*Management, error) {
+	__traceStack()
+
 	management := &Management{
 		ctx: ctx,
 	}
@@ -306,17 +310,25 @@ func setupManagement(ctx context.Context, restConfig *rest.Config, opts *generic
 }
 
 func ScaledWithContext(ctx context.Context) *Scaled {
+	__traceStack()
+
 	return ctx.Value(_scaledKey{}).(*Scaled)
 }
 
 func (s *Scaled) Start(threadiness int) error {
+	__traceStack()
+
 	return start.All(s.Ctx, threadiness, s.starters...)
 }
 func (s *Management) Start(threadiness int) error {
+	__traceStack()
+
 	return start.All(s.ctx, threadiness, s.starters...)
 }
 
 func (s *Management) NewRecorder(componentName, namespace, nodeName string) record.EventRecorder {
+	__traceStack()
+
 	eventBroadcaster := record.NewBroadcaster()
 	eventBroadcaster.StartLogging(logrus.Infof)
 	eventBroadcaster.StartRecordingToSink(&typedcorev1.EventSinkImpl{Interface: s.ClientSet.CoreV1().Events(namespace)})

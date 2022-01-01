@@ -17,29 +17,31 @@ import (
 )
 
 var (
-	insecureClient = &http.Client{
+	insecureClient	= &http.Client{
 		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
+			Proxy:	http.ProxyFromEnvironment,
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
 			},
 		},
 	}
 
-	Vue = newHandler(settings.UIIndex.Get,
+	Vue	= newHandler(settings.UIIndex.Get,
 		settings.UIPath.Get,
 		settings.UISource.Get)
-	VueIndex = Vue.IndexFile()
+	VueIndex	= Vue.IndexFile()
 )
 
 func newHandler(
 	indexSetting func() string,
 	pathSetting func() string,
 	offlineSetting func() string) *handler {
+	__traceStack()
+
 	return &handler{
-		indexSetting:   indexSetting,
-		offlineSetting: offlineSetting,
-		pathSetting:    pathSetting,
+		indexSetting:	indexSetting,
+		offlineSetting:	offlineSetting,
+		pathSetting:	pathSetting,
 		middleware: responsewriter.Chain{
 			responsewriter.Gzip,
 			responsewriter.FrameOptions,
@@ -55,17 +57,19 @@ func newHandler(
 }
 
 type handler struct {
-	pathSetting     func() string
-	indexSetting    func() string
-	offlineSetting  func() string
-	middleware      func(http.Handler) http.Handler
-	indexMiddleware func(http.Handler) http.Handler
+	pathSetting	func() string
+	indexSetting	func() string
+	offlineSetting	func() string
+	middleware	func(http.Handler) http.Handler
+	indexMiddleware	func(http.Handler) http.Handler
 
-	downloadOnce    sync.Once
-	downloadSuccess bool
+	downloadOnce	sync.Once
+	downloadSuccess	bool
 }
 
 func (u *handler) canDownload(url string) bool {
+	__traceStack()
+
 	u.downloadOnce.Do(func() {
 		if err := serveIndex(ioutil.Discard, url); err == nil {
 			u.downloadSuccess = true
@@ -77,6 +81,8 @@ func (u *handler) canDownload(url string) bool {
 }
 
 func (u *handler) path() (path string, isURL bool) {
+	__traceStack()
+
 	switch u.offlineSetting() {
 	case "auto":
 		if settings.IsRelease() {
@@ -94,12 +100,16 @@ func (u *handler) path() (path string, isURL bool) {
 }
 
 func (u *handler) ServeAsset() http.Handler {
+	__traceStack()
+
 	return u.middleware(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		http.FileServer(http.Dir(u.pathSetting())).ServeHTTP(rw, req)
 	}))
 }
 
 func (u *handler) IndexFileOnNotFound() http.Handler {
+	__traceStack()
+
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/dashboard")
 		if _, err := os.Stat(filepath.Join(u.pathSetting(), req.URL.Path)); err == nil {
@@ -111,6 +121,8 @@ func (u *handler) IndexFileOnNotFound() http.Handler {
 }
 
 func (u *handler) IndexFile() http.Handler {
+	__traceStack()
+
 	return u.indexMiddleware(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		if path, isURL := u.path(); isURL {
 			_ = serveIndex(rw, path)
@@ -121,6 +133,8 @@ func (u *handler) IndexFile() http.Handler {
 }
 
 func serveIndex(resp io.Writer, url string) error {
+	__traceStack()
+
 	r, err := insecureClient.Get(url)
 	if err != nil {
 		return err

@@ -19,45 +19,47 @@ import (
 )
 
 const (
-	appLabelName             = "app.kubernetes.io/name"
-	controllerRancherName    = "harvester-rancher-controller"
-	caCertsSetting           = "cacerts"
-	defaultAdminLabelKey     = "authz.management.cattle.io/bootstrapping"
-	defaultAdminLabelValue   = "admin-user"
-	internalCACertsSetting   = "internal-cacerts"
-	rancherExposeServiceName = "rancher-expose"
-	ingressExposeServiceName = "ingress-expose"
-	systemNamespacesSetting  = "system-namespaces"
-	tlsCNPrefix              = "listener.cattle.io/cn-"
+	appLabelName			= "app.kubernetes.io/name"
+	controllerRancherName		= "harvester-rancher-controller"
+	caCertsSetting			= "cacerts"
+	defaultAdminLabelKey		= "authz.management.cattle.io/bootstrapping"
+	defaultAdminLabelValue		= "admin-user"
+	internalCACertsSetting		= "internal-cacerts"
+	rancherExposeServiceName	= "rancher-expose"
+	ingressExposeServiceName	= "ingress-expose"
+	systemNamespacesSetting		= "system-namespaces"
+	tlsCNPrefix			= "listener.cattle.io/cn-"
 
-	VipConfigmapName      = "vip"
-	vipDHCPMode           = "dhcp"
-	vipDHCPLoadBalancerIP = "0.0.0.0"
+	VipConfigmapName	= "vip"
+	vipDHCPMode		= "dhcp"
+	vipDHCPLoadBalancerIP	= "0.0.0.0"
 )
 
 type Handler struct {
-	RancherSettings          rancherv3.SettingClient
-	RancherSettingCache      rancherv3.SettingCache
-	RancherSettingController rancherv3.SettingController
-	RancherUserCache         rancherv3.UserCache
-	ingresses                networkingv1.IngressClient
-	Services                 ctlcorev1.ServiceClient
-	Configmaps               ctlcorev1.ConfigMapClient
-	Secrets                  ctlcorev1.SecretClient
-	SecretCache              ctlcorev1.SecretCache
-	Namespace                string
+	RancherSettings			rancherv3.SettingClient
+	RancherSettingCache		rancherv3.SettingCache
+	RancherSettingController	rancherv3.SettingController
+	RancherUserCache		rancherv3.UserCache
+	ingresses			networkingv1.IngressClient
+	Services			ctlcorev1.ServiceClient
+	Configmaps			ctlcorev1.ConfigMapClient
+	Secrets				ctlcorev1.SecretClient
+	SecretCache			ctlcorev1.SecretCache
+	Namespace			string
 }
 
 type VIPConfig struct {
-	Enabled        string             `json:"enabled,omitempty"`
-	ServiceType    corev1.ServiceType `json:"serviceType,omitempty"`
-	IP             string             `json:"ip,omitempty"`
-	Mode           string             `json:"mode,omitempty"`
-	HwAddress      string             `json:"hwAddress,omitempty"`
-	LoadBalancerIP string             `json:"loadBalancerIP,omitempty"`
+	Enabled		string			`json:"enabled,omitempty"`
+	ServiceType	corev1.ServiceType	`json:"serviceType,omitempty"`
+	IP		string			`json:"ip,omitempty"`
+	Mode		string			`json:"mode,omitempty"`
+	HwAddress	string			`json:"hwAddress,omitempty"`
+	LoadBalancerIP	string			`json:"loadBalancerIP,omitempty"`
 }
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	if options.RancherEmbedded {
 		rancherSettings := management.RancherManagementFactory.Management().V3().Setting()
 		rancherUsers := management.RancherManagementFactory.Management().V3().User()
@@ -66,16 +68,16 @@ func Register(ctx context.Context, management *config.Management, options config
 		services := management.CoreFactory.Core().V1().Service()
 		configmaps := management.CoreFactory.Core().V1().ConfigMap()
 		h := Handler{
-			RancherSettings:          rancherSettings,
-			RancherSettingController: rancherSettings,
-			RancherSettingCache:      rancherSettings.Cache(),
-			RancherUserCache:         rancherUsers.Cache(),
-			ingresses:                ingresses,
-			Services:                 services,
-			Configmaps:               configmaps,
-			Secrets:                  secrets,
-			SecretCache:              secrets.Cache(),
-			Namespace:                options.Namespace,
+			RancherSettings:		rancherSettings,
+			RancherSettingController:	rancherSettings,
+			RancherSettingCache:		rancherSettings.Cache(),
+			RancherUserCache:		rancherUsers.Cache(),
+			ingresses:			ingresses,
+			Services:			services,
+			Configmaps:			configmaps,
+			Secrets:			secrets,
+			SecretCache:			secrets.Cache(),
+			Namespace:			options.Namespace,
 		}
 
 		rancherSettings.OnChange(ctx, controllerRancherName, h.RancherSettingOnChange)
@@ -90,9 +92,9 @@ func Register(ctx context.Context, management *config.Management, options config
 	return nil
 }
 
-// registerExposeService help to create ingress-expose svc in the kube-system namespace,
-// by default it is nodePort, if the VIP is enabled it will be set to LoadBalancer type service.
 func (h *Handler) registerExposeService() error {
+	__traceStack()
+
 	_, err := h.Services.Get(util.KubeSystemNamespace, ingressExposeServiceName, v1.GetOptions{})
 	if err != nil && !apierrors.IsNotFound(err) {
 		return err
@@ -105,32 +107,31 @@ func (h *Handler) registerExposeService() error {
 
 		svc := &corev1.Service{
 			ObjectMeta: v1.ObjectMeta{
-				Name:      ingressExposeServiceName,
-				Namespace: util.KubeSystemNamespace,
+				Name:		ingressExposeServiceName,
+				Namespace:	util.KubeSystemNamespace,
 			},
 			Spec: corev1.ServiceSpec{
-				Type: corev1.ServiceTypeNodePort,
+				Type:	corev1.ServiceTypeNodePort,
 				Selector: map[string]string{
 					appLabelName: util.Rke2IngressNginxAppName,
 				},
 				Ports: []corev1.ServicePort{
 					{
-						Name:       "https-internal",
-						Port:       443,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.FromInt(443),
+						Name:		"https-internal",
+						Port:		443,
+						Protocol:	corev1.ProtocolTCP,
+						TargetPort:	intstr.FromInt(443),
 					},
 					{
-						Name:       "http",
-						Port:       80,
-						Protocol:   corev1.ProtocolTCP,
-						TargetPort: intstr.FromInt(80),
+						Name:		"http",
+						Port:		80,
+						Protocol:	corev1.ProtocolTCP,
+						TargetPort:	intstr.FromInt(80),
 					},
 				},
 			},
 		}
 
-		// set vip loadBalancer type and ip
 		enabled, err := strconv.ParseBool(vip.Enabled)
 		if err != nil {
 			return err
@@ -140,8 +141,8 @@ func (h *Handler) registerExposeService() error {
 			svc.Spec.LoadBalancerIP = vip.LoadBalancerIP
 			if strings.ToLower(vip.Mode) == vipDHCPMode {
 				svc.Annotations = map[string]string{
-					"kube-vip.io/requestedIP": vip.IP,
-					"kube-vip.io/hwaddr":      vip.HwAddress,
+					"kube-vip.io/requestedIP":	vip.IP,
+					"kube-vip.io/hwaddr":		vip.HwAddress,
 				}
 				svc.Spec.LoadBalancerIP = vipDHCPLoadBalancerIP
 			}
@@ -154,8 +155,9 @@ func (h *Handler) registerExposeService() error {
 	return nil
 }
 
-// cleanUpLegacyExposeService removes rancher-expose service in cattle-system
 func (h *Handler) cleanUpLegacyExposeService() error {
+	__traceStack()
+
 	if err := h.Services.Delete(util.CattleSystemNamespaceName, rancherExposeServiceName, &v1.DeleteOptions{}); err != nil && !apierrors.IsNotFound(err) {
 		return err
 	}
@@ -163,6 +165,8 @@ func (h *Handler) cleanUpLegacyExposeService() error {
 }
 
 func (h *Handler) getVipConfig() (*VIPConfig, error) {
+	__traceStack()
+
 	vipConfig := &VIPConfig{}
 	conf, err := h.Configmaps.Get(h.Namespace, VipConfigmapName, v1.GetOptions{})
 	if err != nil {

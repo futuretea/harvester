@@ -7,25 +7,27 @@ import (
 )
 
 func addAuthenticatedRoles(apply apply.Apply) error {
+	__traceStack()
+
 	return apply.
 		WithDynamicLookup().
 		WithSetID("harvester-authenticated").
 		ApplyObjects(
 			&rbacv1.RoleBinding{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      "harvester-public",
-					Namespace: publicNamespace,
+					Name:		"harvester-public",
+					Namespace:	publicNamespace,
 				},
 				RoleRef: rbacv1.RoleRef{
-					APIGroup: rbacv1.GroupName,
-					Kind:     "ClusterRole",
-					Name:     "view",
+					APIGroup:	rbacv1.GroupName,
+					Kind:		"ClusterRole",
+					Name:		"view",
 				},
 				Subjects: []rbacv1.Subject{
 					{
-						APIGroup: rbacv1.GroupName,
-						Kind:     rbacv1.GroupKind,
-						Name:     "system:authenticated",
+						APIGroup:	rbacv1.GroupName,
+						Kind:		rbacv1.GroupKind,
+						Name:		"system:authenticated",
 					},
 				},
 			},
@@ -35,15 +37,15 @@ func addAuthenticatedRoles(apply apply.Apply) error {
 				},
 				Rules: []rbacv1.PolicyRule{
 					{
-						Verbs:     []string{"get", "list", "watch"},
-						APIGroups: []string{"harvesterhci.io"},
-						Resources: []string{"settings"},
+						Verbs:		[]string{"get", "list", "watch"},
+						APIGroups:	[]string{"harvesterhci.io"},
+						Resources:	[]string{"settings"},
 					},
 					{
-						Verbs:         []string{"get", "watch"},
-						APIGroups:     []string{""},
-						Resources:     []string{"namespaces"},
-						ResourceNames: []string{publicNamespace},
+						Verbs:		[]string{"get", "watch"},
+						APIGroups:	[]string{""},
+						Resources:	[]string{"namespaces"},
+						ResourceNames:	[]string{publicNamespace},
 					},
 				},
 			},
@@ -52,14 +54,14 @@ func addAuthenticatedRoles(apply apply.Apply) error {
 					Name: "harvester-authenticated",
 				},
 				Subjects: []rbacv1.Subject{{
-					Kind:     "Group",
-					APIGroup: rbacv1.GroupName,
-					Name:     "system:authenticated",
+					Kind:		"Group",
+					APIGroup:	rbacv1.GroupName,
+					Name:		"system:authenticated",
 				}},
 				RoleRef: rbacv1.RoleRef{
-					APIGroup: rbacv1.GroupName,
-					Kind:     "ClusterRole",
-					Name:     "harvester-authenticated",
+					APIGroup:	rbacv1.GroupName,
+					Kind:		"ClusterRole",
+					Name:		"harvester-authenticated",
 				},
 			},
 		)

@@ -13,6 +13,8 @@ import (
 )
 
 func createCRDs(ctx context.Context, restConfig *rest.Config) error {
+	__traceStack()
+
 	factory, err := crd.NewFactoryFromClient(ctx, restConfig)
 	if err != nil {
 		return err
@@ -39,8 +41,7 @@ func createCRDs(ctx context.Context, restConfig *rest.Config) error {
 			crd.FromGV(harvesterv1.SchemeGroupVersion, "VirtualMachineRestore", harvesterv1.VirtualMachineRestore{}),
 			crd.FromGV(harvesterv1.SchemeGroupVersion, "Preference", harvesterv1.Preference{}),
 			crd.FromGV(harvesterv1.SchemeGroupVersion, "SupportBundle", harvesterv1.SupportBundle{}),
-			// The BackingImage struct is not compatible with wrangler schemas generation, pass nil as the workaround.
-			// The expected CRD will be applied by Longhorn chart.
+
 			crd.FromGV(longhornv1.SchemeGroupVersion, "BackingImage", nil),
 			crd.FromGV(longhornv1.SchemeGroupVersion, "BackingImageDataSource", longhornv1.BackingImageDataSource{}),
 			crd.FromGV(longhornv1.SchemeGroupVersion, "Backup", longhornv1.Backup{}),

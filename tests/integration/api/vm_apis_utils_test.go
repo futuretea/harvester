@@ -13,39 +13,39 @@ import (
 )
 
 const (
-	testCreator        = "harvester-integration-test"
-	testVMGenerateName = "test-"
-	testVMNamespace    = "default"
+	testCreator		= "harvester-integration-test"
+	testVMGenerateName	= "test-"
+	testVMNamespace		= "default"
 
-	testVMCPUCores       = 1
-	testVMMemory         = "256Mi"
-	testVMUpdatedCPUCore = 2
-	testVMUpdatedMemory  = "200Mi"
+	testVMCPUCores		= 1
+	testVMMemory		= "256Mi"
+	testVMUpdatedCPUCore	= 2
+	testVMUpdatedMemory	= "200Mi"
 
-	testVMDiskSize = "10Mi"
+	testVMDiskSize	= "10Mi"
 
-	testVMInterfaceName  = "default"
-	testVMInterfaceModel = "virtio"
+	testVMInterfaceName	= "default"
+	testVMInterfaceModel	= "virtio"
 
-	testVMBlankDiskName                = "blankdisk"
-	testVMCDRomDiskName                = "cdromdisk"
-	testVMContainerDiskName            = "containerdisk"
-	testVMContainerDiskImageName       = "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
-	testVMRemoveDiskName               = "sparedisk"
-	testVMContainerDiskImagePullPolicy = builder.DefaultImagePullPolicy
-	testVMCloudInitDiskName            = builder.CloudInitDiskName
+	testVMBlankDiskName			= "blankdisk"
+	testVMCDRomDiskName			= "cdromdisk"
+	testVMContainerDiskName			= "containerdisk"
+	testVMContainerDiskImageName		= "kubevirt/fedora-cloud-container-disk-demo:v0.35.0"
+	testVMRemoveDiskName			= "sparedisk"
+	testVMContainerDiskImagePullPolicy	= builder.DefaultImagePullPolicy
+	testVMCloudInitDiskName			= builder.CloudInitDiskName
 
-	testVMDefaultDiskBus = builder.DiskBusVirtio
-	testVMCDRomBus       = builder.DiskBusSata
+	testVMDefaultDiskBus	= builder.DiskBusVirtio
+	testVMCDRomBus		= builder.DiskBusSata
 
-	testVMCloudInitUserDataTemplate = `
+	testVMCloudInitUserDataTemplate	= `
 #cloud-config
 user: %s
 password: %s
 chpasswd: { expire: False }
 ssh_pwauth: True`
 
-	testVMCloudInitNetworkDataTemplate = `
+	testVMCloudInitNetworkDataTemplate	= `
 network:
   version: 1
   config:
@@ -56,7 +56,7 @@ network:
       address: %s
       gateway: %s`
 
-	testVMExpect = `
+	testVMExpect	= `
 #!/usr/bin/env expect
 
 set vmi [lindex $argv 0 ]
@@ -98,14 +98,16 @@ expect {
 )
 
 type VMCloudInit struct {
-	Name     string
-	UserName string
-	Password string
-	Address  string
-	Gateway  string
+	Name		string
+	UserName	string
+	Password	string
+	Address		string
+	Gateway		string
 }
 
 func (c *VMCloudInit) Check() error {
+	__traceStack()
+
 	fileName, err := CreateTmpFile(os.TempDir(), "tmp-expect-", testVMExpect, 0777)
 	if err != nil {
 		return err
@@ -116,6 +118,8 @@ func (c *VMCloudInit) Check() error {
 }
 
 func Exec(command string) error {
+	__traceStack()
+
 	cmd := exec.Command("bash", "-c", command)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -127,6 +131,8 @@ func Exec(command string) error {
 }
 
 func CreateTmpFile(dir, pattern, content string, mode os.FileMode) (string, error) {
+	__traceStack()
+
 	tmpFile, err := ioutil.TempFile(dir, pattern)
 	if err != nil {
 		return "", err
@@ -142,6 +148,8 @@ func CreateTmpFile(dir, pattern, content string, mode os.FileMode) (string, erro
 }
 
 func NewDefaultTestVMBuilder(labels map[string]string) *builder.VMBuilder {
+	__traceStack()
+
 	return builder.NewVMBuilder(testCreator).Namespace(testVMNamespace).Labels(labels).
 		CPU(testVMCPUCores).Memory(testVMMemory).Run(false)
 }

@@ -24,26 +24,27 @@ import (
 var outputFile = flag.String("output", "api/openapi-spec/swagger.json", "Output file.")
 
 var kindToTagMappings = map[string]string{
-	"VirtualMachine":                  "Virtual Machines",
-	"VirtualMachineInstance":          "Virtual Machines",
-	"VirtualMachineTemplate":          "Virtual Machine Templates",
-	"VirtualMachineTemplateVersion":   "Virtual Machine Templates",
-	"PersistentVolumeClaim":           "Volumes",
-	"VirtualMachineImage":             "Images",
-	"VirtualMachineBackup":            "Backups",
-	"VirtualMachineRestore":           "Restores",
-	"VirtualMachineInstanceMigration": "Migrations",
-	"KeyPair":                         "SSH Keys",
-	"Setting":                         "Settings",
-	"SupportBundle":                   "Support Bundles",
-	"Upgrade":                         "Upgrades",
-	"ClusterNetwork":                  "Networks",
-	"NodeNetwork":                     "Networks",
-	"NetworkAttachmentDefinition":     "Networks",
+	"VirtualMachine":			"Virtual Machines",
+	"VirtualMachineInstance":		"Virtual Machines",
+	"VirtualMachineTemplate":		"Virtual Machine Templates",
+	"VirtualMachineTemplateVersion":	"Virtual Machine Templates",
+	"PersistentVolumeClaim":		"Volumes",
+	"VirtualMachineImage":			"Images",
+	"VirtualMachineBackup":			"Backups",
+	"VirtualMachineRestore":		"Restores",
+	"VirtualMachineInstanceMigration":	"Migrations",
+	"KeyPair":				"SSH Keys",
+	"Setting":				"Settings",
+	"SupportBundle":			"Support Bundles",
+	"Upgrade":				"Upgrades",
+	"ClusterNetwork":			"Networks",
+	"NodeNetwork":				"Networks",
+	"NetworkAttachmentDefinition":		"Networks",
 }
 
-// Generate OpenAPI spec definitions for Harvester Resource
 func main() {
+	__traceStack()
+
 	flag.Parse()
 	config := createConfig()
 	webServices := rest.AggregatedWebServices()
@@ -61,6 +62,8 @@ func main() {
 }
 
 func createConfig() *common.Config {
+	__traceStack()
+
 	return &common.Config{
 		CommonResponses: map[int]spec.Response{
 			401: {
@@ -71,8 +74,8 @@ func createConfig() *common.Config {
 		},
 		Info: &spec.Info{
 			InfoProps: spec.InfoProps{
-				Title:   "Harvester APIs",
-				Version: "v1beta1",
+				Title:		"Harvester APIs",
+				Version:	"v1beta1",
 			},
 		},
 		GetDefinitions: func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -80,7 +83,7 @@ func createConfig() *common.Config {
 		},
 
 		GetDefinitionName: func(name string) (string, spec.Extensions) {
-			//adapting k8s style
+
 			name = strings.ReplaceAll(name, "github.com/harvester/harvester/pkg/apis/harvesterhci.io", "harvesterhci.io")
 			name = strings.ReplaceAll(name, "github.com/harvester/harvester-network-controller/pkg/apis/network.harvesterhci.io", "network.harvesterhci.io")
 			name = strings.ReplaceAll(name, "github.com/k8snetworkplumbingwg/network-attachment-definition-client/pkg/apis/k8s.cni.cncf.io", "k8s.cni.cncf.io")

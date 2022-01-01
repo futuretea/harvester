@@ -13,6 +13,8 @@ import (
 )
 
 func NewValidator(nodeCache v1.NodeCache) types.Validator {
+	__traceStack()
+
 	return &nodeValidator{
 		nodeCache: nodeCache,
 	}
@@ -20,16 +22,18 @@ func NewValidator(nodeCache v1.NodeCache) types.Validator {
 
 type nodeValidator struct {
 	types.DefaultValidator
-	nodeCache v1.NodeCache
+	nodeCache	v1.NodeCache
 }
 
 func (v *nodeValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       "nodes",
-		Scope:      admissionregv1.ClusterScope,
-		APIGroup:   corev1.SchemeGroupVersion.Group,
-		APIVersion: corev1.SchemeGroupVersion.Version,
-		ObjectType: &corev1.Node{},
+		Name:		"nodes",
+		Scope:		admissionregv1.ClusterScope,
+		APIGroup:	corev1.SchemeGroupVersion.Group,
+		APIVersion:	corev1.SchemeGroupVersion.Version,
+		ObjectType:	&corev1.Node{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Update,
 		},
@@ -37,6 +41,8 @@ func (v *nodeValidator) Resource() types.Resource {
 }
 
 func (v *nodeValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	oldNode := oldObj.(*corev1.Node)
 	newNode := newObj.(*corev1.Node)
 
@@ -49,12 +55,12 @@ func (v *nodeValidator) Update(request *types.Request, oldObj runtime.Object, ne
 }
 
 func validateCordonAndMaintenanceMode(oldNode, newNode *corev1.Node, nodeList []*corev1.Node) error {
-	// if old node already have "maintain-status" annotation or Unscheduleable=true,
-	// it has already been enabled, so we skip it
+	__traceStack()
+
 	if _, ok := oldNode.Annotations[ctlnode.MaintainStatusAnnotationKey]; ok || oldNode.Spec.Unschedulable {
 		return nil
 	}
-	// if new node doesn't have "maintain-status" annotation and Unscheduleable=false, we skip it
+
 	if _, ok := newNode.Annotations[ctlnode.MaintainStatusAnnotationKey]; !ok && !newNode.Spec.Unschedulable {
 		return nil
 	}
@@ -64,7 +70,6 @@ func validateCordonAndMaintenanceMode(oldNode, newNode *corev1.Node, nodeList []
 			continue
 		}
 
-		// Return when we find another available node
 		if _, ok := node.Annotations[ctlnode.MaintainStatusAnnotationKey]; !ok && !node.Spec.Unschedulable {
 			return nil
 		}

@@ -43,6 +43,8 @@ var registerFuncs = []registerFunc{
 }
 
 func register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	for _, f := range registerFuncs {
 		if err := f(ctx, management, options); err != nil {
 			return err
@@ -53,6 +55,8 @@ func register(ctx context.Context, management *config.Management, options config
 }
 
 func Setup(ctx context.Context, server *server.Server, controllers *server.Controllers, options config.Options) error {
+	__traceStack()
+
 	scaled := config.ScaledWithContext(ctx)
 
 	indexeres.RegisterManagementIndexers(scaled.Management)

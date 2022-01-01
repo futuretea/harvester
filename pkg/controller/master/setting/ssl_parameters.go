@@ -13,6 +13,8 @@ import (
 )
 
 func (h *Handler) syncSSLParameters(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	sslParameter := &settings.SSLParameter{}
 	value := setting.Value
 	if value == "" {
@@ -26,6 +28,8 @@ func (h *Handler) syncSSLParameters(setting *harvesterv1.Setting) error {
 }
 
 func (h *Handler) updateSSLParameters(sslParameter *settings.SSLParameter) error {
+	__traceStack()
+
 	logrus.Infof("Update SSL Parameters: Ciphers: %s, Protocols: %s", sslParameter.Ciphers, sslParameter.Protocols)
 
 	helmChartConfig, err := h.helmChartConfigCache.Get(util.KubeSystemNamespace, util.Rke2IngressNginxAppName)

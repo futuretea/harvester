@@ -10,7 +10,8 @@ import (
 )
 
 func (h *Handler) syncAdditionalTrustedCAs(setting *harvesterv1.Setting) error {
-	// Add envs to the backup secret used by Longhorn backups
+	__traceStack()
+
 	backupConfig := map[string]string{
 		"AWS_CERT": setting.Value,
 	}
@@ -18,16 +19,16 @@ func (h *Handler) syncAdditionalTrustedCAs(setting *harvesterv1.Setting) error {
 		return err
 	}
 
-	// Distribute CA secrets to required system namespaces
 	if err := h.syncAdditionalCASecrets(setting); err != nil {
 		return err
 	}
 
-	//redeploy system services. The CA certs will be injected by the mutation webhook.
 	return h.redeployDeployment(h.namespace, "harvester")
 }
 
 func (h *Handler) syncAdditionalCASecrets(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	namespaces := []string{h.namespace, util.LonghornSystemNamespaceName, util.CattleSystemNamespaceName}
 
 	for _, namespace := range namespaces {
@@ -35,8 +36,8 @@ func (h *Handler) syncAdditionalCASecrets(setting *harvesterv1.Setting) error {
 		if errors.IsNotFound(err) {
 			newSecret := &corev1.Secret{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      util.AdditionalCASecretName,
-					Namespace: namespace,
+					Name:		util.AdditionalCASecretName,
+					Namespace:	namespace,
 				},
 				Data: map[string][]byte{
 					util.AdditionalCAFileName: []byte(setting.Value),

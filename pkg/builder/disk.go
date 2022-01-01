@@ -15,35 +15,37 @@ import (
 )
 
 const (
-	StorageClassNamePrefix = "longhorn"
+	StorageClassNamePrefix	= "longhorn"
 
-	DiskTypeDisk  = "disk"
-	DiskTypeCDRom = "cd-rom"
+	DiskTypeDisk	= "disk"
+	DiskTypeCDRom	= "cd-rom"
 
-	DiskBusVirtio = "virtio"
-	DiskBusScsi   = "scsi"
-	DiskBusSata   = "sata"
+	DiskBusVirtio	= "virtio"
+	DiskBusScsi	= "scsi"
+	DiskBusSata	= "sata"
 
-	PersistentVolumeModeBlock      = "Block"
-	PersistentVolumeModeFilesystem = "Filesystem"
+	PersistentVolumeModeBlock	= "Block"
+	PersistentVolumeModeFilesystem	= "Filesystem"
 
-	PersistentVolumeAccessModeReadWriteOnce = "ReadWriteOnce"
-	PersistentVolumeAccessModeReadOnlyMany  = "ReadOnlyMany"
-	PersistentVolumeAccessModeReadWriteMany = "ReadWriteMany"
+	PersistentVolumeAccessModeReadWriteOnce	= "ReadWriteOnce"
+	PersistentVolumeAccessModeReadOnlyMany	= "ReadOnlyMany"
+	PersistentVolumeAccessModeReadWriteMany	= "ReadWriteMany"
 
-	DefaultDiskSize        = "10Gi"
-	DefaultImagePullPolicy = "IfNotPresent"
+	DefaultDiskSize		= "10Gi"
+	DefaultImagePullPolicy	= "IfNotPresent"
 )
 
 type PersistentVolumeClaimOption struct {
-	ImageID          string
-	VolumeMode       corev1.PersistentVolumeMode
-	AccessMode       corev1.PersistentVolumeAccessMode
-	StorageClassName *string
-	Annotations      map[string]string
+	ImageID			string
+	VolumeMode		corev1.PersistentVolumeMode
+	AccessMode		corev1.PersistentVolumeAccessMode
+	StorageClassName	*string
+	Annotations		map[string]string
 }
 
 func UintPtr(in int) *uint {
+	__traceStack()
+
 	var out *uint
 	u := uint(in)
 	if in > 0 {
@@ -53,6 +55,8 @@ func UintPtr(in int) *uint {
 }
 
 func BuildImageStorageClassName(namespace, name string) string {
+	__traceStack()
+
 	if namespace != "" {
 		return StorageClassNamePrefix + "-" + namespace + "-" + name
 	}
@@ -60,10 +64,12 @@ func BuildImageStorageClassName(namespace, name string) string {
 }
 
 func (v *VMBuilder) Disk(diskName, diskBus string, isCDRom bool, bootOrder int) *VMBuilder {
+	__traceStack()
+
 	var (
-		exist bool
-		index int
-		disks = v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
+		exist	bool
+		index	int
+		disks	= v.VirtualMachine.Spec.Template.Spec.Domain.Devices.Disks
 	)
 	for i, disk := range disks {
 		if disk.Name == diskName {
@@ -85,9 +91,9 @@ func (v *VMBuilder) Disk(diskName, diskBus string, isCDRom bool, bootOrder int) 
 		}
 	}
 	disk := kubevirtv1.Disk{
-		Name:       diskName,
-		BootOrder:  UintPtr(bootOrder),
-		DiskDevice: diskDevice,
+		Name:		diskName,
+		BootOrder:	UintPtr(bootOrder),
+		DiskDevice:	diskDevice,
 	}
 	if exist {
 		disks[index] = disk
@@ -99,10 +105,12 @@ func (v *VMBuilder) Disk(diskName, diskBus string, isCDRom bool, bootOrder int) 
 }
 
 func (v *VMBuilder) Volume(diskName string, volume kubevirtv1.Volume) *VMBuilder {
+	__traceStack()
+
 	var (
-		exist   bool
-		index   int
-		volumes = v.VirtualMachine.Spec.Template.Spec.Volumes
+		exist	bool
+		index	int
+		volumes	= v.VirtualMachine.Spec.Template.Spec.Volumes
 	)
 	for i, e := range volumes {
 		if e.Name == diskName {
@@ -122,46 +130,56 @@ func (v *VMBuilder) Volume(diskName string, volume kubevirtv1.Volume) *VMBuilder
 }
 
 func (v *VMBuilder) ExistingPVCVolume(diskName, pvcName string, hotpluggable bool) *VMBuilder {
+	__traceStack()
+
 	return v.Volume(diskName, kubevirtv1.Volume{
-		Name: diskName,
+		Name:	diskName,
 		VolumeSource: kubevirtv1.VolumeSource{
 			PersistentVolumeClaim: &kubevirtv1.PersistentVolumeClaimVolumeSource{
 				PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 					ClaimName: pvcName,
 				},
-				Hotpluggable: hotpluggable,
+				Hotpluggable:	hotpluggable,
 			},
 		},
 	})
 }
 
 func (v *VMBuilder) ExistingVolumeDisk(diskName, diskBus string, isCDRom, hotpluggable bool, bootOrder int, pvcName string) *VMBuilder {
+	__traceStack()
+
 	return v.Disk(diskName, diskBus, isCDRom, bootOrder).ExistingPVCVolume(diskName, pvcName, hotpluggable)
 }
 
 func (v *VMBuilder) ContainerDiskVolume(diskName, imageName, ImagePullPolicy string) *VMBuilder {
+	__traceStack()
+
 	return v.Volume(diskName, kubevirtv1.Volume{
-		Name: diskName,
+		Name:	diskName,
 		VolumeSource: kubevirtv1.VolumeSource{
 			ContainerDisk: &kubevirtv1.ContainerDiskSource{
-				Image:           imageName,
-				ImagePullPolicy: corev1.PullPolicy(ImagePullPolicy),
+				Image:			imageName,
+				ImagePullPolicy:	corev1.PullPolicy(ImagePullPolicy),
 			},
 		},
 	})
 }
 
 func (v *VMBuilder) ContainerDisk(diskName, diskBus string, isCDRom bool, bootOrder int, imageName, ImagePullPolicy string) *VMBuilder {
+	__traceStack()
+
 	return v.Disk(diskName, diskBus, isCDRom, bootOrder).ContainerDiskVolume(diskName, imageName, ImagePullPolicy)
 }
 
 func (v *VMBuilder) PVCVolume(diskName, diskSize, pvcName string, hotpluggable bool, opt *PersistentVolumeClaimOption) *VMBuilder {
+	__traceStack()
+
 	if opt == nil {
 		defaultStorageClass := "longhorn"
 		opt = &PersistentVolumeClaimOption{
-			VolumeMode:       corev1.PersistentVolumeBlock,
-			AccessMode:       corev1.ReadWriteMany,
-			StorageClassName: &defaultStorageClass,
+			VolumeMode:		corev1.PersistentVolumeBlock,
+			AccessMode:		corev1.ReadWriteMany,
+			StorageClassName:	&defaultStorageClass,
 		}
 	}
 
@@ -181,8 +199,8 @@ func (v *VMBuilder) PVCVolume(diskName, diskSize, pvcName string, hotpluggable b
 	}
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:        pvcName,
-			Annotations: opt.Annotations,
+			Name:		pvcName,
+			Annotations:	opt.Annotations,
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{
@@ -193,8 +211,8 @@ func (v *VMBuilder) PVCVolume(diskName, diskSize, pvcName string, hotpluggable b
 					corev1.ResourceStorage: resource.MustParse(diskSize),
 				},
 			},
-			VolumeMode:       &opt.VolumeMode,
-			StorageClassName: opt.StorageClassName,
+			VolumeMode:		&opt.VolumeMode,
+			StorageClassName:	opt.StorageClassName,
 		},
 	}
 	if opt.ImageID != "" {
@@ -214,5 +232,7 @@ func (v *VMBuilder) PVCVolume(diskName, diskSize, pvcName string, hotpluggable b
 }
 
 func (v *VMBuilder) PVCDisk(diskName, diskBus string, isCDRom, hotpluggable bool, bootOrder int, diskSize, pvcName string, opt *PersistentVolumeClaimOption) *VMBuilder {
+	__traceStack()
+
 	return v.Disk(diskName, diskBus, isCDRom, bootOrder).PVCVolume(diskName, diskSize, pvcName, hotpluggable, opt)
 }

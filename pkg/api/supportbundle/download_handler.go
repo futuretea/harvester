@@ -25,22 +25,24 @@ import (
 )
 
 type DownloadHandler struct {
-	context            context.Context
-	namespace          string
-	supportBundles     v1beta1.SupportBundleClient
-	supportBundleCache v1beta1.SupportBundleCache
-	podCache           ctlcorev1.PodCache
+	context			context.Context
+	namespace		string
+	supportBundles		v1beta1.SupportBundleClient
+	supportBundleCache	v1beta1.SupportBundleCache
+	podCache		ctlcorev1.PodCache
 
-	httpClient *http.Client
+	httpClient	*http.Client
 }
 
 func NewDownloadHandler(scaled *config.Scaled, namespace string) *DownloadHandler {
+	__traceStack()
+
 	return &DownloadHandler{
-		context:            scaled.Ctx,
-		namespace:          namespace,
-		supportBundles:     scaled.HarvesterFactory.Harvesterhci().V1beta1().SupportBundle(),
-		supportBundleCache: scaled.HarvesterFactory.Harvesterhci().V1beta1().SupportBundle().Cache(),
-		podCache:           scaled.CoreFactory.Core().V1().Pod().Cache(),
+		context:		scaled.Ctx,
+		namespace:		namespace,
+		supportBundles:		scaled.HarvesterFactory.Harvesterhci().V1beta1().SupportBundle(),
+		supportBundleCache:	scaled.HarvesterFactory.Harvesterhci().V1beta1().SupportBundle().Cache(),
+		podCache:		scaled.CoreFactory.Core().V1().Pod().Cache(),
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
@@ -48,6 +50,8 @@ func NewDownloadHandler(scaled *config.Scaled, namespace string) *DownloadHandle
 }
 
 func (h *DownloadHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	__traceStack()
+
 	bundleName := mux.Vars(r)["bundleName"]
 
 	retainSb := false

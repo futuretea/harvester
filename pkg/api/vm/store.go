@@ -18,13 +18,15 @@ import (
 type vmStore struct {
 	types.Store
 
-	vms      ctlkubevirtv1.VirtualMachineClient
-	vmCache  ctlkubevirtv1.VirtualMachineCache
-	pvcs     v1.PersistentVolumeClaimClient
-	pvcCache v1.PersistentVolumeClaimCache
+	vms		ctlkubevirtv1.VirtualMachineClient
+	vmCache		ctlkubevirtv1.VirtualMachineCache
+	pvcs		v1.PersistentVolumeClaimClient
+	pvcCache	v1.PersistentVolumeClaimCache
 }
 
 func (s *vmStore) Delete(request *types.APIRequest, schema *types.APISchema, id string) (types.APIObject, error) {
+	__traceStack()
+
 	removedDisks := request.Query["removedDisks"]
 	vm, err := s.vmCache.Get(request.Namespace, request.Name)
 	if err != nil {
@@ -44,7 +46,6 @@ func (s *vmStore) Delete(request *types.APIRequest, schema *types.APISchema, id 
 		}
 	}
 
-	// Set removed PVCs in annotations. VMController is in charge of the cleanup.
 	if err = s.setRemovedPVCs(vm, removedPVCs); err != nil {
 		return types.APIObject{}, apierror.NewAPIError(validation.ServerError, fmt.Sprintf("Failed to set removedPersistentVolumeClaims to virtualMachine %s/%s, %v", request.Namespace, request.Name, err))
 	}
@@ -58,6 +59,8 @@ func (s *vmStore) Delete(request *types.APIRequest, schema *types.APISchema, id 
 }
 
 func (s *vmStore) setRemovedPVCs(vm *kv1.VirtualMachine, removedPVCs []string) error {
+	__traceStack()
+
 	vmCopy := vm.DeepCopy()
 	vmCopy.Annotations[util.RemovedPVCsAnnotationKey] = strings.Join(removedPVCs, ",")
 	_, err := s.vms.Update(vmCopy)

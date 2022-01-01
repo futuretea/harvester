@@ -25,7 +25,6 @@ var _ = Describe("verify keypair APIs", func() {
 
 	BeforeEach(func() {
 
-		// keypair is stored in the same namespace of harvester
 		keypairNamespace = options.Namespace
 
 	})
@@ -62,10 +61,10 @@ var _ = Describe("verify keypair APIs", func() {
 			By("create a keypair with public key missing", func() {
 				var keypair = harvesterv1.KeyPair{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      fuzz.String(5),
-						Namespace: keypairNamespace,
+						Name:		fuzz.String(5),
+						Namespace:	keypairNamespace,
 					},
-					Spec: harvesterv1.KeyPairSpec{},
+					Spec:	harvesterv1.KeyPairSpec{},
 				}
 				respCode, respBody, err := helper.PostObject(keypairsAPI, keypair)
 				MustRespCodeIs(http.StatusUnprocessableEntity, "post keypair", err, respCode, respBody)
@@ -77,8 +76,8 @@ var _ = Describe("verify keypair APIs", func() {
 			By("create a keypair with invalid public key")
 			var keypair = harvesterv1.KeyPair{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      fuzz.String(5),
-					Namespace: keypairNamespace,
+					Name:		fuzz.String(5),
+					Namespace:	keypairNamespace,
 				},
 				Spec: harvesterv1.KeyPairSpec{
 					PublicKey: "invalid test public key",
@@ -99,18 +98,18 @@ var _ = Describe("verify keypair APIs", func() {
 			expectedFingerPrint := ssh.FingerprintLegacyMD5(pk)
 
 			var (
-				keypairName = fuzz.String(5)
-				keypair     = harvesterv1.KeyPair{
+				keypairName	= fuzz.String(5)
+				keypair		= harvesterv1.KeyPair{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      keypairName,
-						Namespace: keypairNamespace,
+						Name:		keypairName,
+						Namespace:	keypairNamespace,
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: string(publicKey),
 					},
 				}
-				retKeypair harvesterv1.KeyPair
-				keypairURL = fmt.Sprintf("%s/%s/%s", keypairsAPI, keypairNamespace, keypairName)
+				retKeypair	harvesterv1.KeyPair
+				keypairURL	= fmt.Sprintf("%s/%s/%s", keypairsAPI, keypairNamespace, keypairName)
 			)
 			By("create a keypair")
 			respCode, respBody, err := helper.PostObject(keypairsAPI, keypair)
@@ -152,18 +151,18 @@ var _ = Describe("verify keypair APIs", func() {
 			expectedFingerPrint := ssh.FingerprintLegacyMD5(pk)
 
 			var (
-				keypairName = fuzz.String(5)
-				keypair     = harvesterv1.KeyPair{
+				keypairName	= fuzz.String(5)
+				keypair		= harvesterv1.KeyPair{
 					ObjectMeta: v1.ObjectMeta{
-						Name:      keypairName,
-						Namespace: keypairNamespace,
+						Name:		keypairName,
+						Namespace:	keypairNamespace,
 					},
 					Spec: harvesterv1.KeyPairSpec{
 						PublicKey: string(publicKey),
 					},
 				}
-				retKeypair harvesterv1.KeyPair
-				keypairURL = fmt.Sprintf("%s/%s/%s", keypairsAPI, keypairNamespace, keypairName)
+				retKeypair	harvesterv1.KeyPair
+				keypairURL	= fmt.Sprintf("%s/%s/%s", keypairsAPI, keypairNamespace, keypairName)
 			)
 			By("create a keypair by yaml")
 			respCode, respBody, err := helper.PostObjectByYAML(keypairsAPI, keypair)
@@ -189,18 +188,18 @@ var _ = Describe("verify keypair APIs", func() {
 			By("given a random name keypair")
 			var keypairName = strings.ToLower(fuzz.String(5))
 			var keygen = gout.H{
-				"name":      keypairName,
-				"namespace": keypairNamespace,
+				"name":		keypairName,
+				"namespace":	keypairNamespace,
 			}
 
 			By("when call keygen action")
 			var (
-				respCode   int
-				respBody   []byte
-				respHeader struct {
-					ContentDisposition string `header:"content-disposition"`
-					ContentType        string `header:"content-type"`
-					ContentLength      int    `header:"content-length"`
+				respCode	int
+				respBody	[]byte
+				respHeader	struct {
+					ContentDisposition	string	`header:"content-disposition"`
+					ContentType		string	`header:"content-type"`
+					ContentLength		int	`header:"content-length"`
 				}
 			)
 			var err = helper.NewHTTPClient().
@@ -224,8 +223,8 @@ var _ = Describe("verify keypair APIs", func() {
 			By("then the same name keypair is created")
 			MustFinallyBeTrue(func() bool {
 				var (
-					respCode int
-					respBody []byte
+					respCode	int
+					respBody	[]byte
 				)
 				err = helper.NewHTTPClient().
 					GET(fmt.Sprintf("%s/%s/%s", keypairsAPI, keypairNamespace, keypairName)).

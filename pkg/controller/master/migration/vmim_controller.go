@@ -12,15 +12,13 @@ import (
 )
 
 const (
-	StateMigrating         = "Migrating"
-	StateAbortingMigration = "Aborting migration"
+	StateMigrating		= "Migrating"
+	StateAbortingMigration	= "Aborting migration"
 )
 
-// The handler adds the AnnotationMigrationUID annotation to the VMI when vmim starts.
-// This is mainly for the period when vmim is created but VMI.status.migrationState is not updated before
-// the target pod is running.
-
 func (h *Handler) OnVmimChanged(_ string, vmim *v1.VirtualMachineInstanceMigration) (*v1.VirtualMachineInstanceMigration, error) {
+	__traceStack()
+
 	if vmim == nil {
 		return nil, nil
 	}
@@ -42,8 +40,7 @@ func (h *Handler) OnVmimChanged(_ string, vmim *v1.VirtualMachineInstanceMigrati
 	} else if vmim.Status.Phase == v1.MigrationScheduling {
 		return vmim, h.setVmiMigrationUIDAnnotation(vmi, string(vmim.UID), StateMigrating)
 	} else if vmi.Annotations[util.AnnotationMigrationUID] == string(vmim.UID) && vmim.Status.Phase == v1.MigrationFailed {
-		// There are cases when VMIM failed but the status is not reported in VMI.status.migrationState
-		// https://github.com/kubevirt/kubevirt/issues/5503
+
 		if err := h.resetHarvesterMigrationStateInVMI(vmi); err != nil {
 			return vmim, err
 		}
@@ -52,6 +49,8 @@ func (h *Handler) OnVmimChanged(_ string, vmim *v1.VirtualMachineInstanceMigrati
 }
 
 func (h *Handler) setVmiMigrationUIDAnnotation(vmi *v1.VirtualMachineInstance, UID string, state string) error {
+	__traceStack()
+
 	if vmi.Annotations[util.AnnotationMigrationUID] == UID &&
 		vmi.Annotations[util.AnnotationMigrationState] == state {
 		return nil
@@ -73,8 +72,9 @@ func (h *Handler) setVmiMigrationUIDAnnotation(vmi *v1.VirtualMachineInstance, U
 	return h.syncVM(vmi)
 }
 
-// syncVM update vm so that UI gets websocket message with updated actions
 func (h *Handler) syncVM(vmi *v1.VirtualMachineInstance) error {
+	__traceStack()
+
 	vm, err := h.vmCache.Get(vmi.Namespace, vmi.Name)
 	if err != nil {
 		return err

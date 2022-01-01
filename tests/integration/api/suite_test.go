@@ -21,31 +21,33 @@ import (
 )
 
 var (
-	testSuiteStartErrChan chan error
-	testCtx               context.Context
-	testCtxCancel         context.CancelFunc
-	harvester             *server.HarvesterServer
+	testSuiteStartErrChan	chan error
+	testCtx			context.Context
+	testCtxCancel		context.CancelFunc
+	harvester		*server.HarvesterServer
 
-	kubeConfig       *restclient.Config
-	KubeClientConfig clientcmd.ClientConfig
-	testCluster      cluster.Cluster
-	options          config.Options
+	kubeConfig		*restclient.Config
+	KubeClientConfig	clientcmd.ClientConfig
+	testCluster		cluster.Cluster
+	options			config.Options
 
-	testResourceLabels = map[string]string{
+	testResourceLabels	= map[string]string{
 		"harvester.test.io": "harvester-test",
 	}
-	testVMBackupLabels = map[string]string{
+	testVMBackupLabels	= map[string]string{
 		"harvester.test.io/type": "vm-backup",
 	}
 )
 
 const (
-	beforeSuiteTimeOut    = 1200
-	afterSuiteTimeOut     = 600
-	harvesterStartTimeOut = 15
+	beforeSuiteTimeOut	= 1200
+	afterSuiteTimeOut	= 600
+	harvesterStartTimeOut	= 15
 )
 
 func TestAPI(t *testing.T) {
+	__traceStack()
+
 	defer GinkgoRecover()
 
 	RegisterFailHandler(Fail)
@@ -87,11 +89,6 @@ var _ = BeforeSuite(func(done Done) {
 		testSuiteStartErrChan <- harvester.ListenAndServe(listenOpts, options)
 	}()
 
-	// NB(thxCode): since the start of all controllers is not synchronized,
-	// it cannot guarantee the controllers has been start,
-	// which means the cache(informer) has not ready,
-	// so we give a stupid time sleep to trigger the first list-watch,
-	// and please use the client interface instead of informer interface if you can.
 	select {
 	case <-time.After(harvesterStartTimeOut * time.Second):
 	case err := <-testSuiteStartErrChan:

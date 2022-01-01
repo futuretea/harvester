@@ -11,15 +11,17 @@ import (
 )
 
 func TestValidateCordonAndMaintenanceMode(t *testing.T) {
+	__traceStack()
+
 	var testCases = []struct {
-		name          string
-		oldNode       *corev1.Node
-		newNode       *corev1.Node
-		nodeList      []*corev1.Node
-		expectedError bool
+		name		string
+		oldNode		*corev1.Node
+		newNode		*corev1.Node
+		nodeList	[]*corev1.Node
+		expectedError	bool
 	}{
 		{
-			name: "user can cordon a node when there is another available node",
+			name:	"user can cordon a node when there is another available node",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -45,10 +47,10 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
+			expectedError:	false,
 		},
 		{
-			name: "user can enable maintenance mode when there is another available node",
+			name:	"user can enable maintenance mode when there is another available node",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -56,7 +58,7 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 			},
 			newNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "node1",
+					Name:	"node1",
 					Annotations: map[string]string{
 						ctlnode.MaintainStatusAnnotationKey: ctlnode.MaintainStatusRunning,
 					},
@@ -74,10 +76,10 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
+			expectedError:	false,
 		},
 		{
-			name: "user cannot cordon a node when the other node is in maintenance mode",
+			name:	"user cannot cordon a node when the other node is in maintenance mode",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -99,17 +101,17 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "node2",
+						Name:	"node2",
 						Annotations: map[string]string{
 							ctlnode.MaintainStatusAnnotationKey: ctlnode.MaintainStatusComplete,
 						},
 					},
 				},
 			},
-			expectedError: true,
+			expectedError:	true,
 		},
 		{
-			name: "user cannot cordon a node when the other node is unschedulable",
+			name:	"user cannot cordon a node when the other node is unschedulable",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -138,10 +140,10 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 					},
 				},
 			},
-			expectedError: true,
+			expectedError:	true,
 		},
 		{
-			name: "user cannot enable maintenance mode when the other node is in maintenance mode",
+			name:	"user cannot enable maintenance mode when the other node is in maintenance mode",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -149,7 +151,7 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 			},
 			newNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "node1",
+					Name:	"node1",
 					Annotations: map[string]string{
 						ctlnode.MaintainStatusAnnotationKey: ctlnode.MaintainStatusRunning,
 					},
@@ -163,17 +165,17 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 				},
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name: "node2",
+						Name:	"node2",
 						Annotations: map[string]string{
 							ctlnode.MaintainStatusAnnotationKey: ctlnode.MaintainStatusRunning,
 						},
 					},
 				},
 			},
-			expectedError: true,
+			expectedError:	true,
 		},
 		{
-			name: "user cannot enable maintenance mode when the other node is unschedulable",
+			name:	"user cannot enable maintenance mode when the other node is unschedulable",
 			oldNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "node1",
@@ -181,7 +183,7 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 			},
 			newNode: &corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: "node1",
+					Name:	"node1",
 					Annotations: map[string]string{
 						ctlnode.MaintainStatusAnnotationKey: ctlnode.MaintainStatusRunning,
 					},
@@ -202,7 +204,7 @@ func TestValidateCordonAndMaintenanceMode(t *testing.T) {
 					},
 				},
 			},
-			expectedError: true,
+			expectedError:	true,
 		},
 	}
 

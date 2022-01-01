@@ -16,16 +16,16 @@ const (
 	TemplateLabel = "template.harvesterhci.io/templateID"
 )
 
-// templateVersionHandler sets metadata and status to templateVersion objects,
-// including labels, ownerReference and status.Version.
 type templateVersionHandler struct {
-	templateCache      ctlharvesterv1.VirtualMachineTemplateCache
-	templateVersions   ctlharvesterv1.VirtualMachineTemplateVersionClient
-	templateController ctlharvesterv1.VirtualMachineTemplateController
-	mu                 sync.RWMutex //use mutex to avoid create duplicated version
+	templateCache		ctlharvesterv1.VirtualMachineTemplateCache
+	templateVersions	ctlharvesterv1.VirtualMachineTemplateVersionClient
+	templateController	ctlharvesterv1.VirtualMachineTemplateController
+	mu			sync.RWMutex
 }
 
 func (h *templateVersionHandler) OnChanged(key string, tv *harvesterv1.VirtualMachineTemplateVersion) (*harvesterv1.VirtualMachineTemplateVersion, error) {
+	__traceStack()
+
 	if tv == nil || tv.DeletionTimestamp != nil {
 		return nil, nil
 	}
@@ -38,7 +38,6 @@ func (h *templateVersionHandler) OnChanged(key string, tv *harvesterv1.VirtualMa
 
 	copyObj := tv.DeepCopy()
 
-	//set labels
 	if copyObj.Labels == nil {
 		copyObj.Labels = make(map[string]string)
 	}
@@ -46,15 +45,14 @@ func (h *templateVersionHandler) OnChanged(key string, tv *harvesterv1.VirtualMa
 		copyObj.Labels[TemplateLabel] = templateName
 	}
 
-	//set ownerReference
 	flagTrue := true
 	ownerRef := []metav1.OwnerReference{{
-		Name:               template.Name,
-		APIVersion:         template.APIVersion,
-		UID:                template.UID,
-		Kind:               template.Kind,
-		BlockOwnerDeletion: &flagTrue,
-		Controller:         &flagTrue,
+		Name:			template.Name,
+		APIVersion:		template.APIVersion,
+		UID:			template.UID,
+		Kind:			template.Kind,
+		BlockOwnerDeletion:	&flagTrue,
+		Controller:		&flagTrue,
 	}}
 
 	if len(copyObj.OwnerReferences) == 0 {
@@ -66,7 +64,6 @@ func (h *templateVersionHandler) OnChanged(key string, tv *harvesterv1.VirtualMa
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	//set version
 	if !harvesterv1.VersionAssigned.IsTrue(copyObj) {
 		existLatestVersion, _, err := getTemplateLatestVersion(tv.Namespace, tv.Spec.TemplateID, h.templateVersions)
 		if err != nil {
@@ -89,6 +86,8 @@ func (h *templateVersionHandler) OnChanged(key string, tv *harvesterv1.VirtualMa
 }
 
 func getTemplateLatestVersion(templateVersionNs, templateID string, templateVersions ctlharvesterv1.VirtualMachineTemplateVersionClient) (int, *harvesterv1.VirtualMachineTemplateVersion, error) {
+	__traceStack()
+
 	var latestVersion int
 	list, err := templateVersions.List(templateVersionNs, metav1.ListOptions{})
 	if err != nil {
@@ -116,12 +115,13 @@ func getTemplateLatestVersion(templateVersionNs, templateID string, templateVers
 	return 0, nil, nil
 }
 
-// templateVersionByCreationTimestamp sorts a list of TemplateVersion by creation timestamp, using their names as a tie breaker.
 type templateVersionByCreationTimestamp []harvesterv1.VirtualMachineTemplateVersion
 
-func (o templateVersionByCreationTimestamp) Len() int      { return len(o) }
-func (o templateVersionByCreationTimestamp) Swap(i, j int) { o[i], o[j] = o[j], o[i] }
+func (o templateVersionByCreationTimestamp) Len() int		{ __traceStack(); return len(o) }
+func (o templateVersionByCreationTimestamp) Swap(i, j int)	{ __traceStack(); o[i], o[j] = o[j], o[i] }
 func (o templateVersionByCreationTimestamp) Less(i, j int) bool {
+	__traceStack()
+
 	if o[i].CreationTimestamp.Equal(&o[j].CreationTimestamp) {
 		return o[i].Name < o[j].Name
 	}
@@ -129,6 +129,8 @@ func (o templateVersionByCreationTimestamp) Less(i, j int) bool {
 }
 
 func isVersionOwnedByTemplate(version *harvesterv1.VirtualMachineTemplateVersion, template *harvesterv1.VirtualMachineTemplate) bool {
+	__traceStack()
+
 	for _, v := range version.OwnerReferences {
 		if v.UID == template.UID {
 			return true

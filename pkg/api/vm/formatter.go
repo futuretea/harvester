@@ -12,19 +12,19 @@ import (
 )
 
 const (
-	startVM        = "start"
-	stopVM         = "stop"
-	restartVM      = "restart"
-	pauseVM        = "pause"
-	unpauseVM      = "unpause"
-	ejectCdRom     = "ejectCdRom"
-	migrate        = "migrate"
-	abortMigration = "abortMigration"
-	backupVM       = "backup"
-	restoreVM      = "restore"
-	createTemplate = "createTemplate"
-	addVolume      = "addVolume"
-	removeVolume   = "removeVolume"
+	startVM		= "start"
+	stopVM		= "stop"
+	restartVM	= "restart"
+	pauseVM		= "pause"
+	unpauseVM	= "unpause"
+	ejectCdRom	= "ejectCdRom"
+	migrate		= "migrate"
+	abortMigration	= "abortMigration"
+	backupVM	= "backup"
+	restoreVM	= "restore"
+	createTemplate	= "createTemplate"
+	addVolume	= "addVolume"
+	removeVolume	= "removeVolume"
 )
 
 type vmformatter struct {
@@ -32,8 +32,8 @@ type vmformatter struct {
 }
 
 func (vf *vmformatter) formatter(request *types.APIRequest, resource *types.RawResource) {
-	// reset resource actions, because action map already be set when add actions handler,
-	// but current framework can't support use formatter to remove key from action map
+	__traceStack()
+
 	resource.Actions = make(map[string]string, 1)
 	if request.AccessControl.CanUpdate(request, resource.APIObject, resource.Schema) != nil {
 		return
@@ -95,6 +95,8 @@ func (vf *vmformatter) formatter(request *types.APIRequest, resource *types.RawR
 }
 
 func canEjectCdRom(vm *kv1.VirtualMachine) bool {
+	__traceStack()
+
 	if !vmReady.IsTrue(vm) {
 		return false
 	}
@@ -108,6 +110,8 @@ func canEjectCdRom(vm *kv1.VirtualMachine) bool {
 }
 
 func (vf *vmformatter) canPause(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vmi == nil {
 		return false
 	}
@@ -124,6 +128,8 @@ func (vf *vmformatter) canPause(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func (vf *vmformatter) canUnPause(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vmi == nil {
 		return false
 	}
@@ -136,6 +142,8 @@ func (vf *vmformatter) canUnPause(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func (vf *vmformatter) canStart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vf.isVMStarting(vm) {
 		return false
 	}
@@ -147,6 +155,8 @@ func (vf *vmformatter) canStart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineI
 }
 
 func (vf *vmformatter) canRestart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vf.isVMStarting(vm) {
 		return false
 	}
@@ -159,6 +169,8 @@ func (vf *vmformatter) canRestart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachin
 }
 
 func (vf *vmformatter) canStop(vm *kv1.VirtualMachine) bool {
+	__traceStack()
+
 	if vm.Spec.Running != nil && !*vm.Spec.Running {
 		return false
 	}
@@ -167,6 +179,8 @@ func (vf *vmformatter) canStop(vm *kv1.VirtualMachine) bool {
 }
 
 func canMigrate(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vmi != nil && vmi.IsRunning() &&
 		vmi.Annotations[util.AnnotationMigrationUID] == "" {
 		return true
@@ -175,6 +189,8 @@ func canMigrate(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func isReady(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	for _, cond := range vmi.Status.Conditions {
 		if cond.Type == kv1.VirtualMachineInstanceReady && cond.Status == corev1.ConditionTrue {
 			return true
@@ -184,6 +200,8 @@ func isReady(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func canAbortMigrate(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vmi != nil &&
 		vmi.Annotations[util.AnnotationMigrationState] == migration.StateMigrating {
 		return true
@@ -192,6 +210,8 @@ func canAbortMigrate(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func (vf *vmformatter) canDoBackup(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vm.Status.SnapshotInProgress != nil {
 		return false
 	}
@@ -203,6 +223,8 @@ func (vf *vmformatter) canDoBackup(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachi
 }
 
 func (vf *vmformatter) canDoRestore(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vm.Status.Ready || vm.Status.SnapshotInProgress != nil || vmi != nil {
 		return false
 	}
@@ -210,6 +232,8 @@ func (vf *vmformatter) canDoRestore(vm *kv1.VirtualMachine, vmi *kv1.VirtualMach
 }
 
 func (vf *vmformatter) isVMStarting(vm *kv1.VirtualMachine) bool {
+	__traceStack()
+
 	for _, req := range vm.Status.StateChangeRequests {
 		if req.Action == kv1.StartRequest {
 			return true
@@ -219,6 +243,8 @@ func (vf *vmformatter) isVMStarting(vm *kv1.VirtualMachine) bool {
 }
 
 func (vf *vmformatter) canCreateTemplate(vmi *kv1.VirtualMachineInstance) bool {
+	__traceStack()
+
 	if vmi != nil && vmi.Status.Phase != kv1.Running {
 		return false
 	}
@@ -226,6 +252,8 @@ func (vf *vmformatter) canCreateTemplate(vmi *kv1.VirtualMachineInstance) bool {
 }
 
 func (vf *vmformatter) getVMI(vm *kv1.VirtualMachine) *kv1.VirtualMachineInstance {
+	__traceStack()
+
 	if vmi, err := vf.vmiCache.Get(vm.Namespace, vm.Name); err == nil {
 		return vmi
 	}

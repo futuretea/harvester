@@ -24,27 +24,28 @@ import (
 )
 
 const (
-	optionBackingImageName = "backingImage"
-	optionMigratable       = "migratable"
+	optionBackingImageName	= "backingImage"
+	optionMigratable	= "migratable"
 )
 
-// vmImageHandler syncs status on vm image changes, and manage a storageclass & a backingimage per vm image
 type vmImageHandler struct {
-	httpClient     http.Client
-	storageClasses v1.StorageClassClient
-	images         ctlharvesterv1.VirtualMachineImageClient
-	backingImages  lhv1beta1.BackingImageClient
-	pvcCache       ctlcorev1.PersistentVolumeClaimCache
+	httpClient	http.Client
+	storageClasses	v1.StorageClassClient
+	images		ctlharvesterv1.VirtualMachineImageClient
+	backingImages	lhv1beta1.BackingImageClient
+	pvcCache	ctlcorev1.PersistentVolumeClaimCache
 }
 
 func (h *vmImageHandler) OnChanged(_ string, image *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	if image == nil || image.DeletionTimestamp != nil {
 		return image, nil
 	}
 	if harvesterv1.ImageInitialized.GetStatus(image) == "" {
 		return h.initialize(image)
 	} else if image.Spec.URL != image.Status.AppliedURL {
-		// URL is changed, recreate the storageclass and backingimage
+
 		if err := h.backingImages.Delete(util.LonghornSystemNamespaceName, getBackingImageName(image), &metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
 			return image, err
 		}
@@ -57,6 +58,8 @@ func (h *vmImageHandler) OnChanged(_ string, image *harvesterv1.VirtualMachineIm
 }
 
 func (h *vmImageHandler) OnRemove(_ string, image *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	if image == nil {
 		return nil, nil
 	}
@@ -72,6 +75,8 @@ func (h *vmImageHandler) OnRemove(_ string, image *harvesterv1.VirtualMachineIma
 }
 
 func (h *vmImageHandler) initialize(image *harvesterv1.VirtualMachineImage) (*harvesterv1.VirtualMachineImage, error) {
+	__traceStack()
+
 	if err := h.createBackingImage(image); err != nil && !errors.IsAlreadyExists(err) {
 		return nil, err
 	}
@@ -114,18 +119,20 @@ func (h *vmImageHandler) initialize(image *harvesterv1.VirtualMachineImage) (*ha
 }
 
 func (h *vmImageHandler) createBackingImage(image *harvesterv1.VirtualMachineImage) error {
+	__traceStack()
+
 	bi := &v1beta1.BackingImage{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      getBackingImageName(image),
-			Namespace: util.LonghornSystemNamespaceName,
+			Name:		getBackingImageName(image),
+			Namespace:	util.LonghornSystemNamespaceName,
 			Annotations: map[string]string{
 				util.AnnotationImageID: ref.Construct(image.Namespace, image.Name),
 			},
 		},
 		Spec: v1beta1.BackingImageSpec{
-			SourceType:       v1beta1.BackingImageDataSourceType(image.Spec.SourceType),
-			SourceParameters: map[string]string{},
-			Checksum:         image.Spec.Checksum,
+			SourceType:		v1beta1.BackingImageDataSourceType(image.Spec.SourceType),
+			SourceParameters:	map[string]string{},
+			Checksum:		image.Spec.Checksum,
 		},
 	}
 	if image.Spec.SourceType == harvesterv1.VirtualMachineImageSourceTypeDownload {
@@ -147,21 +154,23 @@ func (h *vmImageHandler) createBackingImage(image *harvesterv1.VirtualMachineIma
 }
 
 func (h *vmImageHandler) createStorageClass(image *harvesterv1.VirtualMachineImage) error {
+	__traceStack()
+
 	recliamPolicy := corev1.PersistentVolumeReclaimDelete
 	volumeBindingMode := storagev1.VolumeBindingImmediate
 	sc := &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: getImageStorageClassName(image.Name),
 		},
-		Provisioner:          types.LonghornDriverName,
-		ReclaimPolicy:        &recliamPolicy,
-		AllowVolumeExpansion: pointer.BoolPtr(true),
-		VolumeBindingMode:    &volumeBindingMode,
+		Provisioner:		types.LonghornDriverName,
+		ReclaimPolicy:		&recliamPolicy,
+		AllowVolumeExpansion:	pointer.BoolPtr(true),
+		VolumeBindingMode:	&volumeBindingMode,
 		Parameters: map[string]string{
-			types.OptionNumberOfReplicas:    "3",
-			types.OptionStaleReplicaTimeout: "30",
-			optionMigratable:                "true",
-			optionBackingImageName:          getBackingImageName(image),
+			types.OptionNumberOfReplicas:		"3",
+			types.OptionStaleReplicaTimeout:	"30",
+			optionMigratable:			"true",
+			optionBackingImageName:			getBackingImageName(image),
 		},
 	}
 
@@ -170,9 +179,13 @@ func (h *vmImageHandler) createStorageClass(image *harvesterv1.VirtualMachineIma
 }
 
 func getImageStorageClassName(imageName string) string {
+	__traceStack()
+
 	return fmt.Sprintf("longhorn-%s", imageName)
 }
 
 func getBackingImageName(image *harvesterv1.VirtualMachineImage) string {
+	__traceStack()
+
 	return fmt.Sprintf("%s-%s", image.Namespace, image.Name)
 }

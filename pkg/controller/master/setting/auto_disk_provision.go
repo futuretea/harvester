@@ -10,12 +10,14 @@ import (
 )
 
 const (
-	ManagedChartNamespace     = "fleet-local"
-	HarvesterManagedChartName = "harvester"
-	NDMName                   = "harvester-node-disk-manager"
+	ManagedChartNamespace		= "fleet-local"
+	HarvesterManagedChartName	= "harvester"
+	NDMName				= "harvester-node-disk-manager"
 )
 
 func (h *Handler) syncNDMAutoProvisionPaths(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	mChart, err := h.managedChartCache.Get(ManagedChartNamespace, HarvesterManagedChartName)
 	if err != nil {
 		return err

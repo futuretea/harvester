@@ -18,6 +18,8 @@ const (
 )
 
 func NewValidator(keypairs ctlharvesterv1.KeyPairCache) types.Validator {
+	__traceStack()
+
 	return &keyPairValidator{
 		keypairs: keypairs,
 	}
@@ -25,16 +27,18 @@ func NewValidator(keypairs ctlharvesterv1.KeyPairCache) types.Validator {
 
 type keyPairValidator struct {
 	types.DefaultValidator
-	keypairs ctlharvesterv1.KeyPairCache
+	keypairs	ctlharvesterv1.KeyPairCache
 }
 
 func (v *keyPairValidator) Resource() types.Resource {
+	__traceStack()
+
 	return types.Resource{
-		Name:       v1beta1.KeyPairResourceName,
-		Scope:      admissionregv1.NamespacedScope,
-		APIGroup:   v1beta1.SchemeGroupVersion.Group,
-		APIVersion: v1beta1.SchemeGroupVersion.Version,
-		ObjectType: &v1beta1.KeyPair{},
+		Name:		v1beta1.KeyPairResourceName,
+		Scope:		admissionregv1.NamespacedScope,
+		APIGroup:	v1beta1.SchemeGroupVersion.Group,
+		APIVersion:	v1beta1.SchemeGroupVersion.Version,
+		ObjectType:	&v1beta1.KeyPair{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
 			admissionregv1.Update,
@@ -43,6 +47,8 @@ func (v *keyPairValidator) Resource() types.Resource {
 }
 
 func (v *keyPairValidator) Create(request *types.Request, newObj runtime.Object) error {
+	__traceStack()
+
 	keypair := newObj.(*v1beta1.KeyPair)
 
 	if err := v.checkPublicKey(keypair.Spec.PublicKey); err != nil {
@@ -52,6 +58,8 @@ func (v *keyPairValidator) Create(request *types.Request, newObj runtime.Object)
 }
 
 func (v *keyPairValidator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) error {
+	__traceStack()
+
 	keypair := newObj.(*v1beta1.KeyPair)
 
 	if err := v.checkPublicKey(keypair.Spec.PublicKey); err != nil {
@@ -61,6 +69,8 @@ func (v *keyPairValidator) Update(request *types.Request, oldObj runtime.Object,
 }
 
 func (v *keyPairValidator) checkPublicKey(publicKey string) error {
+	__traceStack()
+
 	if publicKey == "" {
 		return errors.New("public key is required")
 	}

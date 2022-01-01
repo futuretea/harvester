@@ -9,6 +9,8 @@ import (
 )
 
 func isDeploymentClean(appsFactory *apps.Factory, namespace, name string) (string, wait.ConditionFunc) {
+	__traceStack()
+
 	return "clean", func() (bool, error) {
 		deploymentController := appsFactory.Apps().V1().Deployment()
 		_, err := deploymentController.Get(namespace, name, metav1.GetOptions{})
@@ -23,6 +25,8 @@ func isDeploymentClean(appsFactory *apps.Factory, namespace, name string) (strin
 }
 
 func isDeploymentReady(appsFactory *apps.Factory, namespace, name string) (string, wait.ConditionFunc) {
+	__traceStack()
+
 	return "ready", func() (done bool, err error) {
 		deploymentController := appsFactory.Apps().V1().Deployment()
 		deployment, err := deploymentController.Get(namespace, name, metav1.GetOptions{})
@@ -36,8 +40,9 @@ func isDeploymentReady(appsFactory *apps.Factory, namespace, name string) (strin
 	}
 }
 
-// isDeploymentStatusReady checks if the Deployment is ready.
 func isDeploymentStatusReady(status *v1.DeploymentStatus) bool {
+	__traceStack()
+
 	if status == nil {
 		return false
 	}

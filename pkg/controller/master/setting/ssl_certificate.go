@@ -13,11 +13,13 @@ import (
 )
 
 const (
-	rancherDeploymentName = "rancher"
-	tlsIngressSecretName  = "tls-ingress"
+	rancherDeploymentName	= "rancher"
+	tlsIngressSecretName	= "tls-ingress"
 )
 
 func (h *Handler) syncSSLCertificate(setting *harvesterv1.Setting) error {
+	__traceStack()
+
 	sslCertificate := &settings.SSLCertificate{}
 	value := setting.Value
 	if value == "" {
@@ -34,6 +36,8 @@ func (h *Handler) syncSSLCertificate(setting *harvesterv1.Setting) error {
 }
 
 func (h *Handler) resetCertificates() error {
+	__traceStack()
+
 	if err := h.updateIngressDefaultCertificate(util.CattleSystemNamespaceName, util.InternalTLSSecretName); err != nil {
 		return err
 	}
@@ -42,6 +46,8 @@ func (h *Handler) resetCertificates() error {
 }
 
 func (h *Handler) updateCertificates(sslCertificate *settings.SSLCertificate) error {
+	__traceStack()
+
 	if err := h.updateTLSSecret(sslCertificate.PublicCertificate, sslCertificate.PrivateKey); err != nil {
 		return err
 	}
@@ -54,6 +60,8 @@ func (h *Handler) updateCertificates(sslCertificate *settings.SSLCertificate) er
 }
 
 func (h *Handler) updateTLSSecret(publicCertificate, privateKey string) error {
+	__traceStack()
+
 	tlsSecret, err := h.secretCache.Get(util.CattleSystemNamespaceName, tlsIngressSecretName)
 	if err != nil {
 		return err
@@ -65,8 +73,9 @@ func (h *Handler) updateTLSSecret(publicCertificate, privateKey string) error {
 	return err
 }
 
-//updateIngressDefaultCertificate updates default ssl certificate of nginx ingress controller
 func (h *Handler) updateIngressDefaultCertificate(namespace, secretName string) error {
+	__traceStack()
+
 	secretRef := fmt.Sprintf("%s/%s", namespace, secretName)
 	helmChartConfig, err := h.helmChartConfigCache.Get(util.KubeSystemNamespace, util.Rke2IngressNginxAppName)
 	if err != nil {

@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
+	__traceStack()
+
 	if err := cleanup.Cleanup("./pkg/apis"); err != nil {
 		logrus.Fatal(err)
 	}

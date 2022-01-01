@@ -13,14 +13,15 @@ import (
 type FileByteSize int64
 
 const (
-	B FileByteSize = 1 << (10 * iota)
+	B	FileByteSize	= 1 << (10 * iota)
 	KB
 	MB
 	GB
 )
 
-// File tries to create a file with given size and returns the path and the SHA256 checksum or error.
 func File(size FileByteSize) (path string, checksum string, berr error) {
+	__traceStack()
+
 	tempFile, err := ioutil.TempFile("", "rand-")
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create temp file: %w", err)

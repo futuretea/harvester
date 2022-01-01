@@ -19,6 +19,8 @@ var (
 )
 
 func NewHelmConfig(namespace string) (*action.Configuration, error) {
+	__traceStack()
+
 	helmCfg := &action.Configuration{}
 	err := helmCfg.Init(cli.New().RESTClientGetter(), namespace, "", logf)
 	if err != nil {
@@ -27,9 +29,10 @@ func NewHelmConfig(namespace string) (*action.Configuration, error) {
 	return helmCfg, nil
 }
 
-// InstallChart installs the chart or upgrade the same name release.
 func InstallChart(releaseName string, namespace string, chartDir string,
 	patches map[string]interface{}) (*release.Release, error) {
+	__traceStack()
+
 	_ = os.Setenv("HELM_NAMESPACE", namespace)
 	defer func() {
 		_ = os.Unsetenv("HELM_NAMESPACE")
@@ -67,13 +70,11 @@ func InstallChart(releaseName string, namespace string, chartDir string,
 		}
 	}
 
-	// load chart
 	loadedChart, err := loader.LoadDir(chartDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load chart: %w", err)
 	}
 
-	// apply patches
 	for key, value := range patches {
 		patchStr := fmt.Sprintf("%s=%v", key, value)
 		if err := strvals.ParseInto(patchStr, loadedChart.Values); err != nil {
@@ -84,8 +85,9 @@ func InstallChart(releaseName string, namespace string, chartDir string,
 	return helmRun(loadedChart, loadedChart.Values)
 }
 
-// UninstallChart uninstalls the chart.
 func UninstallChart(releaseName string, namespace string) (*release.UninstallReleaseResponse, error) {
+	__traceStack()
+
 	_ = os.Setenv("HELM_NAMESPACE", namespace)
 	defer func() {
 		_ = os.Unsetenv("HELM_NAMESPACE")

@@ -23,334 +23,336 @@ import (
 )
 
 func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
+	__traceStack()
+
 	type input struct {
-		key string
-		vmi *kubevirtapis.VirtualMachineInstance
-		vm  *kubevirtapis.VirtualMachine
-		pvc *corev1.PersistentVolumeClaim
+		key	string
+		vmi	*kubevirtapis.VirtualMachineInstance
+		vm	*kubevirtapis.VirtualMachine
+		pvc	*corev1.PersistentVolumeClaim
 	}
 	type output struct {
-		vmi *kubevirtapis.VirtualMachineInstance
-		err error
-		pvc *corev1.PersistentVolumeClaim
+		vmi	*kubevirtapis.VirtualMachineInstance
+		err	error
+		pvc	*corev1.PersistentVolumeClaim
 	}
 	var testFinalizers = []string{"wrangler.cattle.io/VMIController.UnsetOwnerOfPVCs"}
 
 	var testCases = []struct {
-		name     string
-		given    input
-		expected output
+		name		string
+		given		input
+		expected	output
 	}{
 		{
-			name: "ignore nil resource",
+			name:	"ignore nil resource",
 			given: input{
-				key: "",
-				vmi: nil,
-				vm:  nil,
-				pvc: nil,
+				key:	"",
+				vmi:	nil,
+				vm:	nil,
+				pvc:	nil,
 			},
 			expected: output{
-				vmi: nil,
-				err: nil,
-				pvc: nil,
+				vmi:	nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore none deleted resource",
+			name:	"ignore none deleted resource",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:  "default",
-						Name:       "test",
-						UID:        "fake-vmi-uid",
-						Finalizers: testFinalizers,
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vmi-uid",
+						Finalizers:	testFinalizers,
 					},
 				},
-				vm:  nil,
-				pvc: nil,
-			},
-			expected: output{
-				vmi: &kubevirtapis.VirtualMachineInstance{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace:  "default",
-						Name:       "test",
-						UID:        "fake-vmi-uid",
-						Finalizers: testFinalizers,
-					},
-				},
-				err: nil,
-				pvc: nil,
-			},
-		},
-		{
-			name: "ignore if isn't owned by any resources",
-			given: input{
-				key: "default/test",
-				vmi: &kubevirtapis.VirtualMachineInstance{
-					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
-					},
-				},
-				vm:  nil,
-				pvc: nil,
+				vm:	nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vmi-uid",
+						Finalizers:	testFinalizers,
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if owned by none virtualmachine resource",
+			name:	"ignore if isn't owned by any resources",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
+					},
+				},
+				vm:	nil,
+				pvc:	nil,
+			},
+			expected: output{
+				vmi: &kubevirtapis.VirtualMachineInstance{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
+					},
+				},
+				err:	nil,
+				pvc:	nil,
+			},
+		},
+		{
+			name:	"ignore if owned by none virtualmachine resource",
+			given: input{
+				key:	"default/test",
+				vmi: &kubevirtapis.VirtualMachineInstance{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "apps/v1",
-								Kind:               "Deployment",
-								Name:               "test",
-								UID:                "fake-deployment-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"apps/v1",
+								Kind:			"Deployment",
+								Name:			"test",
+								UID:			"fake-deployment-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				vm:  nil,
-				pvc: nil,
+				vm:	nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "apps/v1",
-								Kind:               "Deployment",
-								Name:               "test",
-								UID:                "fake-deployment-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"apps/v1",
+								Kind:			"Deployment",
+								Name:			"test",
+								UID:			"fake-deployment-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if parent virtualmachine is not found",
+			name:	"ignore if parent virtualmachine is not found",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				vm:  nil,
-				pvc: nil,
+				vm:	nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if parent virtualmachine has been deleted",
+			name:	"ignore if parent virtualmachine has been deleted",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vm-uid",
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vm-uid",
+						DeletionTimestamp:	&metav1.Time{},
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: &kubevirtapis.VirtualMachineInstanceTemplateSpec{},
 					},
 				},
-				pvc: nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if parent virtualmachine's template is nil",
+			name:	"ignore if parent virtualmachine's template is nil",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: nil,
 					},
 				},
-				pvc: nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if both virtualmachine instance and parent virtualmachine do not have any PVCs",
+			name:	"ignore if both virtualmachine instance and parent virtualmachine do not have any PVCs",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -359,8 +361,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -368,7 +370,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -380,7 +382,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -388,7 +390,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									EmptyDisk: &kubevirtapis.EmptyDiskSource{
 										Capacity: resource.MustParse("2Gi"),
@@ -400,9 +402,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: &kubevirtapis.VirtualMachineInstanceTemplateSpec{
@@ -411,8 +413,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 									Devices: kubevirtapis.Devices{
 										Disks: []kubevirtapis.Disk{
 											{
-												Name:      "disk1",
-												BootOrder: pointerToUint(1),
+												Name:		"disk1",
+												BootOrder:	pointerToUint(1),
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -420,7 +422,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 												},
 											},
 											{
-												Name: "disk2",
+												Name:	"disk2",
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -432,7 +434,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 								Volumes: []kubevirtapis.Volume{
 									{
-										Name: "disk1",
+										Name:	"disk1",
 										VolumeSource: kubevirtapis.VolumeSource{
 											ContainerDisk: &kubevirtapis.ContainerDiskSource{
 												Image: "vmidisks/fedora25:latest",
@@ -440,7 +442,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										VolumeSource: kubevirtapis.VolumeSource{
 											EmptyDisk: &kubevirtapis.EmptyDiskSource{
 												Capacity: resource.MustParse("2Gi"),
@@ -452,24 +454,24 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 					},
 				},
-				pvc: nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -478,8 +480,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -487,7 +489,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -499,7 +501,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -507,7 +509,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									EmptyDisk: &kubevirtapis.EmptyDiskSource{
 										Capacity: resource.MustParse("2Gi"),
@@ -517,29 +519,29 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if only add PVCs in parent virtualmachine",
+			name:	"ignore if only add PVCs in parent virtualmachine",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -548,8 +550,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -557,7 +559,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -569,7 +571,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -577,7 +579,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									EmptyDisk: &kubevirtapis.EmptyDiskSource{
 										Capacity: resource.MustParse("2Gi"),
@@ -589,9 +591,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 						Annotations: map[string]string{
 							util.AnnotationVolumeClaimTemplates: MustPVCTemplatesToString([]corev1.PersistentVolumeClaim{
 								{
@@ -599,7 +601,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										Name: "pvc-disk",
 									},
 									Spec: corev1.PersistentVolumeClaimSpec{
-										StorageClassName: pointer.StringPtr("default"),
+										StorageClassName:	pointer.StringPtr("default"),
 										AccessModes: []corev1.PersistentVolumeAccessMode{
 											corev1.ReadWriteOnce,
 										},
@@ -620,8 +622,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 									Devices: kubevirtapis.Devices{
 										Disks: []kubevirtapis.Disk{
 											{
-												Name:      "disk1",
-												BootOrder: pointerToUint(1),
+												Name:		"disk1",
+												BootOrder:	pointerToUint(1),
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -629,7 +631,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 												},
 											},
 											{
-												Name: "disk2",
+												Name:	"disk2",
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -641,7 +643,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 								Volumes: []kubevirtapis.Volume{
 									{
-										Name: "disk1",
+										Name:	"disk1",
 										VolumeSource: kubevirtapis.VolumeSource{
 											ContainerDisk: &kubevirtapis.ContainerDiskSource{
 												Image: "vmidisks/fedora25:latest",
@@ -649,7 +651,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										VolumeSource: kubevirtapis.VolumeSource{
 											EmptyDisk: &kubevirtapis.EmptyDiskSource{
 												Capacity: resource.MustParse("2Gi"),
@@ -657,13 +659,13 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk3",
+										Name:	"disk3",
 										VolumeSource: kubevirtapis.VolumeSource{
 											PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 												PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 													ClaimName: "pvc-disk",
 												},
-												Hotpluggable: true,
+												Hotpluggable:	true,
 											},
 										},
 									},
@@ -672,24 +674,24 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 					},
 				},
-				pvc: nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -698,8 +700,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -707,7 +709,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -719,7 +721,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -727,7 +729,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									EmptyDisk: &kubevirtapis.EmptyDiskSource{
 										Capacity: resource.MustParse("2Gi"),
@@ -737,29 +739,29 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "ignore if the removed PVCs in parent virtualmachine is not found",
+			name:	"ignore if the removed PVCs in parent virtualmachine is not found",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -768,8 +770,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -777,7 +779,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -789,7 +791,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -797,13 +799,13 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
@@ -812,9 +814,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: &kubevirtapis.VirtualMachineInstanceTemplateSpec{
@@ -823,8 +825,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 									Devices: kubevirtapis.Devices{
 										Disks: []kubevirtapis.Disk{
 											{
-												Name:      "disk1",
-												BootOrder: pointerToUint(1),
+												Name:		"disk1",
+												BootOrder:	pointerToUint(1),
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -836,7 +838,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 								Volumes: []kubevirtapis.Volume{
 									{
-										Name: "disk1",
+										Name:	"disk1",
 										VolumeSource: kubevirtapis.VolumeSource{
 											ContainerDisk: &kubevirtapis.ContainerDiskSource{
 												Image: "vmidisks/fedora25:latest",
@@ -848,24 +850,24 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 					},
 				},
-				pvc: nil,
+				pvc:	nil,
 			},
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -874,8 +876,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -883,7 +885,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -895,7 +897,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -903,42 +905,42 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
 						},
 					},
 				},
-				err: nil,
-				pvc: nil,
+				err:	nil,
+				pvc:	nil,
 			},
 		},
 		{
-			name: "unref ownless out-tree PVCs",
+			name:	"unref ownless out-tree PVCs",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -947,8 +949,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -956,7 +958,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -968,7 +970,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -976,13 +978,13 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
@@ -991,9 +993,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: &kubevirtapis.VirtualMachineInstanceTemplateSpec{
@@ -1002,8 +1004,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 									Devices: kubevirtapis.Devices{
 										Disks: []kubevirtapis.Disk{
 											{
-												Name:      "disk1",
-												BootOrder: pointerToUint(1),
+												Name:		"disk1",
+												BootOrder:	pointerToUint(1),
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -1015,7 +1017,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 								Volumes: []kubevirtapis.Volume{
 									{
-										Name: "disk1",
+										Name:	"disk1",
 										VolumeSource: kubevirtapis.VolumeSource{
 											ContainerDisk: &kubevirtapis.ContainerDiskSource{
 												Image: "vmidisks/fedora25:latest",
@@ -1029,15 +1031,15 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				pvc: &corev1.PersistentVolumeClaim{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "pvc-disk",
-						UID:       "fake-pvc-uid",
+						Namespace:	"default",
+						Name:		"pvc-disk",
+						UID:		"fake-pvc-uid",
 						Annotations: map[string]string{
 							ref.AnnotationSchemaOwnerKeyName: `[{"schema":"kubevirt.io.virtualmachine","refs":["default/test"]}]`,
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						StorageClassName: pointer.StringPtr("default"),
+						StorageClassName:	pointer.StringPtr("default"),
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
@@ -1052,19 +1054,19 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -1073,8 +1075,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1082,7 +1084,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1094,7 +1096,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -1102,28 +1104,28 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
 						},
 					},
 				},
-				err: nil,
+				err:	nil,
 				pvc: &corev1.PersistentVolumeClaim{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "pvc-disk",
-						UID:       "fake-pvc-uid",
+						Namespace:	"default",
+						Name:		"pvc-disk",
+						UID:		"fake-pvc-uid",
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						StorageClassName: pointer.StringPtr("default"),
+						StorageClassName:	pointer.StringPtr("default"),
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
@@ -1137,24 +1139,24 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 			},
 		},
 		{
-			name: "unref ownless generated PVCs",
+			name:	"unref ownless generated PVCs",
 			given: input{
-				key: "default/test",
+				key:	"default/test",
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -1163,8 +1165,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1172,7 +1174,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1184,7 +1186,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -1192,13 +1194,13 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
@@ -1207,9 +1209,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				vm: &kubevirtapis.VirtualMachine{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "test",
-						UID:       "fake-vm-uid",
+						Namespace:	"default",
+						Name:		"test",
+						UID:		"fake-vm-uid",
 					},
 					Spec: kubevirtapis.VirtualMachineSpec{
 						Template: &kubevirtapis.VirtualMachineInstanceTemplateSpec{
@@ -1218,8 +1220,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 									Devices: kubevirtapis.Devices{
 										Disks: []kubevirtapis.Disk{
 											{
-												Name:      "disk1",
-												BootOrder: pointerToUint(1),
+												Name:		"disk1",
+												BootOrder:	pointerToUint(1),
 												DiskDevice: kubevirtapis.DiskDevice{
 													Disk: &kubevirtapis.DiskTarget{
 														Bus: "virtio",
@@ -1231,7 +1233,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 								Volumes: []kubevirtapis.Volume{
 									{
-										Name: "disk1",
+										Name:	"disk1",
 										VolumeSource: kubevirtapis.VolumeSource{
 											ContainerDisk: &kubevirtapis.ContainerDiskSource{
 												Image: "vmidisks/fedora25:latest",
@@ -1245,25 +1247,25 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 				},
 				pvc: &corev1.PersistentVolumeClaim{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "pvc-disk",
-						UID:       "fake-pvc-uid",
+						Namespace:	"default",
+						Name:		"pvc-disk",
+						UID:		"fake-pvc-uid",
 						Annotations: map[string]string{
 							ref.AnnotationSchemaOwnerKeyName: `[{"schema":"kubevirt.io.virtualmachine","refs":["default/test"]}]`,
 						},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						StorageClassName: pointer.StringPtr("default"),
+						StorageClassName:	pointer.StringPtr("default"),
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
@@ -1278,19 +1280,19 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 			expected: output{
 				vmi: &kubevirtapis.VirtualMachineInstance{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace:         "default",
-						Name:              "test",
-						UID:               "fake-vmi-uid",
-						Finalizers:        testFinalizers,
-						DeletionTimestamp: &metav1.Time{},
+						Namespace:		"default",
+						Name:			"test",
+						UID:			"fake-vmi-uid",
+						Finalizers:		testFinalizers,
+						DeletionTimestamp:	&metav1.Time{},
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
@@ -1299,8 +1301,8 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 							Devices: kubevirtapis.Devices{
 								Disks: []kubevirtapis.Disk{
 									{
-										Name:      "disk1",
-										BootOrder: pointerToUint(1),
+										Name:		"disk1",
+										BootOrder:	pointerToUint(1),
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1308,7 +1310,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 										},
 									},
 									{
-										Name: "disk2",
+										Name:	"disk2",
 										DiskDevice: kubevirtapis.DiskDevice{
 											Disk: &kubevirtapis.DiskTarget{
 												Bus: "virtio",
@@ -1320,7 +1322,7 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 						},
 						Volumes: []kubevirtapis.Volume{
 							{
-								Name: "disk1",
+								Name:	"disk1",
 								VolumeSource: kubevirtapis.VolumeSource{
 									ContainerDisk: &kubevirtapis.ContainerDiskSource{
 										Image: "vmidisks/fedora25:latest",
@@ -1328,38 +1330,38 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 								},
 							},
 							{
-								Name: "disk2",
+								Name:	"disk2",
 								VolumeSource: kubevirtapis.VolumeSource{
 									PersistentVolumeClaim: &kubevirtapis.PersistentVolumeClaimVolumeSource{
 										PersistentVolumeClaimVolumeSource: corev1.PersistentVolumeClaimVolumeSource{
 											ClaimName: "pvc-disk",
 										},
-										Hotpluggable: true,
+										Hotpluggable:	true,
 									},
 								},
 							},
 						},
 					},
 				},
-				err: nil,
+				err:	nil,
 				pvc: &corev1.PersistentVolumeClaim{
 					ObjectMeta: metav1.ObjectMeta{
-						Namespace: "default",
-						Name:      "pvc-disk",
-						UID:       "fake-pvc-uid",
+						Namespace:	"default",
+						Name:		"pvc-disk",
+						UID:		"fake-pvc-uid",
 						OwnerReferences: []metav1.OwnerReference{
 							{
-								APIVersion:         "kubevirt.io/v1",
-								Kind:               "VirtualMachine",
-								Name:               "test",
-								UID:                "fake-vm-uid",
-								BlockOwnerDeletion: pointer.BoolPtr(true),
-								Controller:         pointer.BoolPtr(true),
+								APIVersion:		"kubevirt.io/v1",
+								Kind:			"VirtualMachine",
+								Name:			"test",
+								UID:			"fake-vm-uid",
+								BlockOwnerDeletion:	pointer.BoolPtr(true),
+								Controller:		pointer.BoolPtr(true),
 							},
 						},
 					},
 					Spec: corev1.PersistentVolumeClaimSpec{
-						StorageClassName: pointer.StringPtr("default"),
+						StorageClassName:	pointer.StringPtr("default"),
 						AccessModes: []corev1.PersistentVolumeAccessMode{
 							corev1.ReadWriteOnce,
 						},
@@ -1391,9 +1393,9 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 		}
 
 		var ctrl = &VMIController{
-			virtualMachineCache: fakeVirtualMachineCache(clientset.KubevirtV1().VirtualMachines),
-			pvcClient:           fakeclients.PersistentVolumeClaimClient(coreclientset.CoreV1().PersistentVolumeClaims),
-			pvcCache:            fakeclients.PersistentVolumeClaimCache(coreclientset.CoreV1().PersistentVolumeClaims),
+			virtualMachineCache:	fakeVirtualMachineCache(clientset.KubevirtV1().VirtualMachines),
+			pvcClient:		fakeclients.PersistentVolumeClaimClient(coreclientset.CoreV1().PersistentVolumeClaims),
+			pvcCache:		fakeclients.PersistentVolumeClaimCache(coreclientset.CoreV1().PersistentVolumeClaims),
 		}
 		if tc.given.vmi != nil {
 			var hasFinalizer = sets.NewString(tc.given.vmi.Finalizers...).Has("wrangler.cattle.io/VMIController.UnsetOwnerOfPVCs")
@@ -1414,17 +1416,25 @@ func TestVMIController_UnsetOwnerOfPVCs(t *testing.T) {
 type fakeVirtualMachineCache func(string) kubevirttype.VirtualMachineInterface
 
 func (c fakeVirtualMachineCache) Get(namespace, name string) (*kubevirtapis.VirtualMachine, error) {
+	__traceStack()
+
 	return c(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 }
 
 func (c fakeVirtualMachineCache) List(namespace string, selector labels.Selector) ([]*kubevirtapis.VirtualMachine, error) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVirtualMachineCache) AddIndexer(indexName string, indexer kubevirtctrl.VirtualMachineIndexer) {
+	__traceStack()
+
 	panic("implement me")
 }
 
 func (c fakeVirtualMachineCache) GetByIndex(indexName, key string) ([]*kubevirtapis.VirtualMachine, error) {
+	__traceStack()
+
 	panic("implement me")
 }

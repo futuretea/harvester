@@ -7,17 +7,19 @@ import (
 )
 
 const (
-	upgradeControllerName = "harvester-upgrade-controller"
-	planControllerName    = "harvester-plan-controller"
-	jobControllerName     = "harvester-upgrade-job-controller"
-	podControllerName     = "harvester-upgrade-pod-controller"
-	settingControllerName = "harvester-version-setting-controller"
-	vmImageControllerName = "harvester-upgrade-vm-image-controller"
-	machineControllerName = "harvester-upgrade-machine-controller"
-	nodeControllerName    = "harvester-upgrade-node-controller"
+	upgradeControllerName	= "harvester-upgrade-controller"
+	planControllerName	= "harvester-plan-controller"
+	jobControllerName	= "harvester-upgrade-job-controller"
+	podControllerName	= "harvester-upgrade-pod-controller"
+	settingControllerName	= "harvester-version-setting-controller"
+	vmImageControllerName	= "harvester-upgrade-vm-image-controller"
+	machineControllerName	= "harvester-upgrade-machine-controller"
+	nodeControllerName	= "harvester-upgrade-node-controller"
 )
 
 func Register(ctx context.Context, management *config.Management, options config.Options) error {
+	__traceStack()
+
 	if !options.HCIMode {
 		return nil
 	}
@@ -36,79 +38,79 @@ func Register(ctx context.Context, management *config.Management, options config
 	machines := management.ClusterFactory.Cluster().V1alpha4().Machine()
 
 	controller := &upgradeHandler{
-		ctx:           ctx,
-		jobClient:     jobs,
-		jobCache:      jobs.Cache(),
-		nodeCache:     nodes.Cache(),
-		namespace:     options.Namespace,
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
-		versionCache:  versions.Cache(),
-		planClient:    plans,
-		planCache:     plans.Cache(),
-		vmImageClient: vmImages,
-		vmImageCache:  vmImages.Cache(),
-		vmClient:      vms,
-		serviceClient: services,
-		clusterClient: clusters,
-		clusterCache:  clusters.Cache(),
+		ctx:		ctx,
+		jobClient:	jobs,
+		jobCache:	jobs.Cache(),
+		nodeCache:	nodes.Cache(),
+		namespace:	options.Namespace,
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
+		versionCache:	versions.Cache(),
+		planClient:	plans,
+		planCache:	plans.Cache(),
+		vmImageClient:	vmImages,
+		vmImageCache:	vmImages.Cache(),
+		vmClient:	vms,
+		serviceClient:	services,
+		clusterClient:	clusters,
+		clusterCache:	clusters.Cache(),
 	}
 	upgrades.OnChange(ctx, upgradeControllerName, controller.OnChanged)
 	upgrades.OnRemove(ctx, upgradeControllerName, controller.OnRemove)
 
 	planHandler := &planHandler{
-		namespace:     options.Namespace,
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
-		nodeCache:     nodes.Cache(),
-		planClient:    plans,
+		namespace:	options.Namespace,
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
+		nodeCache:	nodes.Cache(),
+		planClient:	plans,
 	}
 	plans.OnChange(ctx, planControllerName, planHandler.OnChanged)
 
 	jobHandler := &jobHandler{
-		namespace:     options.Namespace,
-		planCache:     plans.Cache(),
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
-		machineClient: machines,
-		machineCache:  machines.Cache(),
-		nodeClient:    nodes,
-		nodeCache:     nodes.Cache(),
+		namespace:	options.Namespace,
+		planCache:	plans.Cache(),
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
+		machineClient:	machines,
+		machineCache:	machines.Cache(),
+		nodeClient:	nodes,
+		nodeCache:	nodes.Cache(),
 	}
 	jobs.OnChange(ctx, jobControllerName, jobHandler.OnChanged)
 
 	podHandler := &podHandler{
-		namespace:     options.Namespace,
-		planCache:     plans.Cache(),
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
+		namespace:	options.Namespace,
+		planCache:	plans.Cache(),
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
 	}
 	pods.OnChange(ctx, podControllerName, podHandler.OnChanged)
 
 	vmImageHandler := &vmImageHandler{
-		namespace:     options.Namespace,
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
+		namespace:	options.Namespace,
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
 	}
 	vmImages.OnChange(ctx, vmImageControllerName, vmImageHandler.OnChanged)
 
 	machineHandler := &machineHandler{
-		namespace:     options.Namespace,
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
-		jobClient:     jobs,
-		jobCache:      jobs.Cache(),
+		namespace:	options.Namespace,
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
+		jobClient:	jobs,
+		jobCache:	jobs.Cache(),
 	}
 	machines.OnChange(ctx, machineControllerName, machineHandler.OnChanged)
 
 	nodeHandler := &nodeHandler{
-		namespace:     options.Namespace,
-		nodeClient:    nodes,
-		nodeCache:     nodes.Cache(),
-		upgradeClient: upgrades,
-		upgradeCache:  upgrades.Cache(),
-		machineClient: machines,
-		machineCache:  machines.Cache(),
+		namespace:	options.Namespace,
+		nodeClient:	nodes,
+		nodeCache:	nodes.Cache(),
+		upgradeClient:	upgrades,
+		upgradeCache:	upgrades.Cache(),
+		machineClient:	machines,
+		machineCache:	machines.Cache(),
 	}
 	nodes.OnChange(ctx, nodeControllerName, nodeHandler.OnChanged)
 

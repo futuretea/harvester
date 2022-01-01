@@ -6,33 +6,35 @@ import (
 )
 
 const (
-	CloudInitTypeNoCloud     = "noCloud"
-	CloudInitTypeConfigDrive = "configDrive"
-	CloudInitDiskName        = "cloudinitdisk"
+	CloudInitTypeNoCloud		= "noCloud"
+	CloudInitTypeConfigDrive	= "configDrive"
+	CloudInitDiskName		= "cloudinitdisk"
 )
 
 type CloudInitSource struct {
-	CloudInitType         string
-	UserDataSecretName    string
-	UserDataBase64        string
-	UserData              string
-	NetworkDataSecretName string
-	NetworkDataBase64     string
-	NetworkData           string
+	CloudInitType		string
+	UserDataSecretName	string
+	UserDataBase64		string
+	UserData		string
+	NetworkDataSecretName	string
+	NetworkDataBase64	string
+	NetworkData		string
 }
 
 func (v *VMBuilder) CloudInit(diskName string, cloudInitSource CloudInitSource) *VMBuilder {
+	__traceStack()
+
 	var volume kubevirtv1.Volume
 	switch cloudInitSource.CloudInitType {
 	case CloudInitTypeNoCloud:
 		volume = kubevirtv1.Volume{
-			Name: diskName,
+			Name:	diskName,
 			VolumeSource: kubevirtv1.VolumeSource{
 				CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
-					UserData:          cloudInitSource.UserData,
-					UserDataBase64:    cloudInitSource.UserDataBase64,
-					NetworkData:       cloudInitSource.NetworkData,
-					NetworkDataBase64: cloudInitSource.NetworkDataBase64,
+					UserData:		cloudInitSource.UserData,
+					UserDataBase64:		cloudInitSource.UserDataBase64,
+					NetworkData:		cloudInitSource.NetworkData,
+					NetworkDataBase64:	cloudInitSource.NetworkDataBase64,
 				},
 			},
 		}
@@ -48,13 +50,13 @@ func (v *VMBuilder) CloudInit(diskName string, cloudInitSource CloudInitSource) 
 		}
 	case CloudInitTypeConfigDrive:
 		volume = kubevirtv1.Volume{
-			Name: diskName,
+			Name:	diskName,
 			VolumeSource: kubevirtv1.VolumeSource{
 				CloudInitConfigDrive: &kubevirtv1.CloudInitConfigDriveSource{
-					UserData:          cloudInitSource.UserData,
-					UserDataBase64:    cloudInitSource.UserDataBase64,
-					NetworkData:       cloudInitSource.NetworkData,
-					NetworkDataBase64: cloudInitSource.NetworkDataBase64,
+					UserData:		cloudInitSource.UserData,
+					UserDataBase64:		cloudInitSource.UserDataBase64,
+					NetworkData:		cloudInitSource.NetworkData,
+					NetworkDataBase64:	cloudInitSource.NetworkDataBase64,
 				},
 			},
 		}
@@ -74,10 +76,14 @@ func (v *VMBuilder) CloudInit(diskName string, cloudInitSource CloudInitSource) 
 }
 
 func (v *VMBuilder) CloudInitDisk(diskName, diskBus string, isCDRom bool, bootOrder int, cloudInitSource CloudInitSource) *VMBuilder {
+	__traceStack()
+
 	return v.Disk(diskName, diskBus, isCDRom, bootOrder).CloudInit(diskName, cloudInitSource)
 }
 
 func (v *VMBuilder) SSHKey(sshKeyName string) *VMBuilder {
+	__traceStack()
+
 	v.SSHNames = append(v.SSHNames, sshKeyName)
 	return v
 }

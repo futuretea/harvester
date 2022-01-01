@@ -8,15 +8,14 @@ import (
 )
 
 type VMNetworkController struct {
-	vmCache   vmv1.VirtualMachineCache
-	vmClient  vmv1.VirtualMachineClient
-	vmiClient vmv1.VirtualMachineInstanceClient
+	vmCache		vmv1.VirtualMachineCache
+	vmClient	vmv1.VirtualMachineClient
+	vmiClient	vmv1.VirtualMachineInstanceClient
 }
 
-// SetDefaultNetworkMacAddress set the default mac address of networks using the initial allocated mac address from the VMI status,
-// since the most guest OS will use the initial allocated mac address of its DHCP config, and on Kubevirt the VM restart it will re-allocate
-// a new mac address which will lead the original network unreachable.
 func (h *VMNetworkController) SetDefaultNetworkMacAddress(id string, vmi *kv1.VirtualMachineInstance) (*kv1.VirtualMachineInstance, error) {
+	__traceStack()
+
 	if id == "" || vmi == nil || vmi.DeletionTimestamp != nil {
 		return vmi, nil
 	}
@@ -38,6 +37,8 @@ func (h *VMNetworkController) SetDefaultNetworkMacAddress(id string, vmi *kv1.Vi
 }
 
 func (h *VMNetworkController) updateVMDefaultNetworkMacAddress(vmi *kv1.VirtualMachineInstance) error {
+	__traceStack()
+
 	logrus.Debugf("update default network mac address of the vm: %s\n", vmi.Name)
 	vm, err := h.vmCache.Get(vmi.Namespace, vmi.Name)
 	if err != nil {
@@ -55,7 +56,7 @@ func (h *VMNetworkController) updateVMDefaultNetworkMacAddress(vmi *kv1.VirtualM
 
 	for i, vmIface := range vmCopy.Spec.Template.Spec.Domain.Devices.Interfaces {
 		macAddress, ok := vmiInterfaces[vmIface.Name]
-		// only set the network mac address when it has no existing value
+
 		if ok && vmIface.MacAddress == "" {
 			logrus.Debugf("set VM %s management network %s macAddress to %s", vm.Name, vmIface.Name, macAddress)
 			vmCopy.Spec.Template.Spec.Domain.Devices.Interfaces[i].MacAddress = macAddress

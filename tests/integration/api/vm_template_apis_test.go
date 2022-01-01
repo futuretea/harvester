@@ -18,17 +18,17 @@ import (
 )
 
 const (
-	defaultVMTemplates        = 3
-	defaultVMTemplateVersions = 3
+	defaultVMTemplates		= 3
+	defaultVMTemplateVersions	= 3
 )
 
 var _ = Describe("verify vm template APIs", func() {
 
 	var (
-		scaled            *config.Scaled
-		templates         ctlharvesterv1.VirtualMachineTemplateClient
-		templateVersions  ctlharvesterv1.VirtualMachineTemplateVersionClient
-		templateNamespace string
+		scaled			*config.Scaled
+		templates		ctlharvesterv1.VirtualMachineTemplateClient
+		templateVersions	ctlharvesterv1.VirtualMachineTemplateVersionClient
+		templateNamespace	string
 	)
 
 	BeforeEach(func() {
@@ -66,25 +66,25 @@ var _ = Describe("verify vm template APIs", func() {
 
 	Context("operate via steve API", func() {
 		var (
-			template = harvesterv1.VirtualMachineTemplate{
+			template	= harvesterv1.VirtualMachineTemplate{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      "vm-template-0",
-					Namespace: "harvester-system",
-					Labels:    testResourceLabels,
+					Name:		"vm-template-0",
+					Namespace:	"harvester-system",
+					Labels:		testResourceLabels,
 				},
 				Spec: harvesterv1.VirtualMachineTemplateSpec{
 					Description: "testing vm template",
 				},
 			}
-			templateVersion = harvesterv1.VirtualMachineTemplateVersion{
+			templateVersion	= harvesterv1.VirtualMachineTemplateVersion{
 				ObjectMeta: v1.ObjectMeta{
-					Name:      fuzz.String(5),
-					Namespace: "harvester-system",
-					Labels:    testResourceLabels,
+					Name:		fuzz.String(5),
+					Namespace:	"harvester-system",
+					Labels:		testResourceLabels,
 				},
-				Spec: harvesterv1.VirtualMachineTemplateVersionSpec{},
+				Spec:	harvesterv1.VirtualMachineTemplateVersionSpec{},
 			}
-			templateAPI, templateVersionAPI string
+			templateAPI, templateVersionAPI	string
 		)
 
 		BeforeEach(func() {
@@ -117,10 +117,10 @@ var _ = Describe("verify vm template APIs", func() {
 		Specify("verify the vm template and template versions", func() {
 
 			var (
-				templateID         = fmt.Sprintf("%s/%s", templateNamespace, template.Name)
-				defaultVersionID   = fmt.Sprintf("%s/%s", templateNamespace, templateVersion.Name)
-				templateURL        = helper.BuildResourceURL(templateAPI, templateNamespace, template.Name)
-				templateVersionURL = helper.BuildResourceURL(templateVersionAPI, templateNamespace, templateVersion.Name)
+				templateID		= fmt.Sprintf("%s/%s", templateNamespace, template.Name)
+				defaultVersionID	= fmt.Sprintf("%s/%s", templateNamespace, templateVersion.Name)
+				templateURL		= helper.BuildResourceURL(templateAPI, templateNamespace, template.Name)
+				templateVersionURL	= helper.BuildResourceURL(templateVersionAPI, templateNamespace, templateVersion.Name)
 			)
 
 			By("create a vm template", func() {
@@ -143,8 +143,8 @@ var _ = Describe("verify vm template APIs", func() {
 				vm, err := NewDefaultTestVMBuilder(testResourceLabels).VM()
 				MustNotError(err)
 				templateVersion.Spec.VM = harvesterv1.VirtualMachineSourceSpec{
-					ObjectMeta: vm.ObjectMeta,
-					Spec:       vm.Spec,
+					ObjectMeta:	vm.ObjectMeta,
+					Spec:		vm.Spec,
 				}
 
 				respCode, respBody, err := helper.PostObjectByYAML(templateVersionAPI, templateVersion)
