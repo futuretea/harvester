@@ -3,6 +3,7 @@ package vm
 import (
 	"github.com/rancher/apiserver/pkg/types"
 	"github.com/rancher/wrangler/pkg/data/convert"
+	ctlcorev1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	corev1 "k8s.io/api/core/v1"
 	kv1 "kubevirt.io/client-go/api/v1"
 
@@ -29,6 +30,7 @@ const (
 
 type vmformatter struct {
 	vmiCache ctlkubevirtv1.VirtualMachineInstanceCache
+	pvcCache ctlcorev1.PersistentVolumeClaimCache
 }
 
 func (vf *vmformatter) formatter(request *types.APIRequest, resource *types.RawResource) {
@@ -143,6 +145,7 @@ func (vf *vmformatter) canStart(vm *kv1.VirtualMachine, vmi *kv1.VirtualMachineI
 	if vmi != nil && !vmi.IsFinal() && vmi.Status.Phase != kv1.Unknown && vmi.Status.Phase != kv1.VmPhaseUnset {
 		return false
 	}
+
 	return true
 }
 
@@ -228,6 +231,13 @@ func (vf *vmformatter) canCreateTemplate(vmi *kv1.VirtualMachineInstance) bool {
 func (vf *vmformatter) getVMI(vm *kv1.VirtualMachine) *kv1.VirtualMachineInstance {
 	if vmi, err := vf.vmiCache.Get(vm.Namespace, vm.Name); err == nil {
 		return vmi
+	}
+	return nil
+}
+
+func (vf *vmformatter) getPVC(vm *kv1.VirtualMachine, pvcName string) *corev1.PersistentVolumeClaim {
+	if pvc, err := vf.pvcCache.Get(vm.Namespace, pvcName); err == nil {
+		return pvc
 	}
 	return nil
 }
