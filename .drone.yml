@@ -8,7 +8,7 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.4.1
+  image: rancher/dapper:v0.5.8
   commands:
   - dapper ci
   volumes:
@@ -16,13 +16,9 @@ steps:
     path: /var/run/docker.sock
 
 - name: stage-binaries
-  image: rancher/dapper:v0.5.2
+  image: rancher/dapper:v0.5.8
   commands:
   - "cp -r ./bin/* ./package/"
-  when:
-    event:
-    - push
-    - tag
 
 - name: docker-publish-master
   image: plugins/docker
@@ -35,41 +31,11 @@ steps:
     dockerfile: package/Dockerfile
     password:
       from_secret: docker_password
-    repo: "rancher/harvester"
+    repo: "harbor.futuretea.me/rancher/harvester"
+    registry: "harbor.futuretea.me"
     tag: ${DRONE_BRANCH}-head-amd64
     username:
       from_secret: docker_username
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: docker-publish
-  image: plugins/docker
-  settings:
-    build_args:
-    - ARCH=amd64
-    - "VERSION=${DRONE_TAG}"
-    context: package/
-    custom_dns: 1.1.1.1
-    dockerfile: package/Dockerfile
-    password:
-      from_secret: docker_password
-    repo: "rancher/harvester"
-    tag: "${DRONE_TAG}-amd64"
-    username:
-      from_secret: docker_username
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
 
 - name: docker-publish-webhook-master
   image: plugins/docker
@@ -82,42 +48,11 @@ steps:
     dockerfile: package/Dockerfile.webhook
     password:
       from_secret: docker_password
-    repo: "rancher/harvester-webhook"
+    repo: "harbor.futuretea.me/rancher/harvester-webhook"
+    registry: "harbor.futuretea.me"
     tag: ${DRONE_BRANCH}-head-amd64
     username:
       from_secret: docker_username
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: docker-publish-webhook
-  image: plugins/docker
-  settings:
-    build_args:
-    - ARCH=amd64
-    - "VERSION=${DRONE_TAG}"
-    context: package/
-    custom_dns: 1.1.1.1
-    dockerfile: package/Dockerfile.webhook
-    password:
-      from_secret: docker_password
-    repo: "rancher/harvester-webhook"
-    tag: "${DRONE_TAG}-amd64"
-    username:
-      from_secret: docker_username
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
-
 
 - name: docker-publish-upgrade-master
   image: plugins/docker
@@ -130,41 +65,11 @@ steps:
     dockerfile: package/upgrade/Dockerfile
     password:
       from_secret: docker_password
-    repo: "rancher/harvester-upgrade"
+    repo: "harbor.futuretea.me/rancher/harvester-upgrade"
+    registry: "harbor.futuretea.me"
     tag: ${DRONE_BRANCH}-head-amd64
     username:
       from_secret: docker_username
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: docker-publish-upgrade
-  image: plugins/docker
-  settings:
-    build_args:
-    - ARCH=amd64
-    - "VERSION=${DRONE_TAG}"
-    context: package/upgrade
-    custom_dns: 1.1.1.1
-    dockerfile: package/upgrade/Dockerfile
-    password:
-      from_secret: docker_password
-    repo: "rancher/harvester-upgrade"
-    tag: "${DRONE_TAG}-amd64"
-    username:
-      from_secret: docker_username
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
 
 volumes:
 - name: docker
@@ -189,35 +94,8 @@ steps:
       from_secret: docker_password
     platforms:
     - linux/amd64
-    target: "rancher/harvester:${DRONE_BRANCH}-head"
-    template: "rancher/harvester:${DRONE_BRANCH}-head-ARCH"
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: manifest
-  image: plugins/manifest
-  settings:
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    platforms:
-      - linux/amd64
-    target: "rancher/harvester:${DRONE_TAG}"
-    template: "rancher/harvester:${DRONE_TAG}-ARCH"
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
+    target: "harbor.futuretea.me/rancher/harvester:${DRONE_BRANCH}-head"
+    template: "harbor.futuretea.me/rancher/harvester:${DRONE_BRANCH}-head-ARCH"
 
 - name: manifest-webhook-master
   image: plugins/manifest
@@ -228,35 +106,8 @@ steps:
       from_secret: docker_password
     platforms:
     - linux/amd64
-    target: "rancher/harvester-webhook:${DRONE_BRANCH}-head"
-    template: "rancher/harvester-webhook:${DRONE_BRANCH}-head-ARCH"
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: manifest-webhook
-  image: plugins/manifest
-  settings:
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    platforms:
-      - linux/amd64
-    target: "rancher/harvester-webhook:${DRONE_TAG}"
-    template: "rancher/harvester-webhook:${DRONE_TAG}-ARCH"
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
+    target: "harbor.futuretea.me/rancher/harvester-webhook:${DRONE_BRANCH}-head"
+    template: "harbor.futuretea.me/rancher/harvester-webhook:${DRONE_BRANCH}-head-ARCH"
 
 - name: manifest-upgrade-master
   image: plugins/manifest
@@ -267,35 +118,8 @@ steps:
       from_secret: docker_password
     platforms:
     - linux/amd64
-    target: "rancher/harvester-upgrade:${DRONE_BRANCH}-head"
-    template: "rancher/harvester-upgrade:${DRONE_BRANCH}-head-ARCH"
-  when:
-    ref:
-      include:
-      - "refs/heads/master"
-      - "refs/heads/v*"
-    event:
-    - push
-
-- name: manifest-upgrade
-  image: plugins/manifest
-  settings:
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
-    platforms:
-      - linux/amd64
-    target: "rancher/harvester-upgrade:${DRONE_TAG}"
-    template: "rancher/harvester-upgrade:${DRONE_TAG}-ARCH"
-  when:
-    instance:
-    - drone-publish.rancher.io
-    ref:
-    - refs/head/master
-    - refs/tags/*
-    event:
-    - tag
+    target: "harbor.futuretea.me/rancher/harvester-upgrade:${DRONE_BRANCH}-head"
+    template: "harbor.futuretea.me/rancher/harvester-upgrade:${DRONE_BRANCH}-head-ARCH"
 
 depends_on:
 - amd64
@@ -310,31 +134,12 @@ platform:
 
 steps:
 - name: build
-  image: rancher/dapper:v0.4.1
+  image: rancher/dapper:v0.5.8
   commands:
   - dapper build-iso
   volumes:
   - name: docker
     path: /var/run/docker.sock
-  when:
-    instance:
-    - drone-publish.rancher.io
-
-- name: upload_iso_release
-  image: plugins/gcs
-  settings:
-    acl:
-      - allUsers:READER
-    cache_control: "public,no-cache,proxy-revalidate"
-    source: dist/artifacts
-    target: releases.rancher.com/harvester/${DRONE_TAG}
-    token:
-      from_secret: google_auth_key
-  when:
-    instance:
-      - drone-publish.rancher.io
-    event:
-      - tag
 
 - name: upload_iso_release_master
   image: plugins/gcs
@@ -346,20 +151,6 @@ steps:
     target: releases.rancher.com/harvester/master
     token:
       from_secret: google_auth_key
-  when:
-    instance:
-      - drone-publish.rancher.io
-    event:
-      - push
-
-trigger:
-  event:
-    - tag
-    - push
-  ref:
-    - "refs/heads/master"
-    - "refs/heads/v*"
-    - "refs/tags/*"
 
 volumes:
 - name: docker
