@@ -3,11 +3,11 @@ set -e
 
 cd $(dirname $0)
 
-./validate
-./validate-ci
+#./validate
+#./validate-ci
 ./build
-./test
+#./test
 ./package-webhook
 ./package-upgrade
-./test-integration
+#./test-integration
 ./package
