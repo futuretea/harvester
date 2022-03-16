@@ -11,9 +11,9 @@ steps:
   image: alpine/git
   commands:
   - git fetch --tags
-  when:
-    event:
-      - tag
+#  when:
+#    event:
+#      - tag
 
 - name: build
   image: rancher/dapper:v0.5.8
