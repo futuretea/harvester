@@ -53,6 +53,10 @@ spec:
                 type: string
               displayName:
                 type: string
+              extraStorageClassParameters:
+                additionalProperties:
+                  type: string
+                type: object
               pvcName:
                 type: string
               pvcNamespace:

@@ -6817,6 +6817,13 @@
           "type": "string",
           "default": ""
         },
+        "extraStorageClassParameters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "default": ""
+          }
+        },
         "pvcName": {
           "type": "string",
           "default": ""

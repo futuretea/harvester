@@ -2724,6 +2724,21 @@ func schema_pkg_apis_harvesterhciio_v1beta1_VirtualMachineImageSpec(ref common.R
 							Format:  "",
 						},
 					},
+					"extraStorageClassParameters": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 				Required: []string{"displayName", "sourceType"},
 			},
