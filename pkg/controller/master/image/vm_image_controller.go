@@ -9,7 +9,7 @@ import (
 	lhmanager "github.com/longhorn/longhorn-manager/manager"
 	"github.com/longhorn/longhorn-manager/types"
 	ctlcorev1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
-	v1 "github.com/rancher/wrangler/pkg/generated/controllers/storage/v1"
+	ctlstoragev1 "github.com/rancher/wrangler/pkg/generated/controllers/storage/v1"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,13 +25,12 @@ import (
 
 const (
 	optionBackingImageName = "backingImage"
-	optionMigratable       = "migratable"
 )
 
 // vmImageHandler syncs status on vm image changes, and manage a storageclass & a backingimage per vm image
 type vmImageHandler struct {
 	httpClient     http.Client
-	storageClasses v1.StorageClassClient
+	storageClasses ctlstoragev1.StorageClassClient
 	images         ctlharvesterv1.VirtualMachineImageClient
 	backingImages  lhv1beta1.BackingImageClient
 	pvcCache       ctlcorev1.PersistentVolumeClaimCache
@@ -45,11 +44,8 @@ func (h *vmImageHandler) OnChanged(_ string, image *harvesterv1.VirtualMachineIm
 		return h.initialize(image)
 	} else if image.Spec.URL != image.Status.AppliedURL {
 		// URL is changed, recreate the storageclass and backingimage
-		if err := h.backingImages.Delete(util.LonghornSystemNamespaceName, getBackingImageName(image), &metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
-			return image, err
-		}
-		if err := h.storageClasses.Delete(getImageStorageClassName(image.Name), &metav1.DeleteOptions{}); err != nil && !errors.IsNotFound(err) {
-			return image, err
+		if err := h.deleteBackingImageAndStorageClass(image); err != nil {
+			return nil, err
 		}
 		return h.initialize(image)
 	}
@@ -147,26 +143,39 @@ func (h *vmImageHandler) createBackingImage(image *harvesterv1.VirtualMachineIma
 }
 
 func (h *vmImageHandler) createStorageClass(image *harvesterv1.VirtualMachineImage) error {
-	recliamPolicy := corev1.PersistentVolumeReclaimDelete
+	reclaimPolicy := corev1.PersistentVolumeReclaimDelete
 	volumeBindingMode := storagev1.VolumeBindingImmediate
 	sc := &storagev1.StorageClass{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: getImageStorageClassName(image.Name),
 		},
 		Provisioner:          types.LonghornDriverName,
-		ReclaimPolicy:        &recliamPolicy,
+		ReclaimPolicy:        &reclaimPolicy,
 		AllowVolumeExpansion: pointer.BoolPtr(true),
 		VolumeBindingMode:    &volumeBindingMode,
-		Parameters: map[string]string{
-			types.OptionNumberOfReplicas:    "3",
-			types.OptionStaleReplicaTimeout: "30",
-			optionMigratable:                "true",
-			optionBackingImageName:          getBackingImageName(image),
-		},
+		Parameters:           getImageStorageClassParams(image),
 	}
 
 	_, err := h.storageClasses.Create(sc)
 	return err
+}
+
+func (h *vmImageHandler) deleteBackingImage(image *harvesterv1.VirtualMachineImage) error {
+	return h.backingImages.Delete(util.LonghornSystemNamespaceName, getBackingImageName(image), &metav1.DeleteOptions{})
+}
+
+func (h *vmImageHandler) deleteStorageClass(image *harvesterv1.VirtualMachineImage) error {
+	return h.storageClasses.Delete(getImageStorageClassName(image.Name), &metav1.DeleteOptions{})
+}
+
+func (h *vmImageHandler) deleteBackingImageAndStorageClass(image *harvesterv1.VirtualMachineImage) error {
+	if err := h.deleteBackingImage(image); err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	if err := h.deleteStorageClass(image); err != nil && !errors.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
 
 func getImageStorageClassName(imageName string) string {
@@ -175,4 +184,14 @@ func getImageStorageClassName(imageName string) string {
 
 func getBackingImageName(image *harvesterv1.VirtualMachineImage) string {
 	return fmt.Sprintf("%s-%s", image.Namespace, image.Name)
+}
+
+func getImageStorageClassParams(image *harvesterv1.VirtualMachineImage) map[string]string {
+	params := map[string]string{
+		optionBackingImageName: getBackingImageName(image),
+	}
+	for k, v := range image.Spec.ExtraStorageClassParameters {
+		params[k] = v
+	}
+	return params
 }

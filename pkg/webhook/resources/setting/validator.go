@@ -44,14 +44,15 @@ var supportedSSLProtocols = []string{"SSLv2", "SSLv3", "TLSv1", "TLSv1.1", "TLSv
 type validateSettingFunc func(setting *v1beta1.Setting) error
 
 var validateSettingFuncs = map[string]validateSettingFunc{
-	settings.HttpProxySettingName:            validateHTTPProxy,
-	settings.VMForceResetPolicySettingName:   validateVMForceResetPolicy,
-	settings.SupportBundleImageName:          validateSupportBundleImage,
-	settings.SupportBundleTimeoutSettingName: validateSupportBundleTimeout,
-	settings.OvercommitConfigSettingName:     validateOvercommitConfig,
-	settings.VipPoolsConfigSettingName:       validateVipPoolsConfig,
-	settings.SSLCertificatesSettingName:      validateSSLCertificates,
-	settings.SSLParametersName:               validateSSLParameters,
+	settings.HttpProxySettingName:                          validateHTTPProxy,
+	settings.VMForceResetPolicySettingName:                 validateVMForceResetPolicy,
+	settings.SupportBundleImageName:                        validateSupportBundleImage,
+	settings.SupportBundleTimeoutSettingName:               validateSupportBundleTimeout,
+	settings.OvercommitConfigSettingName:                   validateOvercommitConfig,
+	settings.VipPoolsConfigSettingName:                     validateVipPoolsConfig,
+	settings.SSLCertificatesSettingName:                    validateSSLCertificates,
+	settings.SSLParametersName:                             validateSSLParameters,
+	settings.ImageDefaultStorageClassParametersSettingName: validateImageStorageClassParameters,
 }
 
 func NewValidator(
@@ -469,4 +470,45 @@ func (v *settingValidator) validateVolumeSnapshotClass(setting *v1beta1.Setting)
 	}
 	_, err := v.snapshotClassCache.Get(setting.Value)
 	return err
+}
+
+func validateImageStorageClassParameters(setting *v1beta1.Setting) error {
+	if setting.Value == "" {
+		return nil
+	}
+
+	parameters := map[string]string{}
+	if err := json.Unmarshal([]byte(setting.Value), &parameters); err != nil {
+		return werror.NewInvalidError(fmt.Sprintf("Invalid JSON: %s", setting.Value), "Value")
+	}
+
+	parameterMustBeInteger := func(key string) (int, error) {
+		v, err := strconv.Atoi(parameters[key])
+		if err != nil {
+			return 0, werror.NewInvalidError(fmt.Sprintf("parameter %s must be an integer, but got %s", key, parameters[key]), key)
+		}
+		return v, nil
+	}
+
+	numberOfReplicas, err := parameterMustBeInteger("numberOfReplicas")
+	if err != nil {
+		return err
+	}
+	if numberOfReplicas < 1 || numberOfReplicas > 3 {
+		return werror.NewInvalidError(fmt.Sprintf("parameter numberOfReplicas must be >= 1 and <= 3, but got: %d", numberOfReplicas), "numberOfReplicas")
+	}
+
+	staleReplicaTimeout, err := parameterMustBeInteger("staleReplicaTimeout")
+	if err != nil {
+		return err
+	}
+	if staleReplicaTimeout <= 0 {
+		return werror.NewInvalidError(fmt.Sprintf("parameter staleReplicaTimeout must be > 0, but got: %d", staleReplicaTimeout), "staleReplicaTimeout")
+	}
+
+	if parameters["migratable"] != "true" {
+		return werror.NewInvalidError("parameter migratable must be true", "migratable")
+	}
+
+	return nil
 }

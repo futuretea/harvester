@@ -17,11 +17,20 @@ import (
 
 var _ = Describe("verify image APIs", func() {
 
-	var imageNamespace string
+	var (
+		imageNamespace                     string
+		imageDefaultStorageClassParameters map[string]string
+	)
 
 	BeforeEach(func() {
 
 		imageNamespace = "default"
+
+		imageDefaultStorageClassParameters = map[string]string{
+			"staleReplicaTimeout": "30",
+			"migratable":          "true",
+			"numberOfReplicas":    "3",
+		}
 
 	})
 
@@ -106,6 +115,7 @@ var _ = Describe("verify image APIs", func() {
 			})
 
 			By("verify image fields matching", func() {
+				image.Spec.ExtraStorageClassParameters = imageDefaultStorageClassParameters
 				respCode, respBody, err := helper.GetObject(getImageURL, &retImage)
 				MustRespCodeIs(http.StatusOK, "get image", err, respCode, respBody)
 				Expect(retImage.Labels).To(BeEquivalentTo(image.Labels))
@@ -148,6 +158,7 @@ var _ = Describe("verify image APIs", func() {
 			})
 
 			By("verify image fields matching", func() {
+				image.Spec.ExtraStorageClassParameters = imageDefaultStorageClassParameters
 				respCode, respBody, err := helper.GetObject(getImageURL, &retImage)
 				MustRespCodeIs(http.StatusOK, "get image", err, respCode, respBody)
 				Expect(retImage.Labels).To(BeEquivalentTo(image.Labels))
@@ -226,6 +237,7 @@ var _ = Describe("verify image APIs", func() {
 			}, 1*time.Minute, 1*time.Second)
 
 			By("then the image is updated")
+			toUpdateImage.Spec.ExtraStorageClassParameters = imageDefaultStorageClassParameters
 			respCode, respBody, err = helper.GetObject(imageURL, &retImage)
 			MustRespCodeIs(http.StatusOK, "get image", err, respCode, respBody)
 			Expect(retImage.Labels).To(BeEquivalentTo(toUpdateImage.Labels))

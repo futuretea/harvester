@@ -170,3 +170,70 @@ func Test_validateSSLProtocols(t *testing.T) {
 		})
 	}
 }
+
+func Test_validateImageStorageClassParameters(t *testing.T) {
+	tests := []struct {
+		name   string
+		args   *v1beta1.Setting
+		errMsg string
+	}{
+		{
+			name: "invalid json",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"3","staleReplicaTimeout":"30","migratable":"true"`,
+			},
+			errMsg: `Invalid JSON: {"numberOfReplicas":"3","staleReplicaTimeout":"30","migratable":"true"`,
+		},
+		{
+			name: "invalid numberOfReplicas type",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"test","staleReplicaTimeout":"30","migratable":"true"}`,
+			},
+			errMsg: `parameter numberOfReplicas must be an integer, but got test`,
+		},
+		{
+			name: "invalid numberOfReplicas value",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"0","staleReplicaTimeout":"30","migratable":"true"}`,
+			},
+			errMsg: `parameter numberOfReplicas must be >= 1 and <= 3, but got: 0`,
+		},
+		{
+			name: "invalid staleReplicaTimeout type",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"3","staleReplicaTimeout":"test","migratable":"true"}`,
+			},
+			errMsg: `parameter staleReplicaTimeout must be an integer, but got test`,
+		},
+		{
+			name: "invalid staleReplicaTimeout value",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"3","staleReplicaTimeout":"0","migratable":"true"}`,
+			},
+			errMsg: `parameter staleReplicaTimeout must be > 0, but got: 0`,
+		},
+		{
+			name: "invalid migratable",
+			args: &v1beta1.Setting{
+				ObjectMeta: v1.ObjectMeta{Name: settings.ImageDefaultStorageClassParametersSettingName},
+				Value:      `{"numberOfReplicas":"3","staleReplicaTimeout":"30","migratable":"false"}`,
+			},
+			errMsg: `parameter migratable must be true`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateImageStorageClassParameters(tt.args)
+			if tt.errMsg != "" {
+				assert.Equal(t, tt.errMsg, err.Error())
+			}
+		})
+
+	}
+}
