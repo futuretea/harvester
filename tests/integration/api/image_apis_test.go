@@ -203,10 +203,11 @@ var _ = Describe("verify image APIs", func() {
 						},
 					},
 					Spec: harvesterv1.VirtualMachineImageSpec{
-						Description: "test description update",
-						DisplayName: imageDisplayName,
-						SourceType:  harvesterv1.VirtualMachineImageSourceTypeDownload,
-						URL:         "http://harvesterhci.io/test-update.img",
+						Description:                 "test description update",
+						DisplayName:                 imageDisplayName,
+						SourceType:                  harvesterv1.VirtualMachineImageSourceTypeDownload,
+						URL:                         "http://harvesterhci.io/test-update.img",
+						ExtraStorageClassParameters: imageDefaultStorageClassParameters,
 					},
 				}
 
@@ -237,7 +238,6 @@ var _ = Describe("verify image APIs", func() {
 			}, 1*time.Minute, 1*time.Second)
 
 			By("then the image is updated")
-			toUpdateImage.Spec.ExtraStorageClassParameters = imageDefaultStorageClassParameters
 			respCode, respBody, err = helper.GetObject(imageURL, &retImage)
 			MustRespCodeIs(http.StatusOK, "get image", err, respCode, respBody)
 			Expect(retImage.Labels).To(BeEquivalentTo(toUpdateImage.Labels))

@@ -3,7 +3,6 @@ package virtualmachineimage
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	admissionregv1 "k8s.io/api/admissionregistration/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -33,7 +32,6 @@ func (m *virtualMachineImageMutator) Resource() types.Resource {
 		ObjectType: &harvesterv1.VirtualMachineImage{},
 		OperationTypes: []admissionregv1.OperationType{
 			admissionregv1.Create,
-			admissionregv1.Update,
 		},
 	}
 }
@@ -41,17 +39,10 @@ func (m *virtualMachineImageMutator) Resource() types.Resource {
 func (m *virtualMachineImageMutator) Create(request *types.Request, newObj runtime.Object) (types.PatchOps, error) {
 	newImage := newObj.(*harvesterv1.VirtualMachineImage)
 
-	return m.patchImageStorageClassParams(nil, newImage)
+	return m.patchImageStorageClassParams(newImage)
 }
 
-func (m *virtualMachineImageMutator) Update(request *types.Request, oldObj runtime.Object, newObj runtime.Object) (types.PatchOps, error) {
-	newImage := newObj.(*harvesterv1.VirtualMachineImage)
-	oldImage := oldObj.(*harvesterv1.VirtualMachineImage)
-
-	return m.patchImageStorageClassParams(oldImage, newImage)
-}
-
-func (m *virtualMachineImageMutator) patchImageStorageClassParams(oldImage *harvesterv1.VirtualMachineImage, newImage *harvesterv1.VirtualMachineImage) ([]string, error) {
+func (m *virtualMachineImageMutator) patchImageStorageClassParams(newImage *harvesterv1.VirtualMachineImage) ([]string, error) {
 	var patchOps types.PatchOps
 	newParams, err := m.getImageDefaultStorageClassParameters()
 	if err != nil {
@@ -60,13 +51,6 @@ func (m *virtualMachineImageMutator) patchImageStorageClassParams(oldImage *harv
 
 	for k, v := range newImage.Spec.ExtraStorageClassParameters {
 		newParams[k] = v
-	}
-
-	if oldImage != nil {
-		oldParams := oldImage.Spec.ExtraStorageClassParameters
-		if reflect.DeepEqual(oldParams, newParams) {
-			return patchOps, nil
-		}
 	}
 
 	valueBytes, err := json.Marshal(newParams)
