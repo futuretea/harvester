@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	longhorntypes "github.com/longhorn/longhorn-manager/types"
 	"github.com/rancher/apiserver/pkg/apierror"
 	ctlcorev1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	"github.com/rancher/wrangler/pkg/schemas/validation"
@@ -66,7 +67,7 @@ func (h *ActionHandler) do(rw http.ResponseWriter, r *http.Request) error {
 		if input.Namespace == "" {
 			return apierror.NewAPIError(validation.InvalidBodyContent, "Parameter `namespace` is required")
 		}
-		return h.exportVolume(r.Context(), input.Namespace, input.DisplayName, pvcNamespace, pvcName)
+		return h.exportVolume(r.Context(), input.Namespace, input.DisplayName, input.DiskSelector, input.NodeSelector, pvcNamespace, pvcName)
 	case actionCancelExpand:
 		return h.cancelExpand(r.Context(), pvcNamespace, pvcName)
 	default:
@@ -74,18 +75,26 @@ func (h *ActionHandler) do(rw http.ResponseWriter, r *http.Request) error {
 	}
 }
 
-func (h *ActionHandler) exportVolume(ctx context.Context, imageNamespace, imageDisplayName, pvcNamespace, pvcName string) error {
+func (h *ActionHandler) exportVolume(ctx context.Context, imageNamespace, imageDisplayName, imageDiskSelector, imageNodeSelector, pvcNamespace, pvcName string) error {
 	vmImage := &harvesterv1.VirtualMachineImage{
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "image-",
 			Namespace:    imageNamespace,
 		},
 		Spec: harvesterv1.VirtualMachineImageSpec{
-			DisplayName:  imageDisplayName,
-			SourceType:   harvesterv1.VirtualMachineImageSourceTypeExportVolume,
-			PVCName:      pvcName,
-			PVCNamespace: pvcNamespace,
+			DisplayName:                 imageDisplayName,
+			SourceType:                  harvesterv1.VirtualMachineImageSourceTypeExportVolume,
+			PVCName:                     pvcName,
+			PVCNamespace:                pvcNamespace,
+			ExtraStorageClassParameters: map[string]string{},
 		},
+	}
+
+	if imageDiskSelector != "" {
+		vmImage.Spec.ExtraStorageClassParameters[longhorntypes.OptionDiskSelector] = imageDiskSelector
+	}
+	if imageNodeSelector != "" {
+		vmImage.Spec.ExtraStorageClassParameters[longhorntypes.OptionNodeSelector] = imageNodeSelector
 	}
 
 	if _, err := h.images.Create(vmImage); err != nil {
