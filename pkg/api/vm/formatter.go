@@ -1,8 +1,11 @@
 package vm
 
 import (
+	"encoding/json"
+
 	"github.com/rancher/apiserver/pkg/types"
 	"github.com/rancher/wrangler/pkg/data/convert"
+	ctlcorev1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,6 +15,7 @@ import (
 	ctlharvesterv1 "github.com/harvester/harvester/pkg/generated/controllers/harvesterhci.io/v1beta1"
 	ctlkubevirtv1 "github.com/harvester/harvester/pkg/generated/controllers/kubevirt.io/v1"
 	"github.com/harvester/harvester/pkg/indexeres"
+	"github.com/harvester/harvester/pkg/settings"
 	"github.com/harvester/harvester/pkg/util"
 )
 
@@ -36,6 +40,7 @@ const (
 type vmformatter struct {
 	vmiCache      ctlkubevirtv1.VirtualMachineInstanceCache
 	vmBackupCache ctlharvesterv1.VirtualMachineBackupCache
+	pvcCache      ctlcorev1.PersistentVolumeClaimCache
 }
 
 func (vf *vmformatter) formatter(request *types.APIRequest, resource *types.RawResource) {
@@ -237,6 +242,33 @@ func (vf *vmformatter) canDoBackup(vm *kubevirtv1.VirtualMachine, vmi *kubevirtv
 
 	if vmi != nil && vmi.Status.Phase != kubevirtv1.Running && vmi.Status.Phase != kubevirtv1.Succeeded {
 		return false
+	}
+
+	csiDriverConfig := make(map[string]settings.CSIDriverInfo)
+	if err := json.Unmarshal([]byte(settings.CSIDriverConfig.Get()), &csiDriverConfig); err != nil {
+		logrus.Errorf("can not get settings csi-driver-config, err: %+v", err)
+		return false
+	}
+
+	for _, volume := range vm.Spec.Template.Spec.Volumes {
+		if volume.PersistentVolumeClaim == nil {
+			continue
+		}
+		pvcNamespace := vm.Namespace
+		pvcName := volume.PersistentVolumeClaim.ClaimName
+		pvc, err := vf.pvcCache.Get(pvcNamespace, pvcName)
+		if err != nil {
+			logrus.Errorf("can not get pvc %s/%s, err: %+v", pvcNamespace, pvcName, err)
+			return false
+		}
+		provisioner := util.GetProvisionedPVCProvisioner(pvc)
+		c, ok := csiDriverConfig[provisioner]
+		if !ok {
+			return false
+		}
+		if c.BackupVolumeSnapshotClassName == "" || c.VolumeSnapshotClassName == "" {
+			return false
+		}
 	}
 
 	return true
