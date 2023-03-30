@@ -8,7 +8,9 @@ import (
 	v1 "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	kubevirtv1 "kubevirt.io/api/core/v1"
 
+	ctlkubevirtv1 "github.com/harvester/harvester/pkg/generated/controllers/kubevirt.io/v1"
 	ctllonghornv1 "github.com/harvester/harvester/pkg/generated/controllers/longhorn.io/v1beta1"
 	ctlsnapshotv1 "github.com/harvester/harvester/pkg/generated/controllers/snapshot.storage.k8s.io/v1beta1"
 	"github.com/harvester/harvester/pkg/indexeres"
@@ -25,6 +27,7 @@ type Controller struct {
 	volumeController ctllonghornv1.VolumeController
 	volumeCache      ctllonghornv1.VolumeCache
 	snapshotCache    ctlsnapshotv1.VolumeSnapshotCache
+	vmCache          ctlkubevirtv1.VirtualMachineCache
 }
 
 // Detach unused volumes, so attached volumes don't block node drain.
@@ -34,6 +37,18 @@ func (c *Controller) DetachVolumesOnChange(_ string, volume *lhv1beta1.Volume) (
 	}
 
 	if isVolumeDetached(volume) {
+		return volume, nil
+	}
+
+	// check if the volume is used by a VM, we only try to detach volumes that are used by VMs
+	usedByVM := false
+	for _, workload := range volume.Status.KubernetesStatus.WorkloadsStatus {
+		if workload.WorkloadType == kubevirtv1.VirtualMachineInstanceGroupVersionKind.Kind {
+			usedByVM = true
+			break
+		}
+	}
+	if !usedByVM {
 		return volume, nil
 	}
 
@@ -70,10 +85,19 @@ func (c *Controller) checkDetachVolume(pvc *corev1.PersistentVolumeClaim) (canDe
 		return false, false, fmt.Errorf("can't find volume %s/%s, err: %w", util.LonghornSystemNamespaceName, pvc.Spec.VolumeName, err)
 	}
 	for _, workload := range volume.Status.KubernetesStatus.WorkloadsStatus {
-		// For running workload, we don't want to watch again
-		if workload.PodStatus == string(corev1.PodRunning) || workload.PodStatus == string(corev1.PodPending) {
-			logrus.Debugf("workload %s/%s is %s, don't detach pvc: %s/%s", volume.Status.KubernetesStatus.Namespace, workload.WorkloadName, workload.PodStatus, pvc.Namespace, pvc.Name)
+		vmiNamespace := volume.Status.KubernetesStatus.Namespace
+		vmiName := workload.WorkloadName
+		vm, err := c.vmCache.Get(vmiNamespace, vmiName)
+		if err != nil {
+			return false, false, err
+		}
+		// if the VM's runStrategy is not Halted, vmi and pod will be recreated, we can't detach the volume
+		if *vm.Spec.RunStrategy != kubevirtv1.RunStrategyHalted {
 			return false, false, nil
+		}
+		// if the VM's runStrategy is Halted, we also need to retry util the VM's status become to Stopped
+		if vm.Status.PrintableStatus != kubevirtv1.VirtualMachineStatusStopped {
+			return false, true, nil
 		}
 	}
 
