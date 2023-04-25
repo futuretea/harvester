@@ -15,7 +15,7 @@ ENV HARVESTER_UI_PATH /usr/share/harvester/harvester
 # Please update the api-ui-version in pkg/settings/settings.go when updating the version here.
 ENV HARVESTER_API_UI_VERSION 1.1.9
 
-ENV HARVESTER_UI_PLUGIN_BUNDLED_VERSION v1.1.2
+ENV HARVESTER_UI_PLUGIN_BUNDLED_VERSION futuretea-multi-csi-1.1
 
 ARG ARCH=amd64
 ARG VERSION=dev
@@ -30,13 +30,13 @@ RUN curl -sLf ${!TINI_URL} > /usr/bin/tini && chmod +x /usr/bin/tini
 
 RUN mkdir -p /usr/share/harvester/harvester && \
     cd /usr/share/harvester/harvester && \
-    curl -sL https://releases.rancher.com/harvester-ui/dashboard/${HARVESTER_UI_VERSION}.tar.gz | tar xvzf - --strip-components=2 && \
+    curl -sL https://harvester-dev.oss-cn-hangzhou.aliyuncs.com/bot-dashboard/futuretea-multi-csi-1.1.tar.gz | tar xvzf - --strip-components=2 && \
     mkdir -p /usr/share/harvester/harvester/api-ui && \
     cd /usr/share/harvester/harvester/api-ui && \
     curl -sL https://releases.rancher.com/api-ui/${HARVESTER_API_UI_VERSION}.tar.gz | tar xvzf - --strip-components=1 && \
     mkdir -p /usr/share/harvester/harvester/v1/harvester/plugin-assets && \
     cd /usr/share/harvester/harvester/v1/harvester/plugin-assets && \
-    curl -sL https://releases.rancher.com/harvester-ui/plugin/harvester-${HARVESTER_UI_PLUGIN_BUNDLED_VERSION}.tar.gz | tar xvzf - --strip-components=1 && \
+    curl -sL https://harvester-dev.oss-cn-hangzhou.aliyuncs.com/bot-plugin/futuretea-multi-csi-1-1/harvester-futuretea-multi-csi-1.1.tar.gz | tar xvzf - --strip-components=1 && \
     cd /var/lib/harvester/harvester
 
 COPY entrypoint.sh harvester /usr/bin/
