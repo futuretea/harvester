@@ -351,8 +351,11 @@ func (h *vmActionHandler) migrate(ctx context.Context, namespace, vmName string,
 	if !isReady(vmi) {
 		return errors.New("Can't migrate the VM, the VM is not in ready status")
 	}
-	if !canMigrate(vmi) {
-		return errors.New("The VM is not migratable")
+	if vmi.Annotations[util.AnnotationMigrationUID] != "" {
+		return errors.New("The VM is already in migrating state")
+	}
+	if vmi.Spec.NodeSelector != nil && vmi.Spec.NodeSelector[corev1.LabelHostname] != "" {
+		return errors.New("Can't migrate the VM, The VM is set to run on a specific node")
 	}
 
 	// functions in formatter only return bool, the disk.Name is also needed, check them directly here
@@ -459,14 +462,14 @@ func (h *vmActionHandler) findMigratableNodes(rw http.ResponseWriter, namespace,
 		return err
 	}
 
-	if !canMigrate(vmi) {
-		return errors.New("The VM is not migratable")
+	var nodes []string
+	if canMigrate(vmi) {
+		nodes, err = h.findMigratableNodesByVMI(vmi)
+		if err != nil {
+			return err
+		}
 	}
 
-	nodes, err := h.findMigratableNodesByVMI(vmi)
-	if err != nil {
-		return err
-	}
 	resp := FindMigratableNodesOutput{
 		Nodes: nodes,
 	}
