@@ -144,8 +144,13 @@ func (h *Handler) OnBackupChange(key string, vmBackup *harvesterv1.VirtualMachin
 
 		// check if the VM is running, if not make sure the volumes are mounted to the host
 		if !sourceVM.Status.Ready || !sourceVM.Status.Created {
-			if err := h.mountLonghornVolumes(sourceVM); err != nil {
+			waitLonghornVolumeAttached, err := h.mountLonghornVolumes(sourceVM)
+			if err != nil {
 				return nil, h.setStatusError(vmBackup, err)
+			}
+			if waitLonghornVolumeAttached {
+				h.vmBackupController.EnqueueAfter(vmBackup.Namespace, vmBackup.Name, 5*time.Second)
+				return nil, nil
 			}
 		}
 
