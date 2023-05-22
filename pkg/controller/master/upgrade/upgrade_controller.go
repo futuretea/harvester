@@ -62,7 +62,7 @@ const (
 
 	replicaReplenishmentWaitIntervalSetting  = "replica-replenishment-wait-interval"
 	replicaReplenishmentAnnotation           = "harvesterhci.io/" + replicaReplenishmentWaitIntervalSetting
-	extendedReplicaReplenishmentWaitInterval = 1800
+	extendedReplicaReplenishmentWaitInterval = 3600
 )
 
 // upgradeHandler Creates Plan CRDs to trigger upgrades
