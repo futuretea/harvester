@@ -1061,8 +1061,8 @@ github.com/longhorn/longhorn-engine v1.4.2-0.20230505032747-3343bb5fba06 h1:y4qH
 github.com/longhorn/longhorn-engine v1.4.2-0.20230505032747-3343bb5fba06/go.mod h1:Tco41oJDVaBEQJykO0ONP/Qb9pvVbC+eN3a5tS168t8=
 github.com/longhorn/longhorn-instance-manager v1.4.2-0.20230505034424-c9378d6b7c65 h1:rSYY/kki5GEogGBxms4jGZjS8tA7GjjoiniFIeQHtAo=
 github.com/longhorn/longhorn-instance-manager v1.4.2-0.20230505034424-c9378d6b7c65/go.mod h1:ePW0Th8Mmlm1Gar6buGU3VnQW9WAvWvwP0InkZBfE38=
-github.com/longhorn/longhorn-manager v1.4.2 h1:Iper5b5QnXP/2JD/MOSnQTj/GgsvLSwftc78JmtHRNY=
-github.com/longhorn/longhorn-manager v1.4.2/go.mod h1:jVTSe02g9u/biYVZGrSJZrelxxOx08x9FvnR5S0Pdfk=
+github.com/longhorn/longhorn-manager v1.4.3-rc1 h1:8jroVb86zark6KoAbQt26XPvTPLP5Yg0oYztruLDLuA=
+github.com/longhorn/longhorn-manager v1.4.3-rc1/go.mod h1:jVTSe02g9u/biYVZGrSJZrelxxOx08x9FvnR5S0Pdfk=
 github.com/longhorn/nsfilelock v0.0.0-20200723175406-fa7c83ad0003/go.mod h1:0CLeXlf59Lg6C0kjLSDf47ft73Dh37CwymYRKWwAn04=
 github.com/longhorn/sparse-tools v0.0.0-20210729195155-a0fb4226a960/go.mod h1:BWM7yTPb1DulG18EE/Jy20LVIySzIYoZpiOYFtAGwZo=
 github.com/longhorn/sparse-tools v0.0.0-20211229004436-663d2f697e2a/go.mod h1:BWM7yTPb1DulG18EE/Jy20LVIySzIYoZpiOYFtAGwZo=

@@ -455,6 +455,10 @@ func (vc *VolumeController) syncVolume(key string) (err error) {
 		return err
 	}
 
+	if err := vc.ReconcilePersistentVolume(volume); err != nil {
+		return err
+	}
+
 	if err := vc.ReconcileShareManagerState(volume); err != nil {
 		return err
 	}
@@ -1990,7 +1994,7 @@ func (vc *VolumeController) getReplicaCountForAutoBalanceBestEffort(v *longhorn.
 func (vc *VolumeController) getReplicaCountForAutoBalanceZone(v *longhorn.Volume, e *longhorn.Engine, rs map[string]*longhorn.Replica) (int, map[string][]string, error) {
 	log := getLoggerForVolume(vc.logger, v).WithField("replicaAutoBalanceType", "zone")
 
-	readyNodes, err := vc.listReadySchedulableAndScheduledNodes(rs, log)
+	readyNodes, err := vc.listReadySchedulableAndScheduledNodes(v, rs, log)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -2094,10 +2098,19 @@ func (vc *VolumeController) getReplicaCountForAutoBalanceZone(v *longhorn.Volume
 	return adjustCount, zoneExtraRs, err
 }
 
-func (vc *VolumeController) listReadySchedulableAndScheduledNodes(rs map[string]*longhorn.Replica, log logrus.FieldLogger) (map[string]*longhorn.Node, error) {
+func (vc *VolumeController) listReadySchedulableAndScheduledNodes(volume *longhorn.Volume, rs map[string]*longhorn.Replica, log logrus.FieldLogger) (map[string]*longhorn.Node, error) {
 	readyNodes, err := vc.ds.ListReadyAndSchedulableNodes()
 	if err != nil {
 		return nil, err
+	}
+
+	filteredReadyNodes := readyNodes
+	if len(volume.Spec.NodeSelector) != 0 {
+		for nodeName, node := range readyNodes {
+			if !types.IsSelectorsInTags(node.Spec.Tags, volume.Spec.NodeSelector) {
+				delete(filteredReadyNodes, nodeName)
+			}
+		}
 	}
 
 	// Including unschedulable node because the replica is already scheduled and running
@@ -2107,7 +2120,7 @@ func (vc *VolumeController) listReadySchedulableAndScheduledNodes(rs map[string]
 			continue
 		}
 
-		_, exist := readyNodes[r.Spec.NodeID]
+		_, exist := filteredReadyNodes[r.Spec.NodeID]
 		if exist {
 			continue
 		}
@@ -2126,20 +2139,20 @@ func (vc *VolumeController) listReadySchedulableAndScheduledNodes(rs map[string]
 			continue
 		}
 
-		readyNodes[r.Spec.NodeID] = node
+		filteredReadyNodes[r.Spec.NodeID] = node
 		log.WithFields(logrus.Fields{
 			"replica": r.Name,
 			"node":    node.Name,
 		}).Debugf("Including unschedulable node because the replica is scheduled and running")
 	}
 
-	return readyNodes, nil
+	return filteredReadyNodes, nil
 }
 
 func (vc *VolumeController) getReplicaCountForAutoBalanceNode(v *longhorn.Volume, e *longhorn.Engine, rs map[string]*longhorn.Replica) (int, map[string][]string, error) {
 	log := getLoggerForVolume(vc.logger, v).WithField("replicaAutoBalanceType", "node")
 
-	readyNodes, err := vc.listReadySchedulableAndScheduledNodes(rs, log)
+	readyNodes, err := vc.listReadySchedulableAndScheduledNodes(v, rs, log)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -2743,8 +2756,12 @@ func (vc *VolumeController) checkAndInitVolumeClone(v *longhorn.Volume) (err err
 	}
 
 	if snapshotName == "" {
+		// Use a deterministic UUID for snapshotName in case this reconciliation fails and we hit this code block again
+		// in the next reconciliation. We don't want to generate multiple snapshots. Create the UUID by hashing the UIDs
+		// of the source and destination volume to avoid problems with reused volume names.
+		snapshotName = util.DeterministicUUID(string(sourceVol.GetUID()) + string(v.GetUID()))
 		labels := map[string]string{types.GetLonghornLabelKey(types.LonghornLabelSnapshotForCloningVolume): v.Name}
-		snapshot, err := vc.createSnapshot("", labels, sourceVol, e)
+		snapshot, err := vc.createSnapshot(snapshotName, labels, sourceVol, e)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create snapshot of source volume %v", sourceVol.Name)
 		}
@@ -2961,22 +2978,12 @@ func (vc *VolumeController) checkForAutoDetachment(v *longhorn.Volume, e *longho
 		!v.Spec.Standby) {
 		return nil
 	}
-	allScheduledReplicasIncluded := true
-	for _, r := range rs {
-		// skip unscheduled replicas
-		if r.Spec.NodeID == "" {
-			continue
-		}
-		if isDownOrDeleted, err := vc.ds.IsNodeDownOrDeleted(r.Spec.NodeID); err != nil {
-			return err
-		} else if isDownOrDeleted {
-			continue
-		}
-		if mode := e.Status.ReplicaModeMap[r.Name]; mode != longhorn.ReplicaModeRW {
-			allScheduledReplicasIncluded = false
-			break
-		}
+
+	allScheduledReplicasIncluded, err := vc.checkAllScheduledReplicasIncluded(v, e, rs)
+	if err != nil {
+		return err
 	}
+
 	if (cliAPIVersion >= engineapi.CLIVersionFour && !isPurging && (v.Status.Robustness == longhorn.VolumeRobustnessHealthy || v.Status.Robustness == longhorn.VolumeRobustnessDegraded) && allScheduledReplicasIncluded) ||
 		(cliAPIVersion < engineapi.CLIVersionFour && (v.Status.Robustness == longhorn.VolumeRobustnessHealthy || v.Status.Robustness == longhorn.VolumeRobustnessDegraded)) {
 		log.Info("Preparing to do auto detachment for restore/DR volume")
@@ -2986,6 +2993,30 @@ func (vc *VolumeController) checkForAutoDetachment(v *longhorn.Volume, e *longho
 	}
 
 	return nil
+}
+
+func (vc *VolumeController) checkAllScheduledReplicasIncluded(v *longhorn.Volume, e *longhorn.Engine, rs map[string]*longhorn.Replica) (bool, error) {
+	healthReplicaCount := 0
+	hasReplicaNotIncluded := false
+
+	for _, r := range rs {
+		// skip unscheduled replicas
+		if r.Spec.NodeID == "" {
+			continue
+		}
+		if isDownOrDeleted, err := vc.ds.IsNodeDownOrDeleted(r.Spec.NodeID); err != nil {
+			return false, err
+		} else if isDownOrDeleted {
+			continue
+		}
+		if mode := e.Status.ReplicaModeMap[r.Name]; mode == longhorn.ReplicaModeRW {
+			healthReplicaCount++
+		} else {
+			hasReplicaNotIncluded = true
+		}
+	}
+
+	return healthReplicaCount != 0 && (healthReplicaCount >= v.Spec.NumberOfReplicas || !hasReplicaNotIncluded), nil
 }
 
 func (vc *VolumeController) getInfoFromBackupURL(v *longhorn.Volume) (string, string, error) {
@@ -4112,6 +4143,20 @@ func (vc *VolumeController) createSnapshot(snapshotName string, labels map[strin
 	}
 	defer engineClientProxy.Close()
 
+	// Check if we have already created a snapshot with this name.
+	// TODO: Update longhorn-engine and longhorn-instance-manager so that SnapshotCreate returns an identifiable
+	// error/code when a snapshot exists so that this check isn't necessary.
+	if snapshotName != "" {
+		snap, err := engineClientProxy.SnapshotGet(e, snapshotName)
+		if err != nil {
+			return nil, err
+		}
+		if snap != nil {
+			logrus.Debugf("Snapshot %v with labels %+v for volume %v already exists", snapshotName, labels, volume.Name)
+			return snap, nil
+		}
+	}
+
 	snapshotName, err = engineClientProxy.SnapshotCreate(e, snapshotName, labels)
 	if err != nil {
 		return nil, err
@@ -4133,6 +4178,47 @@ func (vc *VolumeController) createSnapshot(snapshotName string, labels map[strin
 func (vc *VolumeController) checkVolumeNotInMigration(volume *longhorn.Volume) error {
 	if volume.Spec.MigrationNodeID != "" {
 		return fmt.Errorf("cannot operate during migration")
+	}
+	return nil
+}
+
+// ReconcilePersistentVolume is responsible for syncing the state with the PersistentVolume
+func (vc *VolumeController) ReconcilePersistentVolume(volume *longhorn.Volume) error {
+	log := getLoggerForVolume(vc.logger, volume)
+
+	kubeStatus := volume.Status.KubernetesStatus
+	if kubeStatus.PVName == "" {
+		return nil
+	}
+
+	pv, err := vc.ds.GetPersistentVolume(kubeStatus.PVName)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+
+	existingPV := pv.DeepCopy()
+	defer func() {
+		if !reflect.DeepEqual(existingPV.Spec, pv.Spec) {
+			logrus.Debugf("Updating PersistentVolume %v", pv.Name)
+			_, err = vc.ds.UpdatePersistentVolume(pv)
+
+			// requeue if it's conflict
+			if apierrors.IsConflict(errors.Cause(err)) {
+				log.WithError(err).Debugf("Requeue volume due to error")
+				vc.enqueueVolume(volume)
+			}
+		}
+	}()
+
+	if volume.Spec.DataLocality == longhorn.DataLocalityStrictLocal && volume.Spec.NodeID != "" {
+		pv.Spec.NodeAffinity = &v1.VolumeNodeAffinity{
+			Required: &v1.NodeSelector{NodeSelectorTerms: []v1.NodeSelectorTerm{
+				util.GetNodeSelectorTermMatchExpressionNodeName(volume.Spec.NodeID),
+			}},
+		}
 	}
 	return nil
 }

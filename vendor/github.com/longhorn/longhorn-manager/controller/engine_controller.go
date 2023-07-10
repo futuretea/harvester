@@ -529,7 +529,7 @@ func (ec *EngineController) DeleteInstance(obj interface{}) (err error) {
 
 	defer func() {
 		if err != nil {
-			logrus.WithError(err).Warnf("Failed to delete engine %v for volume %v", e.Name, v.Name)
+			logrus.WithError(err).Warnf("Failed to delete engine %v", e.Name)
 		}
 		if isRWXVolume && im.Status.CurrentState != longhorn.InstanceManagerStateRunning {
 			// Try the best to delete engine instance.
@@ -544,7 +544,7 @@ func (ec *EngineController) DeleteInstance(obj interface{}) (err error) {
 			// After shifting to node A, the first reattachment fail due to the IO error resulting from the
 			// orphaned engine instance and block device. Then, the detachment will trigger the teardown of the
 			// problematic engine process and block device. The next reattachment then will succeed.
-			logrus.Warnf("Ignored the failure of deleting engine %v for volume %v", e.Name, v.Name)
+			logrus.Warnf("Ignored the failure of deleting engine %v", e.Name)
 			err = nil
 		}
 	}()
@@ -1150,6 +1150,16 @@ func (m *EngineMonitor) acquireRestoringCounter(acquire bool) error {
 }
 
 func (ec *EngineController) syncSnapshotCRs(engine *longhorn.Engine) error {
+	log := ec.logger.WithField("engine", engine.Name)
+
+	vol, err := ec.ds.GetVolumeRO(engine.Spec.VolumeName)
+	if err != nil {
+		return err
+	}
+	if vol.Spec.MigrationNodeID != "" {
+		return nil
+	}
+
 	snapshotCRs, err := ec.ds.ListVolumeSnapshotsRO(engine.Spec.VolumeName)
 	if err != nil {
 		return err
@@ -1162,7 +1172,7 @@ func (ec *EngineController) syncSnapshotCRs(engine *longhorn.Engine) error {
 		requestCreateNewSnapshot := snapCR.Spec.CreateSnapshot
 		alreadyCreatedBefore := snapCR.Status.CreationTime != ""
 		if _, ok := engine.Status.Snapshots[snapName]; !ok && (!requestCreateNewSnapshot || alreadyCreatedBefore) && snapCR.DeletionTimestamp == nil {
-			ec.logger.Infof("Deleting snapshot CR for the snapshot %v", snapName)
+			log.Infof("Deleting snapshot CR for the snapshot %v", snapName)
 			if err := ec.ds.DeleteSnapshot(snapName); err != nil && !apierrors.IsNotFound(err) {
 				utilruntime.HandleError(fmt.Errorf("syncSnapshotCRs: failed to delete snapshot CR %v: %v", snapCR.Name, err))
 			}
@@ -1191,7 +1201,7 @@ func (ec *EngineController) syncSnapshotCRs(engine *longhorn.Engine) error {
 					CreateSnapshot: false,
 				},
 			}
-			ec.logger.Infof("Creating snapshot CR for the snapshot %v", snapName)
+			log.Infof("Creating snapshot CR for the snapshot %v", snapName)
 			if _, err := ec.ds.CreateSnapshot(snapCR); err != nil && !apierrors.IsAlreadyExists(err) {
 				utilruntime.HandleError(fmt.Errorf("syncSnapshotCRs: failed to create snapshot CR %v: %v", snapCR.Name, err))
 			}
