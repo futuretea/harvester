@@ -1,0 +1,57 @@
+# Default values for harvester-load-balancer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicasCount: 1
+
+image:
+  repository: harbor.futuretea.me/rancher/harvester-load-balancer
+  pullPolicy: Always
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: v0.0.0-dev
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 64Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+webhook:
+  replicasCount: 1
+  image:
+    repository: harbor.futuretea.me/rancher/harvester-load-balancer-webhook
+    pullPolicy: Always
+    tag: v0.0.0-dev
+  httpsPort: 8443
+  resources:
+    limits:
+      cpu: 100m
+      memory: 512Mi
+    requests:
+      cpu: 10m
+      memory: 128Mi

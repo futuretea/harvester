@@ -1,0 +1,11 @@
+apiVersion: v2
+appVersion: v0.0.0-dev
+description: A load balancer implementation for Harvester
+home: https://github.com/harvester/harvester-load-balancer
+maintainers:
+- name: harvester
+name: harvester-load-balancer
+sources:
+- https://github.com/harvester/harvester-load-balancer
+type: application
+version: 0.0.0-dev
