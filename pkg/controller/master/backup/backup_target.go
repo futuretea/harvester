@@ -92,14 +92,14 @@ func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Se
 		}
 
 		if err = h.updateLonghornTarget(target); err != nil {
-			return h.setConfiguredCondition(setting, "", err)
+			return h.reUpdateBackupTargetSettingSecret(setting, target, err)
 		}
 
 		if err = h.updateBackupTargetSecret(target); err != nil {
-			return h.setConfiguredCondition(setting, "", err)
+			return h.reUpdateBackupTargetSettingSecret(setting, target, err)
 		}
 
-		return h.reUpdateBackupTargetSettingSecret(setting, target)
+		return h.reUpdateBackupTargetSettingSecret(setting, target, nil)
 
 	case settings.NFSBackupType:
 		if err = h.updateLonghornTarget(target); err != nil {
@@ -139,7 +139,7 @@ func (h *TargetHandler) OnBackupTargetChange(key string, setting *harvesterv1.Se
 	return setting, nil
 }
 
-func (h *TargetHandler) reUpdateBackupTargetSettingSecret(setting *harvesterv1.Setting, target *settings.BackupTarget) (*harvesterv1.Setting, error) {
+func (h *TargetHandler) reUpdateBackupTargetSettingSecret(setting *harvesterv1.Setting, target *settings.BackupTarget, configuredErr error) (*harvesterv1.Setting, error) {
 	// only do a second update when s3 with credentials
 	if target.Type != settings.S3BackupType {
 		return nil, nil
@@ -155,7 +155,9 @@ func (h *TargetHandler) reUpdateBackupTargetSettingSecret(setting *harvesterv1.S
 
 	settingCpy := setting.DeepCopy()
 	settingCpy.Value = string(targetBytes)
-
+	if configuredErr != nil {
+		harvesterv1.SettingConfigured.SetError(settingCpy, "", configuredErr)
+	}
 	return h.settings.Update(settingCpy)
 }
 
