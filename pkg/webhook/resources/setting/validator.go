@@ -55,8 +55,6 @@ const (
 	labelAppNameValueImportController = "harvester-vm-import-controller"
 )
 
-var certs = getSystemCerts()
-
 // See supported TLS protocols of ingress-nginx and Nginx.
 // - https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#ssl-protocols
 // - http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_protocols
@@ -401,6 +399,7 @@ func (v *settingValidator) customizeTransport() error {
 	os.Setenv(util.HTTPSProxyEnv, httpProxyConfig.HTTPSProxy)
 	os.Setenv(util.NoProxyEnv, util.AddBuiltInNoProxy(httpProxyConfig.NoProxy))
 
+	certs := getSystemCerts()
 	caSetting, err := v.settingCache.Get(settings.AdditionalCASettingName)
 	if err != nil {
 		return fmt.Errorf("failed to get additional CA setting: %v", err)
